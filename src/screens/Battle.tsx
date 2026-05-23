@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBattleStore } from '../store/battleStore'
+import { useBattleEngine } from '../hooks/useBattleEngine'
 import PokemonSprite from '../components/PokemonSprite'
 import HpBar from '../components/HpBar'
 import MoveSelector from '../components/MoveSelector'
@@ -14,8 +15,8 @@ export default function Battle() {
   const {
     playerPokemon, opponentPokemon, phase,
     question, selectedMoveIndex, log,
-    selectMove, handleAnswer,
   } = useBattleStore()
+  const { selectMove, handleAnswer } = useBattleEngine()
 
   useEffect(() => {
     if (phase === 'idle') navigate('/map')
