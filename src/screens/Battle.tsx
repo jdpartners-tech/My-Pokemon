@@ -19,7 +19,7 @@ export default function Battle() {
 
   useEffect(() => {
     if (phase === 'idle') navigate('/map')
-  }, [phase])
+  }, [phase, navigate])
 
   if (!playerPokemon || !opponentPokemon) return null
 
