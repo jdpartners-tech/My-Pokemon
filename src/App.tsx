@@ -4,6 +4,7 @@ import Battle from './screens/Battle'
 import WorldMap from './screens/WorldMap'
 import Pokedex from './screens/Pokedex'
 import Team from './screens/Team'
+import Admin from './screens/Admin'
 
 export default function App() {
   return (
@@ -14,7 +15,7 @@ export default function App() {
         <Route path="/battle" element={<Battle />} />
         <Route path="/pokedex" element={<Pokedex />} />
         <Route path="/team" element={<Team />} />
-        <Route path="/admin" element={<div className="p-8 text-center text-yellow-400">Admin — Coming Soon</div>} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
   )
