@@ -52,6 +52,10 @@ export function useBattleEngine() {
     store.setPhase('animating')
 
     const move = playerPokemon.moves[selectedMoveIndex]
+    if (!move) {
+      store.setPhase('player_turn')
+      return
+    }
     const moveInfo = moveMap[move.moveId]
     store.decrementPP(selectedMoveIndex)
 
@@ -158,7 +162,11 @@ export function useBattleEngine() {
         questionsAnswered: (profile.stats?.questionsAnswered ?? 0) + 1,
         questionsCorrect: (profile.stats?.questionsCorrect ?? 0) + 1,
       }
-      await updateProfile(profile.id, { party: updatedParty, stats })
+      try {
+        await updateProfile(profile.id, { party: updatedParty, stats })
+      } catch (e) {
+        console.error('Failed to save battle result:', e)
+      }
     }
 
     store.setPhase('win')
