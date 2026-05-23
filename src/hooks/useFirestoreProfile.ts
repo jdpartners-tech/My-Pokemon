@@ -58,7 +58,8 @@ export function useFirestoreProfile() {
 
   async function updateProfile(id: string, updates: Partial<Profile>): Promise<void> {
     await ensureAuth()
-    await updateDoc(doc(db, 'profiles', id), updates as Record<string, unknown>)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await updateDoc(doc(db, 'profiles', id), updates as any)
   }
 
   async function deleteProfile(id: string): Promise<void> {

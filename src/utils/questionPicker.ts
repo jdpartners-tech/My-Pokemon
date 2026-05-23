@@ -18,7 +18,7 @@ export function filterQuestionsForProfile(
     const settings = profile.subjects[subject]
     if (!settings?.enabled) return false
     if (q.difficulty !== profile.difficulty) return false
-    if (settings.types.length > 0 && !settings.types.includes(q.type as any)) return false
+    if (settings.types.length > 0 && !(settings.types as string[]).includes(q.type)) return false
     return true
   })
 }

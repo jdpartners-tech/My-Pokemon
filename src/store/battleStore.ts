@@ -48,7 +48,7 @@ const initialState = {
   usedQuestionIds: new Set<string>(),
 }
 
-export const useBattleStore = create<BattleState>((set, get) => ({
+export const useBattleStore = create<BattleState>((set) => ({
   ...initialState,
 
   startWildBattle: (player, opponent) => set({

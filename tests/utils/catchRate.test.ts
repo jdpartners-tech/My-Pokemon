@@ -28,7 +28,7 @@ describe('catchShakes', () => {
   it('status bonus increases average shakes over many trials', () => {
     let withStatus = 0
     let withoutStatus = 0
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 1000; i++) {
       withStatus += catchShakes(50, 100, 45, 1, true)
       withoutStatus += catchShakes(50, 100, 45, 1, false)
     }

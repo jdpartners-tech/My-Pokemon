@@ -36,7 +36,7 @@ export function useQuestions() {
     if (!subject) throw new Error('Subject required to update question')
     await updateDoc(
       doc(db, 'questionBank', subject, 'questions', id),
-      updates as Record<string, unknown>
+      updates as any // eslint-disable-line @typescript-eslint/no-explicit-any
     )
   }
 

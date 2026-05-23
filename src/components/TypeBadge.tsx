@@ -1,5 +1,3 @@
-import type { PokemonType } from '../types/game'
-
 const TYPE_COLORS: Record<string, string> = {
   normal:   'bg-gray-400 text-white',
   fire:     'bg-orange-500 text-white',
