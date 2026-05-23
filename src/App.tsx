@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import ProfileSelect from './screens/ProfileSelect'
 import Battle from './screens/Battle'
 import WorldMap from './screens/WorldMap'
+import Pokedex from './screens/Pokedex'
+import Team from './screens/Team'
 
 export default function App() {
   return (
@@ -10,8 +12,8 @@ export default function App() {
         <Route path="/" element={<ProfileSelect />} />
         <Route path="/map" element={<WorldMap />} />
         <Route path="/battle" element={<Battle />} />
-        <Route path="/pokedex" element={<div className="p-8 text-center text-yellow-400">Pokédex — Coming Soon</div>} />
-        <Route path="/team" element={<div className="p-8 text-center text-yellow-400">Team — Coming Soon</div>} />
+        <Route path="/pokedex" element={<Pokedex />} />
+        <Route path="/team" element={<Team />} />
         <Route path="/admin" element={<div className="p-8 text-center text-yellow-400">Admin — Coming Soon</div>} />
       </Routes>
     </div>
