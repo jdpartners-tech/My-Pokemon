@@ -95,6 +95,7 @@ export default function WorldMap() {
         const exit = map.exits.find(e => e.x === nx && e.y === ny)
         if (exit) {
           setCurrentMapId(exit.targetMap)
+          setDialogue(null)
           // Use setTimeout to update after state settles
           setTimeout(() => {
             setPx(exit.targetX)
