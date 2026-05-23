@@ -14,9 +14,12 @@ export default function ProfileSelect() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Profile | null>(null)
   const [pinError, setPinError] = useState('')
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
-    getAllProfiles().then(p => { setProfiles(p); setLoading(false) })
+    getAllProfiles()
+      .then(p => { setProfiles(p); setLoading(false) })
+      .catch(() => { setFetchError(true); setLoading(false) })
   }, [])
 
   async function handlePin(pin: string) {
@@ -33,6 +36,14 @@ export default function ProfileSelect() {
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center text-white">
         Loading...
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center text-red-400">
+        Failed to load profiles. Check your connection.
       </div>
     )
   }
@@ -59,15 +70,19 @@ export default function ProfileSelect() {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-4 justify-center">
-            {profiles.map(p => (
-              <ProfileCard
-                key={p.id}
-                profile={p}
-                onClick={() => { setSelected(p); setPinError('') }}
-              />
-            ))}
-          </div>
+          {profiles.length === 0 ? (
+            <p className="text-gray-400 text-center">No trainers yet. Add one below!</p>
+          ) : (
+            <div className="flex flex-wrap gap-4 justify-center">
+              {profiles.map(p => (
+                <ProfileCard
+                  key={p.id}
+                  profile={p}
+                  onClick={() => { setSelected(p); setPinError('') }}
+                />
+              ))}
+            </div>
+          )}
           <button
             onClick={() => navigate('/add-profile')}
             className="bg-[#0f3460] border border-[#4ecdc4]/40 hover:border-yellow-400 text-[#4ecdc4] px-6 py-3 rounded-xl transition-all"
