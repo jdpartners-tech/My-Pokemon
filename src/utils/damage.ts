@@ -27,7 +27,7 @@ export function calculateDamage(
   defenseStat: number,
   effectiveness: number
 ): number {
-  if (movePower === 0) return 0
+  if (movePower === 0 || effectiveness === 0) return 0
   const base = Math.floor(
     (Math.floor((2 * attackerLevel) / 5 + 2) * movePower * attackStat) / defenseStat / 50
   ) + 2

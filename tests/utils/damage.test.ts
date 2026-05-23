@@ -42,11 +42,8 @@ describe('calculateDamage', () => {
     expect(calculateDamage(50, 0, 100, 100, 1)).toBe(0)
   })
 
-  it('returns 1 (minimum) when effectiveness is 0 due to Math.max(1,...)', () => {
-    // The implementation uses Math.max(1, floor(base * effectiveness * random))
-    // With effectiveness=0: floor(base * 0 * factor) = 0, but Math.max(1, 0) = 1
-    // Immunity should be handled at the caller level (checking effectiveness before calling)
-    expect(calculateDamage(50, 80, 100, 100, 0)).toBe(1)
+  it('returns 0 when effectiveness is 0 (immune)', () => {
+    expect(calculateDamage(50, 80, 100, 100, 0)).toBe(0)
   })
 
   it('returns a positive number for a normal attack', () => {
