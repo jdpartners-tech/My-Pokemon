@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore, collection, addDoc } from 'firebase/firestore'
+import { getAuth, signInAnonymously } from 'firebase/auth'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, resolve } from 'path'
@@ -17,6 +18,7 @@ const app = initializeApp({
   appId:             vars.VITE_FIREBASE_APP_ID?.trim(),
 })
 const db = getFirestore(app)
+const auth = getAuth(app)
 
 const questions = [
   // English — Beginner
@@ -52,6 +54,7 @@ const questions = [
 ]
 
 async function seed() {
+  await signInAnonymously(auth)
   console.log(`Seeding ${questions.length} questions to Firebase...`)
   for (const q of questions) {
     await addDoc(collection(db, 'questionBank', q.subject, 'questions'), q)
