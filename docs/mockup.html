@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Pokemon — Visual Mockups</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a2e; color: white; font-family: 'Courier New', monospace; padding: 24px; }
+  h1 { color: #ffd700; font-size: 22px; margin-bottom: 24px; letter-spacing: 2px; }
+  h2 { color: #4ecdc4; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #4ecdc4; padding-bottom: 6px; }
+  .section { margin-bottom: 48px; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .label { color: #888; font-size: 11px; text-align: center; }
+  .note { color: #ffd700; font-size: 11px; margin-top: 8px; background: #0f3460; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #ffd700; max-width: 700px; }
+</style>
+</head>
+<body>
+<h1>⚔ MY POKEMON — Visual Mockups</h1>
+
+<div class="section">
+  <h2>1 · World Map</h2>
+  <div class="row">
+    <div class="col">
+      <canvas id="mapPallet" width="352" height="288"></canvas>
+      <div class="label">Pallet Town</div>
+    </div>
+    <div class="col">
+      <canvas id="mapRoute" width="352" height="288"></canvas>
+      <div class="label">Route 1 — tall grass</div>
+    </div>
+  </div>
+  <div class="note">Ground = sandy tan · Tall grass = teal-green with blades · Trees = fluffy multi-circle · Buildings = cream walls, warm roofs · Player = red-cap pixel sprite</div>
+</div>
+
+<div class="section">
+  <h2>2 · Characters (4× zoom)</h2>
+  <div class="row">
+    <div class="col">
+      <canvas id="charCanvas" width="480" height="160"></canvas>
+      <div class="label">Left to right: Player · Youngster NPC · Wild Pokemon marker</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>3 · Battle Scene</h2>
+  <div class="row">
+    <div class="col">
+      <canvas id="battleCanvas" width="360" height="500"></canvas>
+      <div class="label">Wild battle — player turn</div>
+    </div>
+    <div class="col">
+      <canvas id="battleQ" width="360" height="500"></canvas>
+      <div class="label">Question popup overlay</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>4 · Catching Pokémon</h2>
+  <div class="row">
+    <div class="col">
+      <canvas id="catchCanvas" width="360" height="500"></canvas>
+      <div class="label">Pokéball thrown — shake animation</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── COLOUR PALETTE ────────────────────────────────────────────────────────
+const C = {
+  ground:   '#d4b870',  // sandy tan
+  gDark:    '#c0a460',  // ground shadow dot
+  gLight:   '#e4cc88',  // ground highlight dot
+  grass:    '#58a840',  // tall grass
+  gBlade:   '#287820',  // blade dark
+  gTip:     '#48a030',  // blade tip
+  treeBg:   '#183828',  // tree background
+  tree1:    '#285838',  // darkest
+  tree2:    '#3a8850',  // mid
+  tree3:    '#52a860',  // bright
+  tree4:    '#80d878',  // highlight
+  water:    '#3888c0',
+  waterRip: '#70b8e0',
+  wallTop:  '#a87828',  // building roof brown
+  wallBot:  '#e0d0a0',  // building wall cream
+  pcRoof:   '#c83028',  // pokemon center red roof
+  pcWall:   '#f0ece8',  // pokemon center white wall
+  pcDoor:   '#4888c8',  // pokemon center blue door
+  skin:     '#e8c090',
+  hairDark: '#201010',
+  playerCap:'#181818',
+  playerBand:'#c83028',
+  playerShirt:'#c83028',
+  playerPants:'#2040a0',
+  npcShirt: '#e0c030',
+  npcPants: '#3060c0',
+}
+
+// ─── TILE DRAWING ──────────────────────────────────────────────────────────
+function tileHash(mx, my, i) {
+  return (((mx+100)*397 + (my+100)*1301 + i*29) * 2654435761 >>> 0) / 0x100000000
+}
+
+function drawGround(ctx, sx, sy, mx, my) {
+  const S = 32
+  ctx.fillStyle = C.ground
+  ctx.fillRect(sx, sy, S, S)
+  ctx.fillStyle = C.gDark
+  for (let i = 0; i < 14; i++) {
+    ctx.fillRect(sx + Math.floor(tileHash(mx,my,i)*(S-1)),
+                 sy + Math.floor(tileHash(mx+50,my+50,i)*(S-1)), 1, 1)
+  }
+  ctx.fillStyle = C.gLight
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(sx + Math.floor(tileHash(mx+99,my+99,i)*(S-1)),
+                 sy + Math.floor(tileHash(mx+199,my+199,i)*(S-1)), 1, 1)
+  }
+}
+
+function drawTallGrass(ctx, sx, sy, mx, my) {
+  const S = 32
+  ctx.fillStyle = C.grass
+  ctx.fillRect(sx, sy, S, S)
+  ctx.fillStyle = '#489030'
+  for (let i = 0; i < 10; i++) {
+    ctx.fillRect(sx + Math.floor(tileHash(mx,my,i*3)*(S-1)),
+                 sy + Math.floor(tileHash(mx+77,my+77,i*3)*(S-1)), 1, 1)
+  }
+  const blades = [[2,6],[7,3],[12,8],[17,4],[22,6],[27,3],[29,9],
+                  [4,18],[9,15],[14,20],[19,17],[24,21],[28,16]]
+  for (const [bx,by] of blades) {
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx, sy+by, 1, 8)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx, sy+by-1, 1, 3)
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx+3, sy+by+2, 1, 7)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx+3, sy+by+1, 1, 2)
+  }
+}
+
+function drawTree(ctx, sx, sy) {
+  const S = 32
+  ctx.fillStyle = C.treeBg
+  ctx.fillRect(sx, sy, S, S)
+  const cx = sx+S/2, cy = sy+S/2-1
+  ctx.fillStyle = C.tree1
+  for (const [bx,by] of [[-7,4],[7,3],[1,8],[-5,-6],[5,-5],[-8,-1],[8,-1]]) {
+    ctx.beginPath(); ctx.arc(cx+bx, cy+by, 7, 0, Math.PI*2); ctx.fill()
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, S/2-2, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = C.tree2
+  ctx.beginPath(); ctx.arc(cx-1, cy-1, S/2-6, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = C.tree3
+  ctx.beginPath(); ctx.arc(cx-3, cy-4, S/2-11, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = C.tree4
+  ctx.beginPath(); ctx.arc(cx-5, cy-6, 4, 0, Math.PI*2); ctx.fill()
+}
+
+function drawBuilding(ctx, sx, sy) {
+  const S = 32, rh = 13
+  ctx.fillStyle = C.wallBot
+  ctx.fillRect(sx, sy+rh, S, S-rh)
+  ctx.fillStyle = C.wallTop
+  ctx.fillRect(sx, sy, S, rh)
+  // roof horizontal lines
+  ctx.fillStyle = '#906018'
+  for (let r=0;r<3;r++) ctx.fillRect(sx, sy+Math.floor(rh*r/3), S, 1)
+  ctx.fillStyle = '#604008'
+  ctx.fillRect(sx, sy+rh-1, S, 2)
+  // window
+  ctx.fillStyle = '#88c0e0'
+  ctx.fillRect(sx+8, sy+rh+6, 10, 8)
+  ctx.fillStyle = '#4898c0'
+  ctx.fillRect(sx+8, sy+rh+6, 5, 8)
+  ctx.fillStyle = '#206080'
+  ctx.fillRect(sx+12, sy+rh+6, 1, 8)
+  ctx.fillRect(sx+8, sy+rh+9, 10, 1)
+}
+
+function drawPCentre(ctx, sx, sy) {
+  const S = 32, rh = 11
+  ctx.fillStyle = C.pcWall
+  ctx.fillRect(sx, sy+rh, S, S-rh)
+  ctx.fillStyle = C.pcRoof
+  ctx.fillRect(sx, sy, S, rh)
+  // roof tile pattern
+  ctx.fillStyle = '#a01818'
+  for (let r=0;r<3;r++) ctx.fillRect(sx, sy+Math.floor(rh*r/3), S, 1)
+  ctx.fillStyle = '#801010'
+  ctx.fillRect(sx, sy+rh-1, S, 2)
+  // Pokéball emblem
+  ctx.fillStyle = '#c03028'
+  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 4, Math.PI, 0); ctx.fill()
+  ctx.fillStyle = '#f0f0f0'
+  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 4, 0, Math.PI); ctx.fill()
+  ctx.fillStyle = '#303030'
+  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 1.5, 0, Math.PI*2); ctx.fill()
+  // door
+  ctx.fillStyle = C.pcDoor
+  ctx.fillRect(sx+11, sy+rh+11, 10, S-rh-11)
+  ctx.fillStyle = '#80b8e8'
+  ctx.fillRect(sx+12, sy+rh+12, 3, 6)
+}
+
+function drawWater(ctx, sx, sy) {
+  const S = 32
+  ctx.fillStyle = C.water
+  ctx.fillRect(sx, sy, S, S)
+  ctx.fillStyle = C.waterRip
+  ctx.beginPath(); ctx.ellipse(sx+17, sy+11, 8, 3, 0, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(sx+10, sy+22, 5, 2, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = '#a8d8f0'
+  ctx.beginPath(); ctx.ellipse(sx+17, sy+9, 4, 1.5, 0, 0, Math.PI*2); ctx.fill()
+}
+
+// ─── CHARACTER SPRITES ─────────────────────────────────────────────────────
+function drawPlayer(ctx, cx, cy, scale=1) {
+  const s = scale
+  const f = (x,y,w,h,col) => { ctx.fillStyle=col; ctx.fillRect(cx+x*s, cy+y*s, w*s, h*s) }
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.22)'
+  ctx.beginPath(); ctx.ellipse(cx, cy+11*s, 7*s, 3*s, 0, 0, Math.PI*2); ctx.fill()
+  // shoes
+  f(-5, 7, 4, 3, '#181818'); f(1, 7, 4, 3, '#181818')
+  // pants
+  f(-4, 1, 3, 7, C.playerPants); f(1, 1, 3, 7, C.playerPants)
+  // shirt body
+  f(-5,-7, 10, 9, C.playerShirt)
+  // arms
+  f(-8,-6, 3, 7, C.playerShirt); f(5,-6, 3, 7, C.playerShirt)
+  // hands
+  f(-8, 0, 3, 3, C.skin); f(5, 0, 3, 3, C.skin)
+  // neck
+  f(-2,-8, 4, 2, C.skin)
+  // head
+  f(-4,-16, 8, 9, C.skin)
+  // hair
+  f(-3,-16, 6, 3, C.hairDark)
+  // cap body
+  f(-5,-20, 10, 5, C.playerCap)
+  f(-4,-22, 8, 3, C.playerCap)
+  // cap band
+  f(-5,-16, 10, 2, C.playerBand)
+  // cap brim
+  f(-6,-15, 12, 2, C.playerCap)
+}
+
+function drawNpc(ctx, cx, cy, scale=1) {
+  const s = scale
+  const f = (x,y,w,h,col) => { ctx.fillStyle=col; ctx.fillRect(cx+x*s, cy+y*s, w*s, h*s) }
+  ctx.fillStyle='rgba(0,0,0,0.22)'
+  ctx.beginPath(); ctx.ellipse(cx, cy+11*s, 7*s, 3*s, 0, 0, Math.PI*2); ctx.fill()
+  f(-5, 7, 4, 3, '#181818'); f(1, 7, 4, 3, '#181818')
+  f(-4, 1, 3, 5, C.npcPants); f(1, 1, 3, 5, C.npcPants)
+  f(-5,-7, 10, 9, C.npcShirt)
+  f(-8,-6, 3, 7, C.npcShirt); f(5,-6, 3, 7, C.npcShirt)
+  f(-8, 0, 3, 3, C.skin); f(5, 0, 3, 3, C.skin)
+  f(-4,-16, 8, 9, C.skin)
+  f(-4,-18, 8, 4, '#c08030') // brown hair
+  f(-5,-15, 2, 3, '#c08030'); f(3,-15, 2, 3, '#c08030')
+}
+
+// ─── DRAW MAP ──────────────────────────────────────────────────────────────
+function drawMap(canvasId, tiles, playerTileX, playerTileY, trainerTile) {
+  const canvas = document.getElementById(canvasId)
+  const ctx = canvas.getContext('2d')
+  const TILE=32, COLS=11, ROWS=9
+  const hw=Math.floor(COLS/2), hh=Math.floor(ROWS/2)
+  ctx.clearRect(0,0,canvas.width,canvas.height)
+  for (let vy=0;vy<ROWS;vy++) {
+    for (let vx=0;vx<COLS;vx++) {
+      const mx=playerTileX-hw+vx, my=playerTileY-hh+vy
+      const sx=vx*TILE, sy=vy*TILE
+      const t = (my>=0&&my<tiles.length&&mx>=0&&mx<tiles[0].length) ? tiles[my][mx] : 'T'
+      if(t==='P') drawGround(ctx, sx, sy, mx, my)
+      else if(t==='G') drawTallGrass(ctx, sx, sy, mx, my)
+      else if(t==='T') drawTree(ctx, sx, sy)
+      else if(t==='B') drawBuilding(ctx, sx, sy)
+      else if(t==='D') drawPCentre(ctx, sx, sy)
+      else if(t==='W') drawWater(ctx, sx, sy)
+      else { ctx.fillStyle='#183828'; ctx.fillRect(sx,sy,TILE,TILE) }
+    }
+  }
+  // trainer
+  if (trainerTile) {
+    const vx=trainerTile[0]-playerTileX+hw
+    const vy=trainerTile[1]-playerTileY+hh
+    if(vx>=0&&vx<COLS&&vy>=0&&vy<ROWS)
+      drawNpc(ctx, vx*TILE+TILE/2, vy*TILE+TILE/2-4)
+  }
+  // player at centre
+  drawPlayer(ctx, hw*TILE+TILE/2, hh*TILE+TILE/2-4)
+}
+
+// ─── PALLET TOWN MAP ───────────────────────────────────────────────────────
+const palletTiles = [
+  ['T','T','T','T','T','T','T','T','T','T','T','T','T','T','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','B','B','P','P','P','P','P','B','B','P','P','P','T'],
+  ['T','P','B','B','P','P','P','P','P','B','B','P','P','P','T'],
+  ['T','P','P','D','P','P','P','P','P','P','D','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
+]
+drawMap('mapPallet', palletTiles, 7, 7)
+
+// ─── ROUTE 1 MAP ───────────────────────────────────────────────────────────
+const route1Tiles = [
+  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','G','G','G','P','P','P','P','P','G','G','G','P','T'],
+  ['T','P','G','G','G','G','P','P','P','G','G','G','G','P','T'],
+  ['T','P','G','G','G','G','G','P','G','G','G','G','G','P','T'],
+  ['T','P','P','G','G','G','P','P','P','G','G','G','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','P','G','G','P','P','P','P','P','P','P','G','G','P','T'],
+  ['T','P','G','G','G','P','P','P','P','P','G','G','G','P','T'],
+  ['T','P','P','G','G','G','P','P','P','G','G','G','P','P','T'],
+  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
+  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
+]
+drawMap('mapRoute', route1Tiles, 7, 5, [7, 6])
+
+// ─── CHARACTER ZOOM ────────────────────────────────────────────────────────
+;(function(){
+  const canvas = document.getElementById('charCanvas')
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = C.ground
+  ctx.fillRect(0,0,canvas.width,canvas.height)
+  // draw ground texture
+  ctx.fillStyle = C.gDark
+  for(let i=0;i<80;i++){
+    ctx.fillRect(Math.floor(Math.random()*480),Math.floor(Math.random()*160),1,1)
+  }
+
+  // Labels
+  ctx.fillStyle = '#ffd700'
+  ctx.font = '11px Courier New'
+  ctx.textAlign = 'center'
+  ctx.fillText('PLAYER', 80, 155)
+  ctx.fillText('YOUNGSTER', 230, 155)
+  ctx.fillText('(1× map size →)', 390, 155)
+
+  // Player at 4×
+  drawPlayer(ctx, 80, 115, 4)
+
+  // NPC at 4×
+  drawNpc(ctx, 230, 115, 4)
+
+  // Player at 1× (actual game size)
+  drawPlayer(ctx, 340, 95)
+  drawNpc(ctx, 380, 95)
+  ctx.font='9px Courier New'
+  ctx.fillStyle='#aaa'
+  ctx.fillText('actual', 360, 130)
+})()
+
+// ─── BATTLE SCENE ──────────────────────────────────────────────────────────
+function drawBattleScene(canvasId, phase) {
+  const canvas = document.getElementById(canvasId)
+  const ctx = canvas.getContext('2d')
+  const W=360, H=500
+
+  // ── Background ──
+  // Sky gradient (light cyan like Ruby)
+  const sky = ctx.createLinearGradient(0,0,0,H*0.45)
+  sky.addColorStop(0, '#c8f0e8')
+  sky.addColorStop(1, '#d8f8f0')
+  ctx.fillStyle = sky
+  ctx.fillRect(0,0,W,H*0.45)
+
+  // Ground platform (opponent side — upper)
+  ctx.fillStyle = '#b8e8a0'
+  ctx.beginPath()
+  ctx.ellipse(W*0.68, H*0.25, 55, 14, 0, 0, Math.PI*2)
+  ctx.fill()
+  ctx.fillStyle = '#98c880'
+  ctx.beginPath()
+  ctx.ellipse(W*0.68, H*0.26, 52, 10, 0, 0, Math.PI*2)
+  ctx.fill()
+
+  // Ground platform (player side — lower)
+  ctx.fillStyle = '#c8d890'
+  ctx.beginPath()
+  ctx.ellipse(W*0.32, H*0.40, 68, 17, 0, 0, Math.PI*2)
+  ctx.fill()
+  ctx.fillStyle = '#b0c070'
+  ctx.beginPath()
+  ctx.ellipse(W*0.32, H*0.41, 64, 12, 0, 0, Math.PI*2)
+  ctx.fill()
+
+  // Lower panel background
+  ctx.fillStyle = '#e8e0c8'
+  ctx.fillRect(0, H*0.45, W, H*0.55)
+  ctx.fillStyle = '#d0c8b0'
+  ctx.fillRect(0, H*0.45, W, 3)
+
+  // ── Opponent Pokemon (Pidgey — simple bird shape) ──
+  const ox=W*0.68, oy=H*0.19
+  ctx.fillStyle = '#b89060'  // body
+  ctx.beginPath(); ctx.ellipse(ox, oy, 22, 18, -0.2, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = '#987040'
+  ctx.beginPath(); ctx.ellipse(ox-6, oy-8, 10, 8, -0.4, 0, Math.PI*2); ctx.fill() // wing
+  ctx.fillStyle = '#d0a878'
+  ctx.beginPath(); ctx.ellipse(ox+4, oy-12, 6, 5, 0.2, 0, Math.PI*2); ctx.fill() // head
+  ctx.fillStyle = '#ffcc00'
+  ctx.beginPath(); ctx.moveTo(ox+8, oy-12); ctx.lineTo(ox+13, oy-10); ctx.lineTo(ox+8, oy-8); ctx.fill() // beak
+  // wings
+  ctx.fillStyle = '#806030'
+  ctx.beginPath(); ctx.ellipse(ox+10, oy+2, 16, 8, 0.3, 0, Math.PI*2); ctx.fill()
+
+  // ── Player Pokemon (Charmander — simple lizard back view) ──
+  const px=W*0.28, py=H*0.375
+  ctx.fillStyle = '#e87830'  // body back
+  ctx.beginPath(); ctx.ellipse(px, py, 26, 22, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = '#f0a060'  // belly
+  ctx.beginPath(); ctx.ellipse(px, py+4, 14, 12, 0, 0, Math.PI*2); ctx.fill()
+  // tail with flame
+  ctx.fillStyle = '#e87830'
+  ctx.beginPath()
+  ctx.moveTo(px+18, py+10); ctx.quadraticCurveTo(px+38, py+8, px+35, py-8); ctx.lineTo(px+30, py-4)
+  ctx.quadraticCurveTo(px+26, py+6, px+18, py+10); ctx.fill()
+  ctx.fillStyle = '#ffaa00' // flame
+  ctx.beginPath(); ctx.arc(px+35, py-10, 5, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle = '#ff6600'
+  ctx.beginPath(); ctx.arc(px+37, py-13, 3, 0, Math.PI*2); ctx.fill()
+  // head (from behind)
+  ctx.fillStyle = '#e87830'
+  ctx.beginPath(); ctx.arc(px, py-20, 14, 0, Math.PI*2); ctx.fill()
+  // small ears
+  ctx.fillRect(px-16, py-28, 5, 8); ctx.fillRect(px+11, py-28, 5, 8)
+
+  // ── Opponent HP Box (top-left panel) ──
+  function hpBox(bx, by, name, level, hp, maxHp, isPlayer) {
+    const bw=170, bh=46
+    // Panel shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)'
+    ctx.fillRect(bx+2, by+2, bw, bh)
+    // Panel body
+    ctx.fillStyle = '#f0ece8'
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.fill()
+    // Panel border
+    ctx.strokeStyle = '#707060'; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.stroke()
+    // Name
+    ctx.fillStyle = '#181808'; ctx.font='bold 11px "Courier New"'
+    ctx.textAlign='left'
+    ctx.fillText(name.toUpperCase(), bx+8, by+15)
+    // Level
+    ctx.fillStyle = '#484838'; ctx.font='10px "Courier New"'
+    ctx.fillText('Lv'+level, bx+bw-34, by+15)
+    // HP label
+    ctx.fillStyle = '#484838'; ctx.font='bold 9px "Courier New"'
+    ctx.fillText('HP', bx+8, by+33)
+    // HP bar bg
+    ctx.fillStyle = '#505040'
+    ctx.fillRect(bx+24, by+26, bw-32, 7)
+    // HP bar fill
+    const pct = hp/maxHp
+    const barCol = pct>0.5 ? '#50d050' : pct>0.25 ? '#e8a020' : '#e03020'
+    ctx.fillStyle = barCol
+    ctx.fillRect(bx+24, by+26, Math.floor((bw-32)*pct), 7)
+    // Bar highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.3)'
+    ctx.fillRect(bx+24, by+26, Math.floor((bw-32)*pct), 3)
+    // HP numbers (player only)
+    if(isPlayer) {
+      ctx.fillStyle = '#181808'; ctx.font='9px "Courier New"'
+      ctx.textAlign='right'
+      ctx.fillText(hp+'/'+maxHp, bx+bw-4, by+43)
+    }
+  }
+
+  hpBox(8, H*0.45+8, 'PIDGEY', 5, 18, 20, false)
+  hpBox(W-178, H*0.45+54, 'CHARMANDER', 5, 28, 35, true)
+
+  // ── Move Menu ──
+  const mY = H*0.45+108
+  ctx.fillStyle = '#f0ece8'
+  ctx.beginPath(); ctx.roundRect(4, mY, W/2-8, H-mY-8, 4); ctx.fill()
+  ctx.strokeStyle='#707060'; ctx.lineWidth=1
+  ctx.beginPath(); ctx.roundRect(4, mY, W/2-8, H-mY-8, 4); ctx.stroke()
+
+  // divider
+  ctx.strokeStyle='#c0b8a8'
+  ctx.beginPath(); ctx.moveTo(W/4, mY+4); ctx.lineTo(W/4, H-12); ctx.stroke()
+  ctx.beginPath(); ctx.moveTo(4, mY+(H-mY-8)/2); ctx.lineTo(W/2-4, mY+(H-mY-8)/2); ctx.stroke()
+
+  const moves = ['SCRATCH','GROWL','EMBER','—']
+  const types = ['normal','normal','fire','—']
+  const typeCol = {'normal':'#a8a880','fire':'#f08030','—':'#aaa'}
+  moves.forEach((mv, i) => {
+    const mx2 = 4 + (i%2)*(W/4), my2 = mY + Math.floor(i/2)*((H-mY-8)/2)
+    const bw2=W/4-8, bh2=(H-mY-8)/2-8
+    ctx.fillStyle = i===0 ? '#fff8e0' : '#f0ece8' // highlight selected
+    ctx.fillRect(mx2+4, my2+4, bw2, bh2)
+    if(i===0){ctx.strokeStyle='#e8a020';ctx.lineWidth=1.5;ctx.strokeRect(mx2+4,my2+4,bw2,bh2)}
+    ctx.fillStyle = typeCol[types[i]]||'#888'
+    ctx.font='bold 8px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText(types[i].toUpperCase(), mx2+8, my2+bh2-2)
+    ctx.fillStyle = mv==='—'?'#aaa':'#181808'
+    ctx.font='bold 10px "Courier New"'
+    ctx.fillText(mv, mx2+8, my2+18)
+  })
+
+  // ── PP / Type panel ──
+  ctx.fillStyle = '#f0ece8'
+  ctx.beginPath(); ctx.roundRect(W/2+4, mY, W/2-8, H-mY-8, 4); ctx.fill()
+  ctx.strokeStyle='#707060'; ctx.lineWidth=1
+  ctx.beginPath(); ctx.roundRect(W/2+4, mY, W/2-8, H-mY-8, 4); ctx.stroke()
+  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText('PP', W/2+14, mY+20)
+  ctx.fillStyle='#181808'; ctx.font='10px "Courier New"'
+  ctx.fillText('35 / 35', W/2+14, mY+34)
+  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'
+  ctx.fillText('TYPE', W/2+14, mY+54)
+  // type badge
+  ctx.fillStyle = '#f08030'
+  ctx.beginPath(); ctx.roundRect(W/2+14, mY+60, 56, 16, 3); ctx.fill()
+  ctx.fillStyle='white'; ctx.font='bold 9px "Courier New"'
+  ctx.fillText('NORMAL', W/2+18, mY+72)
+
+  // ── "What will CHARMANDER do?" ── only on phase=move
+  if(phase==='move') {
+    ctx.fillStyle = '#f0ece8'
+    ctx.beginPath(); ctx.roundRect(4, H*0.45-42, W-8, 38, 4); ctx.fill()
+    ctx.strokeStyle='#707060'; ctx.lineWidth=1
+    ctx.beginPath(); ctx.roundRect(4, H*0.45-42, W-8, 38, 4); ctx.stroke()
+    ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText('▶ What will CHARMANDER do?', 14, H*0.45-22)
+  }
+}
+
+drawBattleScene('battleCanvas', 'move')
+
+// ─── QUESTION POPUP ────────────────────────────────────────────────────────
+;(function(){
+  // draw same battle scene underneath
+  drawBattleScene('battleQ', 'move')
+  const canvas = document.getElementById('battleQ')
+  const ctx = canvas.getContext('2d')
+  const W=360, H=500
+
+  // Dim overlay
+  ctx.fillStyle='rgba(0,0,0,0.55)'
+  ctx.fillRect(0,0,W,H)
+
+  // Question card
+  const qx=12, qy=60, qw=W-24, qh=H-120
+  ctx.fillStyle='#1a2a4a'
+  ctx.beginPath(); ctx.roundRect(qx+3, qy+3, qw, qh, 10); ctx.fill()
+  ctx.fillStyle='#16213e'
+  ctx.beginPath(); ctx.roundRect(qx, qy, qw, qh, 10); ctx.fill()
+  ctx.strokeStyle='#4ecdc4'; ctx.lineWidth=2
+  ctx.beginPath(); ctx.roundRect(qx, qy, qw, qh, 10); ctx.stroke()
+
+  // Move name badge
+  ctx.fillStyle='#0f3460'
+  ctx.beginPath(); ctx.roundRect(qx+qw/2-50, qy-14, 100, 28, 14); ctx.fill()
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(qx+qw/2-50, qy-14, 100, 28, 14); ctx.stroke()
+  ctx.fillStyle='#ffd700'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('SCRATCH', qx+qw/2, qy+5)
+
+  // Question text
+  ctx.fillStyle='white'; ctx.font='bold 13px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('What does "fierce" mean?', qx+qw/2, qy+40)
+  ctx.fillStyle='#4ecdc4'; ctx.font='10px "Courier New"'
+  ctx.fillText('Answer correctly for full damage!', qx+qw/2, qy+58)
+
+  // 4 answer buttons
+  const opts = ['Very strong','Very kind','Very slow','Very small']
+  const optColors = ['#0f3460','#0f3460','#0f3460','#0f3460']
+  const optBorders = ['#ffd700','#4ecdc4','#4ecdc4','#4ecdc4'] // first highlighted
+  opts.forEach((opt, i) => {
+    const bx = qx+16 + (i%2)*(qw/2-8)
+    const by = qy+72 + Math.floor(i/2)*54
+    const bw=qw/2-24, bh=44
+    ctx.fillStyle = i===0 ? '#1a3a6a' : '#0f3460'
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill()
+    ctx.strokeStyle = optBorders[i]; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.stroke()
+    // option letter
+    ctx.fillStyle = optBorders[i]; ctx.font='bold 11px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText('ABCD'[i], bx+8, by+26)
+    ctx.fillStyle='white'; ctx.font='10px "Courier New"'; ctx.textAlign='center'
+    ctx.fillText(opt, bx+bw/2+8, by+26)
+  })
+})()
+
+// ─── CATCH SCENE ───────────────────────────────────────────────────────────
+;(function(){
+  const canvas = document.getElementById('catchCanvas')
+  const ctx = canvas.getContext('2d')
+  const W=360, H=500
+
+  // Reuse battle background
+  const sky = ctx.createLinearGradient(0,0,0,H*0.45)
+  sky.addColorStop(0, '#c8f0e8'); sky.addColorStop(1, '#d8f8f0')
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.45)
+
+  // Ground platforms
+  ctx.fillStyle='#b8e8a0'
+  ctx.beginPath(); ctx.ellipse(W*0.68, H*0.25, 55, 14, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#98c880'
+  ctx.beginPath(); ctx.ellipse(W*0.68, H*0.26, 52, 10, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#c8d890'
+  ctx.beginPath(); ctx.ellipse(W*0.32, H*0.40, 68, 17, 0, 0, Math.PI*2); ctx.fill()
+
+  // Lower panel
+  ctx.fillStyle='#e8e0c8'; ctx.fillRect(0,H*0.45,W,H*0.55)
+  ctx.fillStyle='#d0c8b0'; ctx.fillRect(0,H*0.45,W,3)
+
+  // Pidgey — faint/weakened (greyed out)
+  const ox=W*0.68, oy=H*0.19
+  ctx.globalAlpha=0.5
+  ctx.fillStyle='#b89060'
+  ctx.beginPath(); ctx.ellipse(ox, oy, 22, 18, -0.2, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#987040'
+  ctx.beginPath(); ctx.ellipse(ox-6, oy-8, 10, 8, -0.4, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#d0a878'
+  ctx.beginPath(); ctx.ellipse(ox+4, oy-12, 6, 5, 0.2, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#ffcc00'
+  ctx.beginPath(); ctx.moveTo(ox+8,oy-12); ctx.lineTo(ox+13,oy-10); ctx.lineTo(ox+8,oy-8); ctx.fill()
+  ctx.globalAlpha=1.0
+
+  // Charmander (player side, at rest)
+  const px=W*0.28, py=H*0.375
+  ctx.fillStyle='#e87830'
+  ctx.beginPath(); ctx.ellipse(px, py, 26, 22, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f0a060'
+  ctx.beginPath(); ctx.ellipse(px, py+4, 14, 12, 0, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#e87830'
+  ctx.beginPath()
+  ctx.moveTo(px+18,py+10); ctx.quadraticCurveTo(px+38,py+8,px+35,py-8)
+  ctx.lineTo(px+30,py-4); ctx.quadraticCurveTo(px+26,py+6,px+18,py+10); ctx.fill()
+  ctx.fillStyle='#ffaa00'; ctx.beginPath(); ctx.arc(px+35,py-10,5,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(px+37,py-13,3,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#e87830'; ctx.beginPath(); ctx.arc(px,py-20,14,0,Math.PI*2); ctx.fill()
+  ctx.fillRect(px-16,py-28,5,8); ctx.fillRect(px+11,py-28,5,8)
+
+  // ── POKÉBALL mid-air ──
+  const bx=W*0.62, by=H*0.17
+  const br=16
+  // shadow on ground
+  ctx.fillStyle='rgba(0,0,0,0.2)'
+  ctx.beginPath(); ctx.ellipse(W*0.68,H*0.28,14,5,0,0,Math.PI*2); ctx.fill()
+  // Ball upper half (red)
+  ctx.fillStyle='#e03028'
+  ctx.beginPath(); ctx.arc(bx, by, br, Math.PI, 0); ctx.fill()
+  // Ball upper shine
+  ctx.fillStyle='rgba(255,255,255,0.35)'
+  ctx.beginPath(); ctx.arc(bx-4, by-5, 5, 0, Math.PI*2); ctx.fill()
+  // Ball lower half (white)
+  ctx.fillStyle='#f0f0f0'
+  ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI); ctx.fill()
+  // Horizontal stripe
+  ctx.fillStyle='#181818'
+  ctx.fillRect(bx-br, by-2, br*2, 4)
+  // Centre button
+  ctx.fillStyle='#181818'
+  ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f0f0f0'
+  ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI*2); ctx.fill()
+  // Sparkle lines
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
+  for(let a=0;a<6;a++){
+    const ang=a*Math.PI/3
+    ctx.beginPath()
+    ctx.moveTo(bx+Math.cos(ang)*(br+3), by+Math.sin(ang)*(br+3))
+    ctx.lineTo(bx+Math.cos(ang)*(br+8), by+Math.sin(ang)*(br+8))
+    ctx.stroke()
+  }
+
+  // HP box (opponent weakened — orange bar)
+  function hpBox2(hbx, hby, name, level, hp, maxHp, isPlayer) {
+    const bw=170, bh=46
+    ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.fillRect(hbx+2,hby+2,bw,bh)
+    ctx.fillStyle='#f0ece8'; ctx.beginPath(); ctx.roundRect(hbx,hby,bw,bh,4); ctx.fill()
+    ctx.strokeStyle='#707060'; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(hbx,hby,bw,bh,4); ctx.stroke()
+    ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText(name.toUpperCase(), hbx+8, hby+15)
+    ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
+    ctx.fillText('Lv'+level, hbx+bw-34, hby+15)
+    ctx.fillStyle='#484838'; ctx.font='bold 9px "Courier New"'; ctx.fillText('HP', hbx+8, hby+33)
+    ctx.fillStyle='#505040'; ctx.fillRect(hbx+24, hby+26, bw-32, 7)
+    const pct=hp/maxHp
+    ctx.fillStyle=pct>0.5?'#50d050':pct>0.25?'#e8a020':'#e03020'
+    ctx.fillRect(hbx+24, hby+26, Math.floor((bw-32)*pct), 7)
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(hbx+24,hby+26,Math.floor((bw-32)*pct),3)
+  }
+  hpBox2(8, H*0.45+8, 'PIDGEY', 5, 5, 20, false)
+  hpBox2(W-178, H*0.45+54, 'CHARMANDER', 5, 28, 35, true)
+
+  // Action panel showing "Throw Pokéball"
+  const mY = H*0.45+108
+  ctx.fillStyle='#f0ece8'
+  ctx.beginPath(); ctx.roundRect(4, mY, W-8, H-mY-8, 4); ctx.fill()
+  ctx.strokeStyle='#707060'; ctx.lineWidth=1
+  ctx.beginPath(); ctx.roundRect(4, mY, W-8, H-mY-8, 4); ctx.stroke()
+
+  // Pokéball result text
+  ctx.fillStyle='#181808'; ctx.font='bold 12px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('Gotcha! PIDGEY was caught!', W/2, mY+28)
+
+  // Shake indicators
+  ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
+  ctx.fillText('●  ●  ●', W/2, mY+52)
+  ctx.fillStyle='#4ecdc4'; ctx.font='9px "Courier New"'
+  ctx.fillText('3 shakes = caught!', W/2, mY+68)
+
+  // Pokéball icon row
+  for(let i=0;i<3;i++){
+    const bxi=W/2-44+i*44, byi=mY+82
+    ctx.fillStyle='#e03028'
+    ctx.beginPath(); ctx.arc(bxi,byi,9,Math.PI,0); ctx.fill()
+    ctx.fillStyle='#f0f0f0'
+    ctx.beginPath(); ctx.arc(bxi,byi,9,0,Math.PI); ctx.fill()
+    ctx.fillStyle='#181818'; ctx.fillRect(bxi-9,byi-1,18,2)
+    ctx.beginPath(); ctx.arc(bxi,byi,3,0,Math.PI*2); ctx.fill()
+    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bxi,byi,1.5,0,Math.PI*2); ctx.fill()
+  }
+
+  // "New Pokémon added to Pokédex!"
+  ctx.fillStyle='#0f3460'; ctx.beginPath(); ctx.roundRect(20, mY+106, W-40, 28, 6); ctx.fill()
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=1
+  ctx.beginPath(); ctx.roundRect(20, mY+106, W-40, 28, 6); ctx.stroke()
+  ctx.fillStyle='#ffd700'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('★  PIDGEY added to Pokédex!  ★', W/2, mY+124)
+})()
+</script>
+</body>
+</html>
