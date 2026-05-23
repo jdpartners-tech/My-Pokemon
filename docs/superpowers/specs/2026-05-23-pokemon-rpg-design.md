@@ -102,7 +102,7 @@ The game runs at `www.jdpartners.co/games/my-pokemon/` (deployed via existing Gi
 
 ### Battle System
 - Turn-based 1v1
-- Player always goes first
+- Player goes first each round, unless their Pokemon is asleep or paralysed (skip turn)
 - 4 moves per Pokemon, each with type, power, accuracy, PP
 - Type effectiveness from `type-chart.yaml`: super effective (2×), not very effective (0.5×), no effect (0×)
 - Status conditions: burn (halves attack), paralysis (may skip turn), sleep (skips turn), poison (loses HP each turn)
@@ -210,8 +210,9 @@ gameData/typeChart
 ```
 
 ### Firebase Auth
-- Anonymous auth — device gets a Firebase UID automatically
-- PIN entry maps UID + PIN to a `profileId` in Firestore
+- Anonymous auth — device gets a Firebase UID automatically on first launch
+- Each profile has a globally unique 4-digit PIN stored in Firestore
+- PIN lookup queries Firestore for a matching profile regardless of device — this is how cross-device sync works
 - Parent admin password stored hashed in a `settings` Firestore doc
 
 ---
