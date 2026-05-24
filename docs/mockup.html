@@ -106,6 +106,8 @@ const toLoad = {
   route:    'sprites/route101.gif',
   hero:     'sprites/fr_hero.gif',
   houses:   'sprites/rs_houses.gif',
+  brendan:  'sprites/brendan_art.png',
+  may:      'sprites/may_art.png',
   pidgeyF:  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png',
   charBack: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/4.png',
 }
@@ -204,43 +206,45 @@ function drawCharSelect() {
   const canvas = document.getElementById('charSelectCanvas')
   const ctx    = canvas.getContext('2d')
   const CW=260, CH=220
-  ctx.imageSmoothingEnabled = false
 
-  // Screen bg (dark navy, matches app)
-  ctx.fillStyle='#0f3460'
-  ctx.fillRect(0,0,CW,CH)
+  // App screen background
+  ctx.fillStyle='#0f3460'; ctx.fillRect(0,0,CW,CH)
 
   // Header
   ctx.fillStyle='#ffd700'; ctx.font='bold 11px Courier New'; ctx.textAlign='center'
-  ctx.fillText('New Trainer', CW/2, 20)
+  ctx.fillText('New Trainer', CW/2, 18)
+  ctx.fillStyle='#aaaaaa'; ctx.font='9px Courier New'
+  ctx.fillText('Choose your character', CW/2, 34)
 
-  // "Character" label
-  ctx.fillStyle='#aaaaaa'; ctx.font='10px Courier New'
-  ctx.fillText('Character', CW/2, 40)
+  const cw=108, ch=158, gap=10
+  const cx1=gap, cy1=42
+  const cx2=gap*2+cw, cy2=42
 
-  // Boy card (left, unselected)
-  const cx1=18, cy1=48, cw=98, ch=128
-  ctx.fillStyle='#1a1a2e'
-  ctx.beginPath(); ctx.roundRect(cx1,cy1,cw,ch,10); ctx.fill()
-  ctx.strokeStyle='#506060'; ctx.lineWidth=1.5
-  ctx.beginPath(); ctx.roundRect(cx1,cy1,cw,ch,10); ctx.stroke()
-  drawPlayerSprite(ctx, cx1+cw/2, cy1+ch-22, 4)
-  ctx.fillStyle='#cccccc'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+  function card(img, x, y, selected) {
+    ctx.fillStyle=selected?'rgba(255,215,0,0.12)':'#1a1a2e'
+    ctx.beginPath(); ctx.roundRect(x,y,cw,ch,10); ctx.fill()
+    ctx.strokeStyle=selected?'#ffd700':'#405060'; ctx.lineWidth=selected?2:1.5
+    ctx.beginPath(); ctx.roundRect(x,y,cw,ch,10); ctx.stroke()
+
+    if(img) {
+      const iw=img.naturalWidth, ih=img.naturalHeight
+      const scale=Math.min((cw-8)/iw, (ch-26)/ih)
+      const dw=iw*scale, dh=ih*scale
+      ctx.imageSmoothingQuality='high'; ctx.imageSmoothingEnabled=true
+      ctx.drawImage(img, x+(cw-dw)/2, y+4, dw, dh)
+    }
+  }
+
+  card(SPRITES.brendan, cx1, cy1, false)
+  ctx.fillStyle='#aaaaaa'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
   ctx.fillText('BOY', cx1+cw/2, cy1+ch-4)
 
-  // Girl card (right, selected — yellow border)
-  const cx2=144, cy2=48
-  ctx.fillStyle='rgba(255,215,0,0.1)'
-  ctx.beginPath(); ctx.roundRect(cx2,cy2,cw,ch,10); ctx.fill()
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=2
-  ctx.beginPath(); ctx.roundRect(cx2,cy2,cw,ch,10); ctx.stroke()
-  drawFemaleSprite(ctx, cx2+cw/2, cy2+ch-22, 4)
-  ctx.fillStyle='#ffd700'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
-  ctx.fillText('GIRL', cx2+cw/2, cy2+ch-4)
+  card(SPRITES.may, cx2, cy2, true)
+  ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
+  ctx.fillText('GIRL ✓', cx2+cw/2, cy2+ch-4)
 
-  // Caption
-  ctx.fillStyle='#888888'; ctx.font='8px Courier New'
-  ctx.fillText('Tap to choose your character', CW/2, CH-6)
+  ctx.fillStyle='#666'; ctx.font='8px Courier New'
+  ctx.fillText('Tap card to choose', CW/2, CH-4)
 }
 
 // ── SECTION 1: MAPS ──────────────────────────────────────────────────────────
@@ -282,39 +286,33 @@ function drawCharacters() {
   const CW=260, CH=220
   canvas.width=CW; canvas.height=CH
 
-  // Ruby grass background with subtle tile grid
-  ctx.fillStyle='#78b858'; ctx.fillRect(0,0,CW,CH)
-  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1
-  for(let x=0;x<CW;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke()}
-  for(let y=0;y<CH;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke()}
+  // Dark app-style background
+  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,CW,CH)
 
-  // ── Boy at ×4 ──
-  ctx.fillStyle='#a0e870'; ctx.fillRect(14,12,72,138)
-  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
-  ctx.strokeRect(14,12,72,138)
-  drawPlayerSprite(ctx, 50, 112, 4)
-  ctx.fillStyle='#181808'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
-  ctx.fillText('BOY  ×4', 50, 158)
+  function drawCharCard(img, x, y, w, h, label) {
+    // card bg
+    ctx.fillStyle='#0f3460'
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,8); ctx.fill()
+    ctx.strokeStyle='#4ecdc4'; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,8); ctx.stroke()
 
-  // ── Girl at ×4 ──
-  ctx.fillStyle='#a0e870'; ctx.fillRect(94,12,72,138)
-  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
-  ctx.strokeRect(94,12,72,138)
-  drawFemaleSprite(ctx, 130, 112, 4)
-  ctx.fillStyle='#181808'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
-  ctx.fillText('GIRL ×4', 130, 158)
+    if(img) {
+      // fit image inside card (keep aspect ratio)
+      const iw=img.naturalWidth, ih=img.naturalHeight
+      const scale=Math.min((w-8)/iw, (h-24)/ih)
+      const dw=iw*scale, dh=ih*scale
+      const dx=x+(w-dw)/2, dy=y+4
+      ctx.imageSmoothingEnabled=true
+      ctx.imageSmoothingQuality='high'
+      ctx.drawImage(img, dx, dy, dw, dh)
+    }
+    ctx.fillStyle='#ffd700'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+    ctx.fillText(label, x+w/2, y+h-4)
+  }
 
-  // ── Both at map scale (×2) side by side ──
-  ctx.fillStyle='#90d860'; ctx.fillRect(176,12,72,80)
-  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
-  ctx.strokeRect(176,12,72,80)
-  drawPlayerSprite(ctx, 200, 66, 2)
-  drawFemaleSprite(ctx, 230, 66, 2)
-  ctx.fillStyle='#181808'; ctx.font='8px Courier New'; ctx.textAlign='center'
-  ctx.fillText('Map scale', 212, 102)
-
-  ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'
-  ctx.fillText('Overworld sprites', CW/2, CH-6)
+  const pad=10, cw=(CW-pad*3)/2, ch=CH-20
+  drawCharCard(SPRITES.brendan, pad,     10, cw, ch, 'BOY  (Brendan)')
+  drawCharCard(SPRITES.may,     pad*2+cw, 10, cw, ch, 'GIRL (May)')
 }
 
 // ── BATTLE SCENE ─────────────────────────────────────────────────────────────
@@ -397,14 +395,14 @@ function drawBattleScene(id) {
   drawHpBox(ctx, 6, 8, 'PIDGEY', 5, 18, 20, false)
   drawHpBox(ctx, W-182, panY-58, 'CHARMANDER', 5, 28, 35, true)
 
-  const dlgY=panY+110
+  const dlgY=panY+42
   // "What will X do?" box
   ctx.fillStyle=C.menuBg
-  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(4,panY+4,W-8,34,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
-  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(4,panY+4,W-8,34,3); ctx.stroke()
   ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
-  ctx.fillText('▶ What will CHARMANDER do?', 14, dlgY-17)
+  ctx.fillText('▶ What will CHARMANDER do?', 14, panY+26)
 
   // Move grid (left 56%)
   const mvW=Math.floor(W*0.56), mvH=H-dlgY-4
@@ -504,15 +502,15 @@ function drawCatchScene() {
   drawHpBox(ctx, 6, 8, 'PIDGEY', 5, 4, 20, false)
   drawHpBox(ctx, W-182, panY-58, 'CHARMANDER', 5, 28, 35, true)
 
-  const dlgY=panY+110
+  const dlgY=panY+42
 
   // Catch chance indicator above menu
   ctx.fillStyle=C.menuBg
-  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(4,panY+4,W-8,34,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
-  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(4,panY+4,W-8,34,3); ctx.stroke()
   ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
-  ctx.fillText('▶ Wild PIDGEY is weakened!', 14, dlgY-17)
+  ctx.fillText('▶ Wild PIDGEY is weakened!', 14, panY+26)
 
   // ── ACTION CHOICE: FIGHT vs BAG ──
   const choiceH = H-dlgY-4
