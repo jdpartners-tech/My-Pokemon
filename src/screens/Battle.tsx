@@ -32,7 +32,7 @@ export default function Battle() {
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
       {/* Battle scene */}
       <div className="relative bg-gradient-to-b from-sky-400 to-green-600 h-56 overflow-hidden flex-shrink-0">
-        {/* Opponent top-right */}
+        {/* Opponent top-right: front artwork */}
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
           <div className="bg-white/90 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 min-w-32">
             <div className="flex justify-between">
@@ -41,11 +41,11 @@ export default function Battle() {
             </div>
             <HpBar current={opponentPokemon.currentHp} max={opponentPokemon.maxHp} />
           </div>
-          <PokemonSprite pokemonId={opponentPokemon.pokemonId} variant="artwork" size={110} />
+          <PokemonSprite pokemonId={opponentPokemon.pokemonId} variant="artwork" size={120} />
         </div>
-        {/* Player bottom-left */}
+        {/* Player bottom-left: back sprite (Ruby-style — you see your own Pokemon from behind) */}
         <div className="absolute bottom-3 left-3 flex flex-col items-start gap-1">
-          <PokemonSprite pokemonId={playerPokemon.pokemonId} variant="artwork" size={110} flip />
+          <PokemonSprite pokemonId={playerPokemon.pokemonId} variant="ruby-back" size={140} />
           <div className="bg-white/90 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 min-w-32">
             <div className="flex justify-between">
               <span className="capitalize">{playerPokemon.nickname || `Pokemon #${playerPokemon.pokemonId}`}</span>
