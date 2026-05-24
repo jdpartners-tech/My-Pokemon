@@ -141,9 +141,14 @@ function chromaKey(img) {
 
 function onAllLoaded() {
   // Pre-process sprite sheets into chroma-keyed canvases for rendering on map tiles.
-  // Keep originals (SPRITES.maleSheet / femSheet) for the sheet-viewer panels.
-  if (SPRITES.maleSheet) SPRITES.maleOW = chromaKey(SPRITES.maleSheet)
-  if (SPRITES.femSheet)  SPRITES.femOW  = chromaKey(SPRITES.femSheet)
+  // Falls back to the original image if getImageData is blocked (file:// security policy).
+  try {
+    if (SPRITES.maleSheet) SPRITES.maleOW = chromaKey(SPRITES.maleSheet)
+    if (SPRITES.femSheet)  SPRITES.femOW  = chromaKey(SPRITES.femSheet)
+  } catch(_) {
+    SPRITES.maleOW = SPRITES.maleSheet
+    SPRITES.femOW  = SPRITES.femSheet
+  }
   drawMaps()
   drawCharacters()
   drawCharSelect()
