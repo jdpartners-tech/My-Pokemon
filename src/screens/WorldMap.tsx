@@ -23,8 +23,29 @@ const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
 ) as Record<number, PokemonData>
 
-// Pre-load sprite sheets once at module level
+// Pre-load sprite sheets once at module level, with chroma-key transparency fix.
+// Some GIFs (fr_heroine.gif) have a solid background not marked as transparent in
+// the GIF color table — applyChromaKey samples the top-left pixel and makes it alpha=0.
 const OW_SHEETS: Record<string, HTMLImageElement> = {}
+const OW_CANVASES: Record<string, HTMLCanvasElement | null> = { male: null, female: null }
+
+function applyChromaKey(img: HTMLImageElement): HTMLCanvasElement {
+  const oc = document.createElement('canvas')
+  oc.width = img.naturalWidth; oc.height = img.naturalHeight
+  const octx = oc.getContext('2d')!
+  octx.drawImage(img, 0, 0)
+  const id = octx.getImageData(0, 0, oc.width, oc.height)
+  const d = id.data
+  if (d[3] === 0) return oc // top-left already transparent — GIF is fine
+  const bgR = d[0], bgG = d[1], bgB = d[2]
+  for (let i = 0; i < d.length; i += 4) {
+    if (Math.abs(d[i] - bgR) < 20 && Math.abs(d[i+1] - bgG) < 20 && Math.abs(d[i+2] - bgB) < 20)
+      d[i+3] = 0
+  }
+  octx.putImageData(id, 0, 0)
+  return oc
+}
+
 ;['male', 'female'].forEach(gender => {
   const img = new Image()
   img.src = gender === 'female' ? '/fr_heroine.gif' : '/fr_hero.gif'
@@ -80,23 +101,28 @@ export default function WorldMap() {
       }
     }
 
-    // Draw player from sprite sheet — front-facing walking frame, pixelated
-    const sheet = OW_SHEETS[profile?.gender === 'female' ? 'female' : 'male']
-    // fr_hero.gif front row: sx=4, sy=14, sw=16, sh=22
-    // fr_heroine.gif front row: sx=4, sy=2, sw=16, sh=22
-    const isFemale = profile?.gender === 'female'
+    // Draw player from sprite sheet — front-facing walking frame, pixelated.
+    // fr_hero.gif:     front row sx=4, sy=14, sw=16, sh=22
+    // fr_heroine.gif:  front row sx=4, sy=2,  sw=16, sh=22
+    const gender = profile?.gender === 'female' ? 'female' : 'male'
+    const isFemale = gender === 'female'
+    const rawSheet = OW_SHEETS[gender]
+    if (rawSheet.complete && rawSheet.naturalWidth > 0 && !OW_CANVASES[gender]) {
+      OW_CANVASES[gender] = applyChromaKey(rawSheet)
+    }
     const sx = 4, sy = isFemale ? 2 : 14, sw = 16, sh = 22
     const dw = TILE * 1.4, dh = TILE * 1.8
     const dx = hw * TILE + TILE / 2 - dw / 2
     const dy = hh * TILE + TILE / 2 - dh / 2
-    if (sheet.complete && sheet.naturalWidth > 0) {
+    const owCanvas = OW_CANVASES[gender]
+    if (owCanvas) {
       ctx.imageSmoothingEnabled = false
-      ctx.drawImage(sheet, sx, sy, sw, sh, dx, dy, dw, dh)
+      ctx.drawImage(owCanvas, sx, sy, sw, sh, dx, dy, dw, dh)
     } else {
       ctx.font = `${TILE * 0.7}px serif`
       ctx.textAlign = 'center'
       ctx.fillText(isFemale ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
-      sheet.onload = () => drawMap(px, py)
+      rawSheet.onload = () => drawMap(px, py)
     }
   }, [profile?.gender, px, py, drawMap])
 

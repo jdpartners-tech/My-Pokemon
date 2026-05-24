@@ -120,7 +120,30 @@ const toLoad = {
 let loaded = 0
 const total = Object.keys(toLoad).length
 
+// Strip solid background color from a sprite sheet GIF that lacks a transparent index.
+// Samples the top-left pixel as the background color and makes matching pixels alpha=0.
+function chromaKey(img) {
+  const oc = document.createElement('canvas')
+  oc.width = img.naturalWidth; oc.height = img.naturalHeight
+  const octx = oc.getContext('2d')
+  octx.drawImage(img, 0, 0)
+  const id = octx.getImageData(0, 0, oc.width, oc.height)
+  const d = id.data
+  if (d[3] === 0) return oc // top-left already transparent — no-op
+  const bgR = d[0], bgG = d[1], bgB = d[2]
+  for (let i = 0; i < d.length; i += 4) {
+    if (Math.abs(d[i]-bgR) < 20 && Math.abs(d[i+1]-bgG) < 20 && Math.abs(d[i+2]-bgB) < 20)
+      d[i+3] = 0
+  }
+  octx.putImageData(id, 0, 0)
+  return oc
+}
+
 function onAllLoaded() {
+  // Pre-process sprite sheets into chroma-keyed canvases for rendering on map tiles.
+  // Keep originals (SPRITES.maleSheet / femSheet) for the sheet-viewer panels.
+  if (SPRITES.maleSheet) SPRITES.maleOW = chromaKey(SPRITES.maleSheet)
+  if (SPRITES.femSheet)  SPRITES.femOW  = chromaKey(SPRITES.femSheet)
   drawMaps()
   drawCharacters()
   drawCharSelect()
@@ -291,11 +314,12 @@ function drawCharMap() {
   // Sprite dimensions at map scale: crop front-facing frame from each sheet, draw at ×4
   const sw=16*4, sh=22*4  // 64×88px at ×4
 
+  // Use chroma-keyed canvases so the background is transparent over tiles
   // ── Male (Brendan/Red) — fr_hero.gif, front row at y=14 ──
-  const maleSheet = SPRITES.maleSheet
-  if(maleSheet){
+  const maleOW = SPRITES.maleOW
+  if(maleOW){
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(maleSheet, 4, 14, 16, 22, TILE*1.5-sw/2, CH*0.3-sh/2, sw, sh)
+    ctx.drawImage(maleOW, 4, 14, 16, 22, TILE*1.5-sw/2, CH*0.3-sh/2, sw, sh)
   }
   ctx.fillStyle='rgba(0,0,0,0.65)'
   ctx.beginPath(); ctx.roundRect(TILE*1.5-28, CH*0.3+sh/2+2, 56, 14, 3); ctx.fill()
@@ -303,10 +327,10 @@ function drawCharMap() {
   ctx.fillText('BOY', TILE*1.5, CH*0.3+sh/2+12)
 
   // ── Female (Leaf) — fr_heroine.gif, front row at y=2 ──
-  const femSheet = SPRITES.femSheet
-  if(femSheet){
+  const femOW = SPRITES.femOW
+  if(femOW){
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(femSheet, 4, 2, 16, 22, CW-TILE*2-sw/2, CH*0.3-sh/2, sw, sh)
+    ctx.drawImage(femOW, 4, 2, 16, 22, CW-TILE*2-sw/2, CH*0.3-sh/2, sw, sh)
   }
   ctx.fillStyle='rgba(0,0,0,0.65)'
   ctx.beginPath(); ctx.roundRect(CW-TILE*2-28, CH*0.3+sh/2+2, 56, 14, 3); ctx.fill()
@@ -317,16 +341,16 @@ function drawCharMap() {
   const zx=CW/2-20, zy=CH*0.62, zs=6
   ctx.fillStyle='rgba(0,0,0,0.55)'
   ctx.beginPath(); ctx.roundRect(zx-4,zy-4,16*zs*2+20,22*zs+20,4); ctx.fill()
-  if(maleSheet){
+  if(maleOW){
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(maleSheet, 4, 14, 16, 22, zx, zy, 16*zs, 22*zs)
+    ctx.drawImage(maleOW, 4, 14, 16, 22, zx, zy, 16*zs, 22*zs)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
     ctx.fillText('BOY ×6', zx+16*zs/2, zy+22*zs+12)
   }
-  if(femSheet){
+  if(femOW){
     const ox=zx+16*zs+10
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(femSheet, 4, 2, 16, 22, ox, zy, 16*zs, 22*zs)
+    ctx.drawImage(femOW, 4, 2, 16, 22, ox, zy, 16*zs, 22*zs)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
     ctx.fillText('GIRL ×6', ox+16*zs/2, zy+22*zs+12)
   }
@@ -354,9 +378,9 @@ function drawMapCanvas(id, img, srcX, srcY) {
   ctx.imageSmoothingEnabled = false
   ctx.drawImage(img, srcX, 30, CW, CH, 0, 0, CW, CH)
 
-  // Player sprite — crop front-facing frame from fr_hero.gif sprite sheet
+  // Player sprite — crop front-facing frame from fr_hero.gif (chroma-keyed)
   const TILE=32
-  const sheet = SPRITES.maleSheet
+  const sheet = SPRITES.maleOW
   if(sheet) {
     const sw=TILE*1.4, sh=TILE*1.8
     ctx.imageSmoothingEnabled=false
