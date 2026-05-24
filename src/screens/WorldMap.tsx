@@ -23,6 +23,14 @@ const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
 ) as Record<number, PokemonData>
 
+// Pre-load both overworld sprites once at module level
+const OW_SPRITES: Record<string, HTMLImageElement> = {}
+;['male', 'female'].forEach(gender => {
+  const img = new Image()
+  img.src = gender === 'female' ? '/may_ow.png' : '/brendan_ow.png'
+  OW_SPRITES[gender] = img
+})
+
 export default function WorldMap() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
@@ -72,10 +80,20 @@ export default function WorldMap() {
       }
     }
 
-    ctx.font = `${TILE * 0.7}px serif`
-    ctx.textAlign = 'center'
-    ctx.fillText(profile?.gender === 'female' ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
-  }, [profile?.gender])
+    // Draw Ruby overworld sprite; fall back to emoji if image not loaded yet
+    const owImg = OW_SPRITES[profile?.gender === 'female' ? 'female' : 'male']
+    if (owImg.complete && owImg.naturalWidth > 0) {
+      const sprW = TILE * 1.2, sprH = TILE * 1.5
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(owImg, hw * TILE + TILE / 2 - sprW / 2, hh * TILE + TILE / 2 - sprH / 2, sprW, sprH)
+    } else {
+      ctx.font = `${TILE * 0.7}px serif`
+      ctx.textAlign = 'center'
+      ctx.fillText(profile?.gender === 'female' ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
+      // Redraw once image loads
+      owImg.onload = () => drawMap(px, py)
+    }
+  }, [profile?.gender, px, py, drawMap])
 
   useEffect(() => {
     mapRef.current = getMap(currentMapId)
