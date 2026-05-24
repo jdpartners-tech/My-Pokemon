@@ -23,12 +23,12 @@ const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
 ) as Record<number, PokemonData>
 
-// Pre-load both overworld sprites once at module level
-const OW_SPRITES: Record<string, HTMLImageElement> = {}
+// Pre-load sprite sheets once at module level
+const OW_SHEETS: Record<string, HTMLImageElement> = {}
 ;['male', 'female'].forEach(gender => {
   const img = new Image()
-  img.src = gender === 'female' ? '/may_ow.png' : '/brendan_ow.png'
-  OW_SPRITES[gender] = img
+  img.src = gender === 'female' ? '/fr_heroine.gif' : '/fr_hero.gif'
+  OW_SHEETS[gender] = img
 })
 
 export default function WorldMap() {
@@ -80,18 +80,23 @@ export default function WorldMap() {
       }
     }
 
-    // Draw Ruby overworld sprite; fall back to emoji if image not loaded yet
-    const owImg = OW_SPRITES[profile?.gender === 'female' ? 'female' : 'male']
-    if (owImg.complete && owImg.naturalWidth > 0) {
-      const sprW = TILE * 1.2, sprH = TILE * 1.5
+    // Draw player from sprite sheet — front-facing walking frame, pixelated
+    const sheet = OW_SHEETS[profile?.gender === 'female' ? 'female' : 'male']
+    // fr_hero.gif front row: sx=4, sy=14, sw=16, sh=22
+    // fr_heroine.gif front row: sx=4, sy=2, sw=16, sh=22
+    const isFemale = profile?.gender === 'female'
+    const sx = 4, sy = isFemale ? 2 : 14, sw = 16, sh = 22
+    const dw = TILE * 1.4, dh = TILE * 1.8
+    const dx = hw * TILE + TILE / 2 - dw / 2
+    const dy = hh * TILE + TILE / 2 - dh / 2
+    if (sheet.complete && sheet.naturalWidth > 0) {
       ctx.imageSmoothingEnabled = false
-      ctx.drawImage(owImg, hw * TILE + TILE / 2 - sprW / 2, hh * TILE + TILE / 2 - sprH / 2, sprW, sprH)
+      ctx.drawImage(sheet, sx, sy, sw, sh, dx, dy, dw, dh)
     } else {
       ctx.font = `${TILE * 0.7}px serif`
       ctx.textAlign = 'center'
-      ctx.fillText(profile?.gender === 'female' ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
-      // Redraw once image loads
-      owImg.onload = () => drawMap(px, py)
+      ctx.fillText(isFemale ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
+      sheet.onload = () => drawMap(px, py)
     }
   }, [profile?.gender, px, py, drawMap])
 
