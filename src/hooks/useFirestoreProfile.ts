@@ -70,6 +70,7 @@ export function useFirestoreProfile() {
   function createDefaultProfile(
     name: string,
     age: number,
+    gender: 'male' | 'female',
     difficulty: 'beginner' | 'advanced',
     starterPokemon: string
   ): Omit<Profile, 'id' | 'pinHash'> {
@@ -81,6 +82,7 @@ export function useFirestoreProfile() {
     return {
       name,
       age,
+      gender,
       difficulty,
       starterPokemon,
       subjects: defaultSubjects(),

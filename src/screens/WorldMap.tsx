@@ -74,8 +74,8 @@ export default function WorldMap() {
 
     ctx.font = `${TILE * 0.7}px serif`
     ctx.textAlign = 'center'
-    ctx.fillText('🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
-  }, [])
+    ctx.fillText(profile?.gender === 'female' ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
+  }, [profile?.gender])
 
   useEffect(() => {
     mapRef.current = getMap(currentMapId)

@@ -98,6 +98,7 @@ export interface Profile {
   id?: string
   name: string
   age: number
+  gender: 'male' | 'female'
   pinHash: string
   difficulty: 'beginner' | 'advanced'
   starterPokemon: string

@@ -23,6 +23,7 @@ export default function AddProfile() {
 
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
+  const [gender, setGender] = useState<'male' | 'female'>('male')
   const [difficulty, setDifficulty] = useState<'beginner' | 'advanced'>('beginner')
   const [starter, setStarter] = useState('charmander')
   const [pin, setPin] = useState('')
@@ -48,7 +49,7 @@ export default function AddProfile() {
       const starterData = pokemonMap[starterId]
       const starterPokemon = starterData ? buildPartyPokemon(starterData, 5) : null
 
-      const base = createDefaultProfile(name.trim(), Number(age), difficulty, starter)
+      const base = createDefaultProfile(name.trim(), Number(age), gender, difficulty, starter)
       const profile: Omit<Profile, 'id'> = {
         ...base,
         party: starterPokemon ? [starterPokemon] : [],
@@ -77,6 +78,30 @@ export default function AddProfile() {
               placeholder="e.g. Kaylie"
               maxLength={20}
             />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-300 text-sm">Character</label>
+            <div className="flex gap-3">
+              {([
+                { value: 'male',   label: 'Boy',  sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/red.png',  fallback: '🧒' },
+                { value: 'female', label: 'Girl', sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/leaf.png', fallback: '👧' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGender(opt.value)}
+                  className={`flex-1 flex flex-col items-center py-2 rounded-xl border transition-all ${
+                    gender === opt.value
+                      ? 'border-yellow-400 bg-yellow-400/10'
+                      : 'border-gray-600 bg-[#1a1a2e]'
+                  }`}
+                >
+                  <span className="text-3xl leading-none mb-1">{opt.fallback}</span>
+                  <span className="text-xs font-semibold text-gray-300">{opt.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
