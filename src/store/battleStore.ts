@@ -35,6 +35,26 @@ interface BattleState {
   setExpAnimating: (v: boolean) => void
   setLeveledUp: (v: boolean) => void
   healPlayer: (amount: number) => void
+  playerAttacking: boolean
+  opponentFlash: boolean
+  shakeX: number
+  setPlayerAttacking: (v: boolean) => void
+  setOpponentFlash: (v: boolean) => void
+  setShakeX: (n: number) => void
+
+  // Opponent attack animations (mirror of player attack)
+  opponentAttacking: boolean
+  playerFlash: boolean
+  playerShakeX: number
+  setOpponentAttacking: (v: boolean) => void
+  setPlayerFlash: (v: boolean) => void
+  setPlayerShakeX: (n: number) => void
+
+  // Ball throw animation
+  ballAnimPhase: number   // 0=idle 1=flying 2=flash 3=shaking 4=caught 5=failed
+  ballCaught: boolean
+  setBallAnimPhase: (n: number) => void
+  setBallCaught: (v: boolean) => void
 
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
@@ -47,6 +67,8 @@ const initialState = {
   playerPokemon: null,
   opponentPokemon: null,
   isWildBattle: false,
+  ballAnimPhase: 0,
+  ballCaught: false,
   trainerName: null,
   question: null,
   selectedMoveIndex: null,
@@ -54,6 +76,12 @@ const initialState = {
   usedQuestionIds: new Set<string>(),
   expAnimating: false,
   leveledUp: false,
+  playerAttacking: false,
+  opponentFlash: false,
+  shakeX: 0,
+  opponentAttacking: false,
+  playerFlash: false,
+  playerShakeX: 0,
 }
 
 export const useBattleStore = create<BattleState>((set) => ({
@@ -141,6 +169,12 @@ export const useBattleStore = create<BattleState>((set) => ({
 
   setExpAnimating: (v) => set({ expAnimating: v }),
   setLeveledUp: (v) => set({ leveledUp: v }),
+  setPlayerAttacking: (v) => set({ playerAttacking: v }),
+  setOpponentFlash: (v) => set({ opponentFlash: v }),
+  setShakeX: (n) => set({ shakeX: n }),
+  setOpponentAttacking: (v) => set({ opponentAttacking: v }),
+  setPlayerFlash: (v) => set({ playerFlash: v }),
+  setPlayerShakeX: (n) => set({ playerShakeX: n }),
 
   healPlayer: (amount) => set((state) => {
     if (!state.playerPokemon) return {}
@@ -153,6 +187,9 @@ export const useBattleStore = create<BattleState>((set) => ({
   }),
 
   resetBattle: () => set({ ...initialState, usedQuestionIds: new Set() }),
+
+  setBallAnimPhase: (n) => set({ ballAnimPhase: n }),
+  setBallCaught: (v) => set({ ballCaught: v }),
 
   // Stubs — replaced by useBattleEngine in Task 13
   selectMove: (index) => set({ selectedMoveIndex: index, phase: 'question' }),

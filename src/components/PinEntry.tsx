@@ -16,6 +16,20 @@ export default function PinEntry({ onComplete, error, onClear }: Props) {
     }
   }, [pin])
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key >= '0' && e.key <= '9') {
+        onClear?.()
+        setPin(p => p.length < 4 ? p + e.key : p)
+      } else if (e.key === 'Backspace') {
+        onClear?.()
+        setPin(p => p.slice(0, -1))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClear])
+
   function press(digit: string) {
     if (pin.length < 4) setPin(p => p + digit)
     onClear?.()

@@ -5,7 +5,7 @@ import { useQuestions } from './useQuestions'
 import { useFirestoreProfile } from './useFirestoreProfile'
 import { calculateDamage, getTypeEffectiveness } from '../utils/damage'
 import { expGained, getLevel, calculateStat } from '../utils/exp'
-import { pickQuestion } from '../utils/questionPicker'
+import { pickQuestion, shuffleOptions } from '../utils/questionPicker'
 import pokemonJson from '../data/pokemon.json'
 import movesJson from '../data/moves.json'
 import itemsJson from '../data/items.json'
@@ -62,7 +62,7 @@ export function useBattleEngine() {
     const { usedQuestionIds } = useBattleStore.getState()
     const q = pickQuestion(questions, usedQuestionIds)
     if (q) {
-      store.setQuestion(q)
+      store.setQuestion(shuffleOptions(q))
       if (q.id) store.addUsedQuestionId(q.id)
     }
   }
@@ -85,7 +85,18 @@ export function useBattleEngine() {
 
     if (!correct) {
       store.addLog(`${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}... but it missed!`)
+      await delay(600)
+      await opponentTurn()
     } else {
+      // Player attack lurch
+      store.setPlayerAttacking(true)
+      await delay(220)
+      store.setPlayerAttacking(false)
+      // Hit flash
+      store.setOpponentFlash(true)
+      await delay(120)
+      store.setOpponentFlash(false)
+
       const defenderData = pokemonMap[opponentPokemon.pokemonId]
       const eff = getTypeEffectiveness(
         moveInfo?.type ?? 'normal',
@@ -107,10 +118,17 @@ export function useBattleEngine() {
         await handleWin()
         return
       }
-    }
 
-    await delay(600)
-    await opponentTurn()
+      // Shake animation (3 oscillations)
+      for (let i = 0; i < 6; i++) {
+        store.setShakeX(i % 2 === 0 ? 10 : -10)
+        await delay(80)
+      }
+      store.setShakeX(0)
+
+      await delay(300)
+      await opponentTurn()
+    }
   }
 
   async function opponentTurn() {
@@ -129,10 +147,30 @@ export function useBattleEngine() {
     const atkStat = calculateStat(attackerData?.baseStats.atk ?? 50, opponentPokemon.level)
     const defStat = calculateStat(defenderData?.baseStats.def ?? 50, playerPokemon.level)
     const dmg = calculateDamage(opponentPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
-    store.dealDamageToPlayer(dmg)
-    store.addLog(`${getName(opponentPokemon)} used ${moveInfo?.name ?? 'Move'}! (${dmg} dmg)`)
 
-    await delay(600)
+    store.addLog(`${getName(opponentPokemon)} used ${moveInfo?.name ?? 'Move'}!`)
+
+    // Opponent lurch toward player (shift left)
+    store.setOpponentAttacking(true)
+    await delay(220)
+    store.setOpponentAttacking(false)
+
+    // Player hit flash
+    store.setPlayerFlash(true)
+    await delay(120)
+    store.setPlayerFlash(false)
+
+    store.dealDamageToPlayer(dmg)
+    store.addLog(`${getName(playerPokemon)} took ${dmg} damage!`)
+
+    // Player shake (3 oscillations)
+    for (let i = 0; i < 6; i++) {
+      store.setPlayerShakeX(i % 2 === 0 ? 8 : -8)
+      await delay(80)
+    }
+    store.setPlayerShakeX(0)
+
+    await delay(300)
 
     if (useBattleStore.getState().playerPokemon!.currentHp <= 0) {
       store.addLog(`${getName(playerPokemon)} fainted!`)
@@ -181,24 +219,59 @@ export function useBattleEngine() {
       }
     }
 
+    // Get final pokemon state after all animations and evolution
+    const finalPokemon = useBattleStore.getState().playerPokemon!
+
+    // Learn moves for any new levels gained
+    let updatedMoves = [...finalPokemon.moves]
+    if (newLevel > playerPokemon.level) {
+      const pokeInfoForMoves = pokemonMap[finalPokemon.pokemonId] ?? pokemonMap[playerPokemon.pokemonId]
+      if (pokeInfoForMoves) {
+        const toLearn = pokeInfoForMoves.learnset.filter(
+          e => e.level > playerPokemon.level && e.level <= newLevel
+        )
+        for (const entry of toLearn) {
+          if (updatedMoves.some(m => m.moveId === entry.moveId)) continue
+          const newMove = { moveId: entry.moveId, pp: 10, maxPp: 10 }
+          if (updatedMoves.length < 4) {
+            updatedMoves.push(newMove)
+          } else {
+            updatedMoves = [...updatedMoves.slice(1), newMove]
+          }
+          const mvName = moveMap[entry.moveId]?.name ?? entry.moveId
+          store.addLog(`${getName(finalPokemon)} learned ${mvName}!`)
+        }
+      }
+    }
+
     if (profile.id && profile.party?.length) {
-      const updatedParty = profile.party.map(p =>
-        p.pokemonId === playerPokemon.pokemonId
-          ? {
-              ...p,
-              xp: newXp,
-              level: newLevel,
-              currentHp: useBattleStore.getState().playerPokemon?.currentHp ?? p.currentHp,
-            }
-          : p
-      )
       const stats = {
         battlesWon: (profile.stats?.battlesWon ?? 0) + 1,
         questionsAnswered: (profile.stats?.questionsAnswered ?? 0) + 1,
         questionsCorrect: (profile.stats?.questionsCorrect ?? 0) + 1,
       }
+      // Always update index 0 (the lead pokemon sent to battle)
+      const updatedParty = profile.party.map((p, idx) =>
+        idx === 0
+          ? {
+              ...p,
+              pokemonId: finalPokemon.pokemonId,
+              xp: newXp,
+              level: newLevel,
+              currentHp: finalPokemon.currentHp,
+              moves: updatedMoves,
+              nickname: finalPokemon.nickname,
+            }
+          : p
+      )
       try {
         await updateProfile(profile.id, { party: updatedParty, stats })
+        // Sync in-memory profile so next battle starts with correct XP/moves
+        useProfileStore.getState().setProfile({
+          ...(useProfileStore.getState().profile ?? profile),
+          party: updatedParty,
+          stats,
+        })
       } catch (e) {
         console.error('Failed to save battle result:', e)
       }
@@ -244,5 +317,65 @@ export function useBattleEngine() {
     await opponentTurn()
   }
 
-  return { selectMove, handleAnswer, continueBattle, useItemInBattle }
+  async function attemptCatch() {
+    const state = useBattleStore.getState()
+    const { opponentPokemon, isWildBattle } = state
+    if (!opponentPokemon || !isWildBattle || !profile?.id) return
+
+    store.setPhase('animating')
+
+    // Determine catch success before animation starts
+    const pokeData = pokemonMap[opponentPokemon.pokemonId]
+    const catchRate = pokeData?.catchRate ?? 45
+    const hpFactor = opponentPokemon.currentHp / opponentPokemon.maxHp
+    const catchChance = Math.min(1, (catchRate / 255) * (2 - hpFactor))
+    const caught = Math.random() < catchChance
+    store.setBallCaught(caught)
+
+    // Phase 0 → idle pause before throw
+    store.setBallAnimPhase(0)
+    await delay(600)
+
+    // Phase 1 → ball flies to opponent
+    store.setBallAnimPhase(1)
+    await delay(700)
+
+    // Phase 2 → ball opens, flash
+    store.setBallAnimPhase(2)
+    await delay(250)
+
+    // Phase 3 → ball shakes 3 times
+    store.setBallAnimPhase(3)
+    await delay(700)
+
+    if (caught) {
+      // Phase 4 → caught sparkles
+      store.setBallAnimPhase(4)
+      store.addLog(`Gotcha! ${getName(opponentPokemon)} was caught!`)
+      await delay(900)
+
+      // Add caught pokemon to party (max 6)
+      const currentParty = profile.party ?? []
+      if (currentParty.length < 6) {
+        const newParty = [...currentParty, { ...opponentPokemon, nickname: null }]
+        try {
+          await updateProfile(profile.id, { party: newParty })
+          useProfileStore.getState().setProfile({ ...profile, party: newParty })
+        } catch (e) {
+          console.error('Failed to save caught pokemon:', e)
+        }
+      }
+      store.setBallAnimPhase(0)
+      store.setPhase('win')
+    } else {
+      // Phase 5 → broke free
+      store.setBallAnimPhase(5)
+      store.addLog(`${getName(opponentPokemon)} broke free!`)
+      await delay(500)
+      store.setBallAnimPhase(0)
+      await opponentTurn()
+    }
+  }
+
+  return { selectMove, handleAnswer, continueBattle, useItemInBattle, attemptCatch }
 }

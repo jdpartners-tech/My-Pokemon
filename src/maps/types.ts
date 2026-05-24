@@ -38,7 +38,9 @@ export interface MapData {
   height: number
   tiles: TileType[][]
   wildPokemon: WildEntry[]
+  waterPokemon?: WildEntry[]
   trainers: TrainerNpc[]
   exits: Exit[]
   doors: DoorInteraction[]
+  isInterior?: boolean
 }

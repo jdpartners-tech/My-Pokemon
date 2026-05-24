@@ -9,7 +9,7 @@ import AddProfile from './screens/AddProfile'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#1a1a2e] text-white">
+    <div className="min-h-screen bg-[#1a1a2e] text-white" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <Routes>
         <Route path="/" element={<ProfileSelect />} />
         <Route path="/add-profile" element={<AddProfile />} />

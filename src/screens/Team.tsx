@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
+import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import PokemonSprite from '../components/PokemonSprite'
 import HpBar from '../components/HpBar'
 import TypeBadge from '../components/TypeBadge'
@@ -15,10 +16,24 @@ const moveMap = Object.fromEntries((movesJson as MoveData[]).map(m => [m.id, m])
 export default function Team() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
+  const { updateProfile } = useFirestoreProfile()
   const [selected, setSelected] = useState<number | null>(null)
+  const [settingLead, setSettingLead] = useState(false)
   const party = profile?.party ?? []
   const mon = selected !== null ? party[selected] : null
   const info = mon ? pokeMap[mon.pokemonId] : null
+
+  async function setAsLead(index: number) {
+    if (!profile?.id || index === 0 || index >= party.length) return
+    setSettingLead(true)
+    const newParty = [party[index], ...party.filter((_, i) => i !== index)]
+    try {
+      await updateProfile(profile.id, { party: newParty })
+      useProfileStore.getState().setProfile({ ...profile, party: newParty })
+      setSelected(null)
+    } catch { /* silent */ }
+    setSettingLead(false)
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
@@ -66,6 +81,20 @@ export default function Team() {
               })}
             </div>
           </div>
+          {selected !== null && selected !== 0 && (
+            <button
+              onClick={() => setAsLead(selected)}
+              disabled={settingLead}
+              className="bg-yellow-400 text-black font-bold py-3 px-6 rounded-xl w-full max-w-sm disabled:opacity-50"
+            >
+              {settingLead ? 'Switching...' : '⚔ Set as Lead (Use in Battle)'}
+            </button>
+          )}
+          {selected !== null && selected === 0 && (
+            <div className="text-yellow-400 text-sm text-center w-full max-w-sm py-2">
+              ⚔ Currently leading in battle
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3 p-4">
