@@ -53,7 +53,8 @@ function applyChromaKey(img: HTMLImageElement): HTMLCanvasElement {
 
 ;['male', 'female'].forEach(gender => {
   const img = new Image()
-  img.src = gender === 'female' ? '/fr_heroine.gif' : '/fr_hero.gif'
+  const base = import.meta.env.BASE_URL
+  img.src = gender === 'female' ? `${base}fr_heroine.gif` : `${base}fr_hero.gif`
   OW_SHEETS[gender] = img
 })
 
