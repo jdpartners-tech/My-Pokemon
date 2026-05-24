@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Pokemon — Visual Mockups</title>
+<title>My Pokemon — Ruby Style Mockups</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #1a1a2e; color: white; font-family: 'Courier New', monospace; padding: 24px; }
@@ -13,11 +13,10 @@
   .col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   canvas { image-rendering: pixelated; display: block; }
   .label { color: #888; font-size: 11px; text-align: center; }
-  .note { color: #ffd700; font-size: 11px; margin-top: 8px; background: #0f3460; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #ffd700; max-width: 700px; }
 </style>
 </head>
 <body>
-<h1>⚔ MY POKEMON — Visual Mockups</h1>
+<h1>MY POKEMON — Ruby Style Mockups</h1>
 
 <div class="section">
   <h2>1 · World Map</h2>
@@ -31,7 +30,6 @@
       <div class="label">Route 1 — tall grass</div>
     </div>
   </div>
-  <div class="note">Ground = sandy tan · Tall grass = teal-green with blades · Trees = fluffy multi-circle · Buildings = cream walls, warm roofs · Player = red-cap pixel sprite</div>
 </div>
 
 <div class="section">
@@ -39,7 +37,7 @@
   <div class="row">
     <div class="col">
       <canvas id="charCanvas" width="480" height="160"></canvas>
-      <div class="label">Left to right: Player · Youngster NPC · Wild Pokemon marker</div>
+      <div class="label">Player · Youngster NPC · actual game size →</div>
     </div>
   </div>
 </div>
@@ -49,11 +47,11 @@
   <div class="row">
     <div class="col">
       <canvas id="battleCanvas" width="360" height="500"></canvas>
-      <div class="label">Wild battle — player turn</div>
+      <div class="label">Wild battle — move select</div>
     </div>
     <div class="col">
       <canvas id="battleQ" width="360" height="500"></canvas>
-      <div class="label">Question popup overlay</div>
+      <div class="label">Question popup</div>
     </div>
   </div>
 </div>
@@ -63,241 +61,292 @@
   <div class="row">
     <div class="col">
       <canvas id="catchCanvas" width="360" height="500"></canvas>
-      <div class="label">Pokéball thrown — shake animation</div>
+      <div class="label">Pokéball mid-air</div>
     </div>
   </div>
 </div>
 
 <script>
-// ─── COLOUR PALETTE ────────────────────────────────────────────────────────
+// ── PALETTE (sampled from actual Ruby screenshots) ───────────────────────────
 const C = {
-  ground:   '#d4b870',  // sandy tan
-  gDark:    '#c0a460',  // ground shadow dot
-  gLight:   '#e4cc88',  // ground highlight dot
-  grass:    '#58a840',  // tall grass
-  gBlade:   '#287820',  // blade dark
-  gTip:     '#48a030',  // blade tip
-  treeBg:   '#183828',  // tree background
-  tree1:    '#285838',  // darkest
-  tree2:    '#3a8850',  // mid
-  tree3:    '#52a860',  // bright
-  tree4:    '#80d878',  // highlight
-  water:    '#3888c0',
-  waterRip: '#70b8e0',
-  wallTop:  '#a87828',  // building roof brown
-  wallBot:  '#e0d0a0',  // building wall cream
-  pcRoof:   '#c83028',  // pokemon center red roof
-  pcWall:   '#f0ece8',  // pokemon center white wall
-  pcDoor:   '#4888c8',  // pokemon center blue door
+  // Sandy path tiles
+  ground:   '#d0c070',
+  gDark:    '#b0a050',
+  gLight:   '#e8d888',
+
+  // Tall grass (encounter)
+  grass:    '#68b840',
+  gBase:    '#50a030',
+  gBlade:   '#306830',
+  gTip:     '#58b038',
+
+  // Trees
+  treeBg:   '#183020',
+  tree1:    '#285038',
+  tree2:    '#3a7848',
+  tree3:    '#58a860',
+  tree4:    '#88d870',
+
+  // Generic building
+  roofBrn:  '#a87830',
+  roofLine: '#806018',
+  wallCrm:  '#e8d8a0',
+  wallShd:  '#c0b080',
+  winBlue:  '#90c8e8',
+  winMid:   '#5098c0',
+  winLine:  '#286878',
+
+  // Pokemon Center
+  pcRoof:   '#c83028',
+  pcRoofDk: '#981818',
+  pcWall:   '#f4f0ec',
+  pcWallSh: '#d8d4d0',
+  pcDoor:   '#5098d0',
+  pcDoorLt: '#80b8e8',
+
+  // Player sprite
   skin:     '#e8c090',
-  hairDark: '#201010',
-  playerCap:'#181818',
-  playerBand:'#c83028',
-  playerShirt:'#c83028',
-  playerPants:'#2040a0',
-  npcShirt: '#e0c030',
-  npcPants: '#3060c0',
+  hair:     '#201008',
+  capDark:  '#181818',
+  capRed:   '#c02818',
+  shirt:    '#c02818',
+  pants:    '#2048a8',
+  shoe:     '#181818',
+
+  // NPC sprite
+  npcShirt: '#e0c028',
+  npcPants: '#3068c0',
+  npcHair:  '#c08030',
+
+  // Battle sky (Ruby pale mint)
+  skyTop:   '#b8ecdc',
+  skyBot:   '#d0f4ec',
+
+  // Battle platforms
+  enPlTop:  '#d8e868',
+  enPlBot:  '#a8d038',
+  plPlTop:  '#d8c060',
+  plPlBot:  '#b09038',
+
+  // HP box
+  hpBg:     '#f0ece8',
+  hpBorder: '#282818',
+  hpGreen:  '#58d040',
+  hpOrange: '#e8a018',
+  hpRed:    '#e02820',
+  hpBarBg:  '#404030',
+
+  // Move menu
+  menuBg:   '#f0ece8',
+  menuBd:   '#282818',
+  menuSel:  '#fff8d8',
+  menuSelB: '#e8a018',
 }
 
-// ─── TILE DRAWING ──────────────────────────────────────────────────────────
-function tileHash(mx, my, i) {
-  return (((mx+100)*397 + (my+100)*1301 + i*29) * 2654435761 >>> 0) / 0x100000000
+// ── HASH (deterministic pseudo-random for tile texture) ──────────────────────
+function h(a, b, i) {
+  return (((a+100)*397 + (b+100)*1301 + i*29) * 2654435761 >>> 0) / 0x100000000
 }
 
-function drawGround(ctx, sx, sy, mx, my) {
-  const S = 32
-  ctx.fillStyle = C.ground
-  ctx.fillRect(sx, sy, S, S)
+// ── TILE: SANDY PATH ─────────────────────────────────────────────────────────
+function drawPath(ctx, sx, sy, mx, my) {
+  ctx.fillStyle = C.ground; ctx.fillRect(sx, sy, 32, 32)
   ctx.fillStyle = C.gDark
-  for (let i = 0; i < 14; i++) {
-    ctx.fillRect(sx + Math.floor(tileHash(mx,my,i)*(S-1)),
-                 sy + Math.floor(tileHash(mx+50,my+50,i)*(S-1)), 1, 1)
-  }
+  for (let i = 0; i < 14; i++)
+    ctx.fillRect(sx + Math.floor(h(mx,my,i)*31), sy + Math.floor(h(mx+50,my+50,i)*31), 1, 1)
   ctx.fillStyle = C.gLight
-  for (let i = 0; i < 5; i++) {
-    ctx.fillRect(sx + Math.floor(tileHash(mx+99,my+99,i)*(S-1)),
-                 sy + Math.floor(tileHash(mx+199,my+199,i)*(S-1)), 1, 1)
+  for (let i = 0; i < 5; i++)
+    ctx.fillRect(sx + Math.floor(h(mx+99,my+99,i)*30), sy + Math.floor(h(mx+199,my+199,i)*30), 1, 1)
+}
+
+// ── TILE: TALL GRASS ─────────────────────────────────────────────────────────
+function drawGrass(ctx, sx, sy) {
+  ctx.fillStyle = C.grass; ctx.fillRect(sx, sy, 32, 32)
+  ctx.fillStyle = C.gBase; ctx.fillRect(sx, sy+24, 32, 8)
+  // 5 Y-blade pairs
+  const px = [2, 8, 14, 20, 26]
+  for (const bx of px) {
+    const by = 3
+    // left arm up-left
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx, sy+by+4, 1, 10)
+    ctx.fillRect(sx+bx-1, sy+by+1, 1, 5)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx-2, sy+by-1, 1, 3)
+    // right arm up-right
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx+2, sy+by+5, 1, 9)
+    ctx.fillRect(sx+bx+3, sy+by+2, 1, 4)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx+4, sy+by, 1, 3)
+    // second row of blades (lower half)
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx, sy+by+18, 1, 8)
+    ctx.fillRect(sx+bx-1, sy+by+15, 1, 4)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx-2, sy+by+13, 1, 3)
+    ctx.fillStyle = C.gBlade
+    ctx.fillRect(sx+bx+2, sy+by+19, 1, 7)
+    ctx.fillRect(sx+bx+3, sy+by+16, 1, 4)
+    ctx.fillStyle = C.gTip
+    ctx.fillRect(sx+bx+4, sy+by+14, 1, 3)
   }
 }
 
-function drawTallGrass(ctx, sx, sy, mx, my) {
-  const S = 32
-  ctx.fillStyle = C.grass
-  ctx.fillRect(sx, sy, S, S)
-  ctx.fillStyle = '#489030'
-  for (let i = 0; i < 10; i++) {
-    ctx.fillRect(sx + Math.floor(tileHash(mx,my,i*3)*(S-1)),
-                 sy + Math.floor(tileHash(mx+77,my+77,i*3)*(S-1)), 1, 1)
-  }
-  const blades = [[2,6],[7,3],[12,8],[17,4],[22,6],[27,3],[29,9],
-                  [4,18],[9,15],[14,20],[19,17],[24,21],[28,16]]
-  for (const [bx,by] of blades) {
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx, sy+by, 1, 8)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx, sy+by-1, 1, 3)
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx+3, sy+by+2, 1, 7)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx+3, sy+by+1, 1, 2)
-  }
-}
-
+// ── TILE: TREE ───────────────────────────────────────────────────────────────
 function drawTree(ctx, sx, sy) {
-  const S = 32
-  ctx.fillStyle = C.treeBg
-  ctx.fillRect(sx, sy, S, S)
-  const cx = sx+S/2, cy = sy+S/2-1
+  ctx.fillStyle = C.treeBg; ctx.fillRect(sx, sy, 32, 32)
+  const cx = sx+16, cy = sy+15
+  // bumpy outer
   ctx.fillStyle = C.tree1
-  for (const [bx,by] of [[-7,4],[7,3],[1,8],[-5,-6],[5,-5],[-8,-1],[8,-1]]) {
-    ctx.beginPath(); ctx.arc(cx+bx, cy+by, 7, 0, Math.PI*2); ctx.fill()
+  const bumps = [[-8,4,7.5],[8,4,7.5],[0,9,7],[-5,-5,6.5],[5,-5,6.5],[-9,0,6],[9,0,6],[0,-9,5.5]]
+  for (const [bx,by,br] of bumps) {
+    ctx.beginPath(); ctx.arc(cx+bx, cy+by, br, 0, Math.PI*2); ctx.fill()
   }
-  ctx.beginPath(); ctx.arc(cx, cy, S/2-2, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI*2); ctx.fill()
+  // mid layer
   ctx.fillStyle = C.tree2
-  ctx.beginPath(); ctx.arc(cx-1, cy-1, S/2-6, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx-1, cy, 9, 0, Math.PI*2); ctx.fill()
+  // bright inner
   ctx.fillStyle = C.tree3
-  ctx.beginPath(); ctx.arc(cx-3, cy-4, S/2-11, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx-3, cy-3, 6, 0, Math.PI*2); ctx.fill()
+  // highlight
   ctx.fillStyle = C.tree4
-  ctx.beginPath(); ctx.arc(cx-5, cy-6, 4, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx-5, cy-6, 3.5, 0, Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx+1, cy-8, 2, 0, Math.PI*2); ctx.fill()
 }
 
-function drawBuilding(ctx, sx, sy) {
-  const S = 32, rh = 13
-  ctx.fillStyle = C.wallBot
-  ctx.fillRect(sx, sy+rh, S, S-rh)
-  ctx.fillStyle = C.wallTop
-  ctx.fillRect(sx, sy, S, rh)
-  // roof horizontal lines
-  ctx.fillStyle = '#906018'
-  for (let r=0;r<3;r++) ctx.fillRect(sx, sy+Math.floor(rh*r/3), S, 1)
-  ctx.fillStyle = '#604008'
-  ctx.fillRect(sx, sy+rh-1, S, 2)
-  // window
-  ctx.fillStyle = '#88c0e0'
-  ctx.fillRect(sx+8, sy+rh+6, 10, 8)
-  ctx.fillStyle = '#4898c0'
-  ctx.fillRect(sx+8, sy+rh+6, 5, 8)
-  ctx.fillStyle = '#206080'
-  ctx.fillRect(sx+12, sy+rh+6, 1, 8)
-  ctx.fillRect(sx+8, sy+rh+9, 10, 1)
+// ── TILE: BUILDING ROW (top = roof, bottom = wall+window) ───────────────────
+function drawBldTop(ctx, sx, sy) {
+  // Roof: brown horizontal planks
+  ctx.fillStyle = C.roofBrn; ctx.fillRect(sx, sy, 32, 32)
+  ctx.fillStyle = C.roofLine
+  for (let r = 0; r < 7; r++) ctx.fillRect(sx, sy + r*5, 32, 2)
+  // Overhang shadow at bottom
+  ctx.fillStyle = '#503808'; ctx.fillRect(sx, sy+28, 32, 4)
 }
 
-function drawPCentre(ctx, sx, sy) {
-  const S = 32, rh = 11
-  ctx.fillStyle = C.pcWall
-  ctx.fillRect(sx, sy+rh, S, S-rh)
-  ctx.fillStyle = C.pcRoof
-  ctx.fillRect(sx, sy, S, rh)
-  // roof tile pattern
-  ctx.fillStyle = '#a01818'
-  for (let r=0;r<3;r++) ctx.fillRect(sx, sy+Math.floor(rh*r/3), S, 1)
-  ctx.fillStyle = '#801010'
-  ctx.fillRect(sx, sy+rh-1, S, 2)
-  // Pokéball emblem
-  ctx.fillStyle = '#c03028'
-  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 4, Math.PI, 0); ctx.fill()
-  ctx.fillStyle = '#f0f0f0'
-  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 4, 0, Math.PI); ctx.fill()
-  ctx.fillStyle = '#303030'
-  ctx.beginPath(); ctx.arc(sx+16, sy+rh+7, 1.5, 0, Math.PI*2); ctx.fill()
-  // door
-  ctx.fillStyle = C.pcDoor
-  ctx.fillRect(sx+11, sy+rh+11, 10, S-rh-11)
-  ctx.fillStyle = '#80b8e8'
-  ctx.fillRect(sx+12, sy+rh+12, 3, 6)
+function drawBldBot(ctx, sx, sy) {
+  // Wall: cream with cross-pane window
+  ctx.fillStyle = C.wallCrm; ctx.fillRect(sx, sy, 32, 32)
+  const wx=sx+7, wy=sy+5, ww=15, wh=14
+  ctx.fillStyle = C.winBlue; ctx.fillRect(wx, wy, ww, wh)
+  ctx.fillStyle = C.winMid; ctx.fillRect(wx, wy, ww/2, wh)
+  ctx.fillStyle = C.winLine
+  ctx.fillRect(wx+ww/2-1, wy, 2, wh)
+  ctx.fillRect(wx, wy+wh/2-1, ww, 2)
+  // wall bottom shadow
+  ctx.fillStyle = C.wallShd; ctx.fillRect(sx, sy+29, 32, 3)
 }
 
-function drawWater(ctx, sx, sy) {
-  const S = 32
-  ctx.fillStyle = C.water
-  ctx.fillRect(sx, sy, S, S)
-  ctx.fillStyle = C.waterRip
-  ctx.beginPath(); ctx.ellipse(sx+17, sy+11, 8, 3, 0, 0, Math.PI*2); ctx.fill()
-  ctx.beginPath(); ctx.ellipse(sx+10, sy+22, 5, 2, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle = '#a8d8f0'
-  ctx.beginPath(); ctx.ellipse(sx+17, sy+9, 4, 1.5, 0, 0, Math.PI*2); ctx.fill()
+// ── TILE: POKEMON CENTER ROOF ROW ────────────────────────────────────────────
+function drawPCTop(ctx, sx, sy) {
+  ctx.fillStyle = C.pcRoof; ctx.fillRect(sx, sy, 32, 32)
+  ctx.fillStyle = C.pcRoofDk
+  for (let r = 0; r < 7; r++) ctx.fillRect(sx, sy + r*5, 32, 2)
+  // Pokéball emblem centred on roof
+  const cx=sx+16, cy=sy+18
+  ctx.fillStyle='#d03028'; ctx.beginPath(); ctx.arc(cx,cy,6,Math.PI,0); ctx.fill()
+  ctx.fillStyle='#f8f8f8'; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI); ctx.fill()
+  ctx.fillStyle='#181818'; ctx.fillRect(cx-6,cy-1,12,2)
+  ctx.beginPath(); ctx.arc(cx,cy,2.5,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f8f8f8'; ctx.beginPath(); ctx.arc(cx,cy,1.2,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle=C.pcRoofDk; ctx.fillRect(sx,sy+28,32,4)
 }
 
-// ─── CHARACTER SPRITES ─────────────────────────────────────────────────────
-function drawPlayer(ctx, cx, cy, scale=1) {
-  const s = scale
-  const f = (x,y,w,h,col) => { ctx.fillStyle=col; ctx.fillRect(cx+x*s, cy+y*s, w*s, h*s) }
-  // shadow
-  ctx.fillStyle='rgba(0,0,0,0.22)'
-  ctx.beginPath(); ctx.ellipse(cx, cy+11*s, 7*s, 3*s, 0, 0, Math.PI*2); ctx.fill()
-  // shoes
-  f(-5, 7, 4, 3, '#181818'); f(1, 7, 4, 3, '#181818')
-  // pants
-  f(-4, 1, 3, 7, C.playerPants); f(1, 1, 3, 7, C.playerPants)
-  // shirt body
-  f(-5,-7, 10, 9, C.playerShirt)
-  // arms
-  f(-8,-6, 3, 7, C.playerShirt); f(5,-6, 3, 7, C.playerShirt)
-  // hands
-  f(-8, 0, 3, 3, C.skin); f(5, 0, 3, 3, C.skin)
-  // neck
-  f(-2,-8, 4, 2, C.skin)
-  // head
-  f(-4,-16, 8, 9, C.skin)
-  // hair
-  f(-3,-16, 6, 3, C.hairDark)
-  // cap body
-  f(-5,-20, 10, 5, C.playerCap)
-  f(-4,-22, 8, 3, C.playerCap)
-  // cap band
-  f(-5,-16, 10, 2, C.playerBand)
-  // cap brim
-  f(-6,-15, 12, 2, C.playerCap)
+// ── TILE: POKEMON CENTER DOOR ROW ────────────────────────────────────────────
+function drawPCDoor(ctx, sx, sy) {
+  ctx.fillStyle = C.pcWall; ctx.fillRect(sx, sy, 32, 32)
+  // "P.C" sign
+  ctx.fillStyle = '#c83028'; ctx.fillRect(sx+1, sy+2, 12, 7)
+  ctx.fillStyle = '#f8f8f8'; ctx.font = 'bold 5px monospace'; ctx.textAlign = 'center'
+  ctx.fillText('P.C', sx+7, sy+8)
+  // blue sliding door
+  const dx=sx+8, dy=sy+11, dw=16, dh=21
+  ctx.fillStyle = C.pcDoor; ctx.fillRect(dx, dy, dw, dh)
+  ctx.fillStyle = C.pcDoorLt
+  ctx.fillRect(dx+1, dy+1, 5, 9)
+  ctx.fillRect(dx+9, dy+1, 5, 9)
+  ctx.strokeStyle='#2060a0'; ctx.lineWidth=1; ctx.strokeRect(dx,dy,dw,dh)
+  // wall bottom shadow
+  ctx.fillStyle = C.pcWallSh; ctx.fillRect(sx, sy+29, 32, 3)
 }
 
-function drawNpc(ctx, cx, cy, scale=1) {
-  const s = scale
-  const f = (x,y,w,h,col) => { ctx.fillStyle=col; ctx.fillRect(cx+x*s, cy+y*s, w*s, h*s) }
-  ctx.fillStyle='rgba(0,0,0,0.22)'
-  ctx.beginPath(); ctx.ellipse(cx, cy+11*s, 7*s, 3*s, 0, 0, Math.PI*2); ctx.fill()
-  f(-5, 7, 4, 3, '#181818'); f(1, 7, 4, 3, '#181818')
-  f(-4, 1, 3, 5, C.npcPants); f(1, 1, 3, 5, C.npcPants)
-  f(-5,-7, 10, 9, C.npcShirt)
-  f(-8,-6, 3, 7, C.npcShirt); f(5,-6, 3, 7, C.npcShirt)
-  f(-8, 0, 3, 3, C.skin); f(5, 0, 3, 3, C.skin)
-  f(-4,-16, 8, 9, C.skin)
-  f(-4,-18, 8, 4, '#c08030') // brown hair
-  f(-5,-15, 2, 3, '#c08030'); f(3,-15, 2, 3, '#c08030')
+// ── SPRITE: PLAYER (from behind, red cap) ────────────────────────────────────
+function drawPlayer(ctx, cx, cy, s=1) {
+  const f=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(cx+x*s,cy+y*s,w*s,h*s) }
+  ctx.fillStyle='rgba(0,0,0,0.2)'
+  ctx.beginPath(); ctx.ellipse(cx,cy+13*s,7*s,3*s,0,0,Math.PI*2); ctx.fill()
+  f(-5,9,4,3,C.shoe); f(1,9,4,3,C.shoe)
+  f(-4,2,3,8,C.pants); f(1,2,3,8,C.pants)
+  f(-5,-6,10,9,C.shirt)
+  f(-8,-5,3,7,C.shirt); f(5,-5,3,7,C.shirt)
+  f(-8,1,3,3,C.skin); f(5,1,3,3,C.skin)
+  f(-2,-7,4,2,C.skin)
+  f(-4,-15,8,9,C.skin)
+  f(-3,-16,6,3,C.hair)
+  f(-5,-21,10,6,C.capDark)
+  f(-4,-23,8,3,C.capDark)
+  f(-5,-16,10,2,C.capRed)
+  f(-6,-15,12,2,C.capDark)
 }
 
-// ─── DRAW MAP ──────────────────────────────────────────────────────────────
-function drawMap(canvasId, tiles, playerTileX, playerTileY, trainerTile) {
-  const canvas = document.getElementById(canvasId)
-  const ctx = canvas.getContext('2d')
-  const TILE=32, COLS=11, ROWS=9
-  const hw=Math.floor(COLS/2), hh=Math.floor(ROWS/2)
+// ── SPRITE: NPC (youngster) ──────────────────────────────────────────────────
+function drawNpc(ctx, cx, cy, s=1) {
+  const f=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(cx+x*s,cy+y*s,w*s,h*s) }
+  ctx.fillStyle='rgba(0,0,0,0.2)'
+  ctx.beginPath(); ctx.ellipse(cx,cy+13*s,7*s,3*s,0,0,Math.PI*2); ctx.fill()
+  f(-5,9,4,3,C.shoe); f(1,9,4,3,C.shoe)
+  f(-4,2,3,7,C.npcPants); f(1,2,3,7,C.npcPants)
+  f(-5,-6,10,9,C.npcShirt)
+  f(-8,-5,3,7,C.npcShirt); f(5,-5,3,7,C.npcShirt)
+  f(-8,1,3,3,C.skin); f(5,1,3,3,C.skin)
+  f(-4,-15,8,9,C.skin)
+  f(-4,-20,8,6,C.npcHair)
+  f(-5,-17,2,4,C.npcHair); f(3,-17,2,4,C.npcHair)
+}
+
+// ── MAP RENDERER ─────────────────────────────────────────────────────────────
+function drawMap(id, tiles, px, py, trainer) {
+  const canvas=document.getElementById(id)
+  const ctx=canvas.getContext('2d')
+  const T=32, COLS=11, ROWS=9, hw=5, hh=4
   ctx.clearRect(0,0,canvas.width,canvas.height)
-  for (let vy=0;vy<ROWS;vy++) {
-    for (let vx=0;vx<COLS;vx++) {
-      const mx=playerTileX-hw+vx, my=playerTileY-hh+vy
-      const sx=vx*TILE, sy=vy*TILE
-      const t = (my>=0&&my<tiles.length&&mx>=0&&mx<tiles[0].length) ? tiles[my][mx] : 'T'
-      if(t==='P') drawGround(ctx, sx, sy, mx, my)
-      else if(t==='G') drawTallGrass(ctx, sx, sy, mx, my)
-      else if(t==='T') drawTree(ctx, sx, sy)
-      else if(t==='B') drawBuilding(ctx, sx, sy)
-      else if(t==='D') drawPCentre(ctx, sx, sy)
-      else if(t==='W') drawWater(ctx, sx, sy)
-      else { ctx.fillStyle='#183828'; ctx.fillRect(sx,sy,TILE,TILE) }
+
+  for (let vy=0; vy<ROWS; vy++) {
+    for (let vx=0; vx<COLS; vx++) {
+      const mx=px-hw+vx, my=py-hh+vy
+      const sx=vx*T, sy=vy*T
+      const t=(my>=0&&my<tiles.length&&mx>=0&&mx<tiles[0].length)?tiles[my][mx]:'T'
+      const tAbove=(my-1>=0&&mx>=0&&mx<tiles[0].length)?tiles[my-1][mx]:null
+      const t2Above=(my-2>=0&&mx>=0&&mx<tiles[0].length)?tiles[my-2][mx]:null
+
+      if (t==='P') drawPath(ctx,sx,sy,mx,my)
+      else if (t==='G') drawGrass(ctx,sx,sy)
+      else if (t==='T') drawTree(ctx,sx,sy)
+      else if (t==='B') {
+        // If tile directly above is also B, this is the wall row; else it's the roof row
+        if (tAbove==='B') drawBldBot(ctx,sx,sy)
+        else drawBldTop(ctx,sx,sy)
+      }
+      else if (t==='D') {
+        // D tile is the door row; use PC style (B tiles two rows above)
+        if (t2Above==='B') drawPCDoor(ctx,sx,sy)
+        else drawPCDoor(ctx,sx,sy)
+      }
+      else { ctx.fillStyle=C.treeBg; ctx.fillRect(sx,sy,T,T) }
     }
   }
-  // trainer
-  if (trainerTile) {
-    const vx=trainerTile[0]-playerTileX+hw
-    const vy=trainerTile[1]-playerTileY+hh
-    if(vx>=0&&vx<COLS&&vy>=0&&vy<ROWS)
-      drawNpc(ctx, vx*TILE+TILE/2, vy*TILE+TILE/2-4)
+
+  if (trainer) {
+    const tvx=trainer[0]-px+hw, tvy=trainer[1]-py+hh
+    if(tvx>=0&&tvx<COLS&&tvy>=0&&tvy<ROWS)
+      drawNpc(ctx, tvx*T+T/2, tvy*T+T/2-4)
   }
-  // player at centre
-  drawPlayer(ctx, hw*TILE+TILE/2, hh*TILE+TILE/2-4)
+  drawPlayer(ctx, hw*T+T/2, hh*T+T/2-4)
 }
 
-// ─── PALLET TOWN MAP ───────────────────────────────────────────────────────
+// ── MAP DATA ─────────────────────────────────────────────────────────────────
 const palletTiles = [
   ['T','T','T','T','T','T','T','T','T','T','T','T','T','T','T'],
   ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
@@ -314,7 +363,6 @@ const palletTiles = [
 ]
 drawMap('mapPallet', palletTiles, 7, 7)
 
-// ─── ROUTE 1 MAP ───────────────────────────────────────────────────────────
 const route1Tiles = [
   ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
   ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
@@ -329,415 +377,307 @@ const route1Tiles = [
   ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
   ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
 ]
-drawMap('mapRoute', route1Tiles, 7, 5, [7, 6])
+drawMap('mapRoute', route1Tiles, 7, 5, [7,6])
 
-// ─── CHARACTER ZOOM ────────────────────────────────────────────────────────
+// ── CHARACTER ZOOM ───────────────────────────────────────────────────────────
 ;(function(){
-  const canvas = document.getElementById('charCanvas')
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle = C.ground
-  ctx.fillRect(0,0,canvas.width,canvas.height)
-  // draw ground texture
-  ctx.fillStyle = C.gDark
-  for(let i=0;i<80;i++){
+  const canvas=document.getElementById('charCanvas')
+  const ctx=canvas.getContext('2d')
+  ctx.fillStyle=C.ground; ctx.fillRect(0,0,480,160)
+  ctx.fillStyle=C.gDark
+  for(let i=0;i<100;i++)
     ctx.fillRect(Math.floor(Math.random()*480),Math.floor(Math.random()*160),1,1)
-  }
-
-  // Labels
-  ctx.fillStyle = '#ffd700'
-  ctx.font = '11px Courier New'
-  ctx.textAlign = 'center'
-  ctx.fillText('PLAYER', 80, 155)
-  ctx.fillText('YOUNGSTER', 230, 155)
-  ctx.fillText('(1× map size →)', 390, 155)
-
-  // Player at 4×
-  drawPlayer(ctx, 80, 115, 4)
-
-  // NPC at 4×
-  drawNpc(ctx, 230, 115, 4)
-
-  // Player at 1× (actual game size)
-  drawPlayer(ctx, 340, 95)
-  drawNpc(ctx, 380, 95)
-  ctx.font='9px Courier New'
-  ctx.fillStyle='#aaa'
-  ctx.fillText('actual', 360, 130)
+  ctx.fillStyle='#ffd700'; ctx.font='10px Courier New'; ctx.textAlign='center'
+  ctx.fillText('PLAYER  ×4', 80,152)
+  ctx.fillText('NPC  ×4', 230,152)
+  ctx.fillText('actual size →', 390,152)
+  drawPlayer(ctx,80,110,4)
+  drawNpc(ctx,230,110,4)
+  drawPath(ctx,320,60,0,0); drawPath(ctx,352,60,1,0)
+  drawPath(ctx,320,92,0,1); drawPath(ctx,352,92,1,1)
+  drawPlayer(ctx,345,94)
+  drawNpc(ctx,385,94)
 })()
 
-// ─── BATTLE SCENE ──────────────────────────────────────────────────────────
-function drawBattleScene(canvasId, phase) {
-  const canvas = document.getElementById(canvasId)
-  const ctx = canvas.getContext('2d')
-  const W=360, H=500
+// ── BATTLE BACKGROUND (shared) ───────────────────────────────────────────────
+function drawBattleBg(ctx, W, H, pidgeyAlpha) {
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,H*0.48)
+  sky.addColorStop(0,C.skyTop); sky.addColorStop(1,C.skyBot)
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.48)
 
-  // ── Background ──
-  // Sky gradient (light cyan like Ruby)
-  const sky = ctx.createLinearGradient(0,0,0,H*0.45)
-  sky.addColorStop(0, '#c8f0e8')
-  sky.addColorStop(1, '#d8f8f0')
-  ctx.fillStyle = sky
-  ctx.fillRect(0,0,W,H*0.45)
+  // Opponent platform (upper-right, yellow-green)
+  ctx.fillStyle=C.enPlTop
+  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.235,56,14,0,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle=C.enPlBot
+  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.247,52,9,0,0,Math.PI*2); ctx.fill()
 
-  // Ground platform (opponent side — upper)
-  ctx.fillStyle = '#b8e8a0'
+  // Player platform (lower-left, sandy-tan)
+  ctx.fillStyle=C.plPlTop
+  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.40,72,18,0,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle=C.plPlBot
+  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.41,68,12,0,0,Math.PI*2); ctx.fill()
+
+  // Pidgey (opponent)
+  ctx.globalAlpha=pidgeyAlpha
+  const ox=W*0.70, oy=H*0.185
+  ctx.fillStyle='#b89060'
+  ctx.beginPath(); ctx.ellipse(ox,oy,22,17,-0.15,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#907040'
+  ctx.beginPath(); ctx.ellipse(ox-5,oy-7,10,8,-0.3,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#d0a878'
+  ctx.beginPath(); ctx.ellipse(ox+5,oy-12,6,5,0.2,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f0c830'
+  ctx.beginPath(); ctx.moveTo(ox+9,oy-12); ctx.lineTo(ox+14,oy-10); ctx.lineTo(ox+9,oy-8); ctx.fill()
+  ctx.fillStyle='#805030'
+  ctx.beginPath(); ctx.ellipse(ox+9,oy+2,15,8,0.3,0,Math.PI*2); ctx.fill()
+  ctx.globalAlpha=1
+
+  // Charmander (player, from behind)
+  const ppx=W*0.28, ppy=H*0.37
+  ctx.fillStyle='#e87830'
+  ctx.beginPath(); ctx.ellipse(ppx,ppy,26,22,0,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f0a058'
+  ctx.beginPath(); ctx.ellipse(ppx,ppy+4,14,12,0,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#e87830'
   ctx.beginPath()
-  ctx.ellipse(W*0.68, H*0.25, 55, 14, 0, 0, Math.PI*2)
-  ctx.fill()
-  ctx.fillStyle = '#98c880'
-  ctx.beginPath()
-  ctx.ellipse(W*0.68, H*0.26, 52, 10, 0, 0, Math.PI*2)
-  ctx.fill()
+  ctx.moveTo(ppx+18,ppy+10); ctx.quadraticCurveTo(ppx+38,ppy+8,ppx+35,ppy-8)
+  ctx.lineTo(ppx+30,ppy-4); ctx.quadraticCurveTo(ppx+26,ppy+6,ppx+18,ppy+10); ctx.fill()
+  ctx.fillStyle='#ffaa00'; ctx.beginPath(); ctx.arc(ppx+35,ppy-10,5,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(ppx+37,ppy-13,3,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#e87830'; ctx.beginPath(); ctx.arc(ppx,ppy-20,14,0,Math.PI*2); ctx.fill()
+  ctx.fillRect(ppx-16,ppy-28,5,8); ctx.fillRect(ppx+11,ppy-28,5,8)
 
-  // Ground platform (player side — lower)
-  ctx.fillStyle = '#c8d890'
-  ctx.beginPath()
-  ctx.ellipse(W*0.32, H*0.40, 68, 17, 0, 0, Math.PI*2)
-  ctx.fill()
-  ctx.fillStyle = '#b0c070'
-  ctx.beginPath()
-  ctx.ellipse(W*0.32, H*0.41, 64, 12, 0, 0, Math.PI*2)
-  ctx.fill()
+  // Lower panel
+  const panY=Math.floor(H*0.48)
+  ctx.fillStyle='#f0ece8'; ctx.fillRect(0,panY,W,H-panY)
+  ctx.fillStyle=C.hpBorder; ctx.fillRect(0,panY,W,3)
+}
 
-  // Lower panel background
-  ctx.fillStyle = '#e8e0c8'
-  ctx.fillRect(0, H*0.45, W, H*0.55)
-  ctx.fillStyle = '#d0c8b0'
-  ctx.fillRect(0, H*0.45, W, 3)
-
-  // ── Opponent Pokemon (Pidgey — simple bird shape) ──
-  const ox=W*0.68, oy=H*0.19
-  ctx.fillStyle = '#b89060'  // body
-  ctx.beginPath(); ctx.ellipse(ox, oy, 22, 18, -0.2, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle = '#987040'
-  ctx.beginPath(); ctx.ellipse(ox-6, oy-8, 10, 8, -0.4, 0, Math.PI*2); ctx.fill() // wing
-  ctx.fillStyle = '#d0a878'
-  ctx.beginPath(); ctx.ellipse(ox+4, oy-12, 6, 5, 0.2, 0, Math.PI*2); ctx.fill() // head
-  ctx.fillStyle = '#ffcc00'
-  ctx.beginPath(); ctx.moveTo(ox+8, oy-12); ctx.lineTo(ox+13, oy-10); ctx.lineTo(ox+8, oy-8); ctx.fill() // beak
-  // wings
-  ctx.fillStyle = '#806030'
-  ctx.beginPath(); ctx.ellipse(ox+10, oy+2, 16, 8, 0.3, 0, Math.PI*2); ctx.fill()
-
-  // ── Player Pokemon (Charmander — simple lizard back view) ──
-  const px=W*0.28, py=H*0.375
-  ctx.fillStyle = '#e87830'  // body back
-  ctx.beginPath(); ctx.ellipse(px, py, 26, 22, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle = '#f0a060'  // belly
-  ctx.beginPath(); ctx.ellipse(px, py+4, 14, 12, 0, 0, Math.PI*2); ctx.fill()
-  // tail with flame
-  ctx.fillStyle = '#e87830'
-  ctx.beginPath()
-  ctx.moveTo(px+18, py+10); ctx.quadraticCurveTo(px+38, py+8, px+35, py-8); ctx.lineTo(px+30, py-4)
-  ctx.quadraticCurveTo(px+26, py+6, px+18, py+10); ctx.fill()
-  ctx.fillStyle = '#ffaa00' // flame
-  ctx.beginPath(); ctx.arc(px+35, py-10, 5, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle = '#ff6600'
-  ctx.beginPath(); ctx.arc(px+37, py-13, 3, 0, Math.PI*2); ctx.fill()
-  // head (from behind)
-  ctx.fillStyle = '#e87830'
-  ctx.beginPath(); ctx.arc(px, py-20, 14, 0, Math.PI*2); ctx.fill()
-  // small ears
-  ctx.fillRect(px-16, py-28, 5, 8); ctx.fillRect(px+11, py-28, 5, 8)
-
-  // ── Opponent HP Box (top-left panel) ──
-  function hpBox(bx, by, name, level, hp, maxHp, isPlayer) {
-    const bw=170, bh=46
-    // Panel shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.15)'
-    ctx.fillRect(bx+2, by+2, bw, bh)
-    // Panel body
-    ctx.fillStyle = '#f0ece8'
-    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.fill()
-    // Panel border
-    ctx.strokeStyle = '#707060'; ctx.lineWidth=1.5
-    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.stroke()
-    // Name
-    ctx.fillStyle = '#181808'; ctx.font='bold 11px "Courier New"'
-    ctx.textAlign='left'
-    ctx.fillText(name.toUpperCase(), bx+8, by+15)
-    // Level
-    ctx.fillStyle = '#484838'; ctx.font='10px "Courier New"'
-    ctx.fillText('Lv'+level, bx+bw-34, by+15)
-    // HP label
-    ctx.fillStyle = '#484838'; ctx.font='bold 9px "Courier New"'
-    ctx.fillText('HP', bx+8, by+33)
-    // HP bar bg
-    ctx.fillStyle = '#505040'
-    ctx.fillRect(bx+24, by+26, bw-32, 7)
-    // HP bar fill
-    const pct = hp/maxHp
-    const barCol = pct>0.5 ? '#50d050' : pct>0.25 ? '#e8a020' : '#e03020'
-    ctx.fillStyle = barCol
-    ctx.fillRect(bx+24, by+26, Math.floor((bw-32)*pct), 7)
-    // Bar highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.3)'
-    ctx.fillRect(bx+24, by+26, Math.floor((bw-32)*pct), 3)
-    // HP numbers (player only)
-    if(isPlayer) {
-      ctx.fillStyle = '#181808'; ctx.font='9px "Courier New"'
-      ctx.textAlign='right'
-      ctx.fillText(hp+'/'+maxHp, bx+bw-4, by+43)
-    }
-  }
-
-  hpBox(8, H*0.45+8, 'PIDGEY', 5, 18, 20, false)
-  hpBox(W-178, H*0.45+54, 'CHARMANDER', 5, 28, 35, true)
-
-  // ── Move Menu ──
-  const mY = H*0.45+108
-  ctx.fillStyle = '#f0ece8'
-  ctx.beginPath(); ctx.roundRect(4, mY, W/2-8, H-mY-8, 4); ctx.fill()
-  ctx.strokeStyle='#707060'; ctx.lineWidth=1
-  ctx.beginPath(); ctx.roundRect(4, mY, W/2-8, H-mY-8, 4); ctx.stroke()
-
-  // divider
-  ctx.strokeStyle='#c0b8a8'
-  ctx.beginPath(); ctx.moveTo(W/4, mY+4); ctx.lineTo(W/4, H-12); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(4, mY+(H-mY-8)/2); ctx.lineTo(W/2-4, mY+(H-mY-8)/2); ctx.stroke()
-
-  const moves = ['SCRATCH','GROWL','EMBER','—']
-  const types = ['normal','normal','fire','—']
-  const typeCol = {'normal':'#a8a880','fire':'#f08030','—':'#aaa'}
-  moves.forEach((mv, i) => {
-    const mx2 = 4 + (i%2)*(W/4), my2 = mY + Math.floor(i/2)*((H-mY-8)/2)
-    const bw2=W/4-8, bh2=(H-mY-8)/2-8
-    ctx.fillStyle = i===0 ? '#fff8e0' : '#f0ece8' // highlight selected
-    ctx.fillRect(mx2+4, my2+4, bw2, bh2)
-    if(i===0){ctx.strokeStyle='#e8a020';ctx.lineWidth=1.5;ctx.strokeRect(mx2+4,my2+4,bw2,bh2)}
-    ctx.fillStyle = typeCol[types[i]]||'#888'
-    ctx.font='bold 8px "Courier New"'; ctx.textAlign='left'
-    ctx.fillText(types[i].toUpperCase(), mx2+8, my2+bh2-2)
-    ctx.fillStyle = mv==='—'?'#aaa':'#181808'
-    ctx.font='bold 10px "Courier New"'
-    ctx.fillText(mv, mx2+8, my2+18)
-  })
-
-  // ── PP / Type panel ──
-  ctx.fillStyle = '#f0ece8'
-  ctx.beginPath(); ctx.roundRect(W/2+4, mY, W/2-8, H-mY-8, 4); ctx.fill()
-  ctx.strokeStyle='#707060'; ctx.lineWidth=1
-  ctx.beginPath(); ctx.roundRect(W/2+4, mY, W/2-8, H-mY-8, 4); ctx.stroke()
-  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='left'
-  ctx.fillText('PP', W/2+14, mY+20)
-  ctx.fillStyle='#181808'; ctx.font='10px "Courier New"'
-  ctx.fillText('35 / 35', W/2+14, mY+34)
-  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'
-  ctx.fillText('TYPE', W/2+14, mY+54)
-  // type badge
-  ctx.fillStyle = '#f08030'
-  ctx.beginPath(); ctx.roundRect(W/2+14, mY+60, 56, 16, 3); ctx.fill()
-  ctx.fillStyle='white'; ctx.font='bold 9px "Courier New"'
-  ctx.fillText('NORMAL', W/2+18, mY+72)
-
-  // ── "What will CHARMANDER do?" ── only on phase=move
-  if(phase==='move') {
-    ctx.fillStyle = '#f0ece8'
-    ctx.beginPath(); ctx.roundRect(4, H*0.45-42, W-8, 38, 4); ctx.fill()
-    ctx.strokeStyle='#707060'; ctx.lineWidth=1
-    ctx.beginPath(); ctx.roundRect(4, H*0.45-42, W-8, 38, 4); ctx.stroke()
-    ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
-    ctx.fillText('▶ What will CHARMANDER do?', 14, H*0.45-22)
+// ── HP BOX ───────────────────────────────────────────────────────────────────
+function drawHpBox(ctx, bx, by, name, lv, hp, maxHp, showNums) {
+  const bw=176, bh=48
+  ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(bx+2,by+2,bw,bh)
+  ctx.fillStyle=C.hpBg
+  ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.fill()
+  ctx.strokeStyle=C.hpBorder; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.stroke()
+  // name
+  ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'
+  ctx.textAlign='left'; ctx.fillText(name.toUpperCase(), bx+8, by+16)
+  // level
+  ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
+  ctx.fillText(':Lv'+lv, bx+bw-46, by+16)
+  // HP bar track
+  ctx.fillStyle=C.hpBarBg; ctx.fillRect(bx+28,by+27,bw-36,7)
+  const pct=hp/maxHp
+  ctx.fillStyle=pct>0.5?C.hpGreen:pct>0.25?C.hpOrange:C.hpRed
+  const fw=Math.max(0,Math.floor((bw-36)*pct))
+  ctx.fillRect(bx+28,by+27,fw,7)
+  ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fillRect(bx+28,by+27,fw,3)
+  // HP label
+  ctx.fillStyle='#181808'; ctx.font='bold 9px "Courier New"'
+  ctx.textAlign='left'; ctx.fillText('HP',bx+8,by+34)
+  if(showNums){
+    ctx.fillStyle='#181808'; ctx.font='9px "Courier New"'
+    ctx.textAlign='right'; ctx.fillText(hp+'/'+maxHp,bx+bw-4,by+44)
   }
 }
 
-drawBattleScene('battleCanvas', 'move')
-
-// ─── QUESTION POPUP ────────────────────────────────────────────────────────
-;(function(){
-  // draw same battle scene underneath
-  drawBattleScene('battleQ', 'move')
-  const canvas = document.getElementById('battleQ')
-  const ctx = canvas.getContext('2d')
+// ── BATTLE SCENE (move menu) ─────────────────────────────────────────────────
+function drawBattleScene(id) {
+  const canvas=document.getElementById(id)
+  const ctx=canvas.getContext('2d')
   const W=360, H=500
+  drawBattleBg(ctx,W,H,1.0)
+  const panY=Math.floor(H*0.48)
 
-  // Dim overlay
-  ctx.fillStyle='rgba(0,0,0,0.55)'
-  ctx.fillRect(0,0,W,H)
+  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 18, 20, false)
+  drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
 
-  // Question card
-  const qx=12, qy=60, qw=W-24, qh=H-120
+  // Dialog line above menu
+  const dlgY=panY+110
+  ctx.fillStyle=C.menuBg
+  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
+  ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.stroke()
+  ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText('▶ What will CHARMANDER do?', 14, dlgY-17)
+
+  // Move grid (left 56%)
+  const mvW=Math.floor(W*0.56), mvH=H-dlgY-4
+  ctx.fillStyle=C.menuBg
+  ctx.beginPath(); ctx.roundRect(4,dlgY,mvW,mvH,3); ctx.fill()
+  ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(4,dlgY,mvW,mvH,3); ctx.stroke()
+
+  // grid dividers
+  ctx.strokeStyle='#c8c0a8'; ctx.lineWidth=1
+  ctx.beginPath(); ctx.moveTo(4+mvW/2,dlgY+4); ctx.lineTo(4+mvW/2,dlgY+mvH-4); ctx.stroke()
+  ctx.beginPath(); ctx.moveTo(8,dlgY+mvH/2); ctx.lineTo(4+mvW-4,dlgY+mvH/2); ctx.stroke()
+
+  const moves=[['SCRATCH','NORMAL'],['GROWL','NORMAL'],['EMBER','FIRE'],['—','—']]
+  const tCol={'NORMAL':'#a0a070','FIRE':'#f07830','WATER':'#6890f0','—':'#aaa'}
+  moves.forEach(([mv,tp],i)=>{
+    const mcx=4+(i%2)*(mvW/2), mcy=dlgY+Math.floor(i/2)*(mvH/2)
+    if(i===0){
+      ctx.fillStyle=C.menuSel; ctx.fillRect(mcx+3,mcy+3,mvW/2-6,mvH/2-6)
+      ctx.strokeStyle=C.menuSelB; ctx.lineWidth=1; ctx.strokeRect(mcx+3,mcy+3,mvW/2-6,mvH/2-6)
+    }
+    ctx.fillStyle=i===0?'#181808':'#505040'
+    ctx.font='bold 10px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText((i===0?'▶ ':'')+mv, mcx+10, mcy+mvH/4+4)
+    ctx.fillStyle=tCol[tp]||'#999'
+    ctx.font='8px "Courier New"'
+    ctx.fillText(tp, mcx+10, mcy+mvH/2-8)
+  })
+
+  // PP / TYPE panel (right)
+  const ppX=4+mvW+4, ppW=W-ppX-4
+  ctx.fillStyle=C.menuBg
+  ctx.beginPath(); ctx.roundRect(ppX,dlgY,ppW,mvH,3); ctx.fill()
+  ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(ppX,dlgY,ppW,mvH,3); ctx.stroke()
+  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText('PP', ppX+10, dlgY+22)
+  ctx.fillStyle='#181808'; ctx.font='10px "Courier New"'
+  ctx.fillText('35/35', ppX+10, dlgY+36)
+  ctx.fillStyle='#484838'; ctx.font='bold 10px "Courier New"'
+  ctx.fillText('TYPE/', ppX+10, dlgY+58)
+  ctx.fillStyle=tCol['NORMAL']
+  ctx.beginPath(); ctx.roundRect(ppX+8,dlgY+64,ppW-16,17,3); ctx.fill()
+  ctx.fillStyle='#f8f8f8'; ctx.font='bold 8px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('NORMAL', ppX+ppW/2, dlgY+76)
+}
+
+drawBattleScene('battleCanvas')
+
+// ── QUESTION POPUP ────────────────────────────────────────────────────────────
+;(function(){
+  drawBattleScene('battleQ')
+  const canvas=document.getElementById('battleQ')
+  const ctx=canvas.getContext('2d')
+  const W=360,H=500
+  // dim overlay
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H)
+  // card
+  const qx=12,qy=52,qw=W-24,qh=H-110
   ctx.fillStyle='#1a2a4a'
-  ctx.beginPath(); ctx.roundRect(qx+3, qy+3, qw, qh, 10); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(qx+3,qy+3,qw,qh,10); ctx.fill()
   ctx.fillStyle='#16213e'
-  ctx.beginPath(); ctx.roundRect(qx, qy, qw, qh, 10); ctx.fill()
-  ctx.strokeStyle='#4ecdc4'; ctx.lineWidth=2
-  ctx.beginPath(); ctx.roundRect(qx, qy, qw, qh, 10); ctx.stroke()
-
-  // Move name badge
-  ctx.fillStyle='#0f3460'
-  ctx.beginPath(); ctx.roundRect(qx+qw/2-50, qy-14, 100, 28, 14); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(qx,qy,qw,qh,10); ctx.fill()
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=2
+  ctx.beginPath(); ctx.roundRect(qx,qy,qw,qh,10); ctx.stroke()
+  // move badge
+  ctx.fillStyle='#c83028'
+  ctx.beginPath(); ctx.roundRect(qx+qw/2-55,qy-14,110,28,14); ctx.fill()
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
-  ctx.beginPath(); ctx.roundRect(qx+qw/2-50, qy-14, 100, 28, 14); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(qx+qw/2-55,qy-14,110,28,14); ctx.stroke()
   ctx.fillStyle='#ffd700'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center'
   ctx.fillText('SCRATCH', qx+qw/2, qy+5)
-
-  // Question text
-  ctx.fillStyle='white'; ctx.font='bold 13px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('What does "fierce" mean?', qx+qw/2, qy+40)
-  ctx.fillStyle='#4ecdc4'; ctx.font='10px "Courier New"'
-  ctx.fillText('Answer correctly for full damage!', qx+qw/2, qy+58)
-
-  // 4 answer buttons
-  const opts = ['Very strong','Very kind','Very slow','Very small']
-  const optColors = ['#0f3460','#0f3460','#0f3460','#0f3460']
-  const optBorders = ['#ffd700','#4ecdc4','#4ecdc4','#4ecdc4'] // first highlighted
-  opts.forEach((opt, i) => {
-    const bx = qx+16 + (i%2)*(qw/2-8)
-    const by = qy+72 + Math.floor(i/2)*54
-    const bw=qw/2-24, bh=44
-    ctx.fillStyle = i===0 ? '#1a3a6a' : '#0f3460'
-    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill()
-    ctx.strokeStyle = optBorders[i]; ctx.lineWidth=1.5
-    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.stroke()
-    // option letter
-    ctx.fillStyle = optBorders[i]; ctx.font='bold 11px "Courier New"'; ctx.textAlign='left'
-    ctx.fillText('ABCD'[i], bx+8, by+26)
+  // question
+  ctx.fillStyle='white'; ctx.font='bold 13px "Courier New"'
+  ctx.fillText('What does "fierce" mean?', qx+qw/2, qy+38)
+  ctx.fillStyle='#ffd700'; ctx.font='10px "Courier New"'
+  ctx.fillText('Answer correctly for full damage!', qx+qw/2, qy+55)
+  // 4 answers
+  const opts=['Very strong','Very kind','Very slow','Very small']
+  const cellW=(qw-24)/2, cellH=50
+  opts.forEach((opt,i)=>{
+    const bx=qx+8+(i%2)*(cellW+8), by=qy+68+Math.floor(i/2)*56
+    ctx.fillStyle=i===0?'#1e3a6e':'#0f3460'
+    ctx.beginPath(); ctx.roundRect(bx,by,cellW,cellH,8); ctx.fill()
+    ctx.strokeStyle=i===0?'#ffd700':'#4ecdc4'; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(bx,by,cellW,cellH,8); ctx.stroke()
+    ctx.fillStyle=i===0?'#ffd700':'#4ecdc4'
+    ctx.font='bold 12px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText('ABCD'[i], bx+10, by+28)
     ctx.fillStyle='white'; ctx.font='10px "Courier New"'; ctx.textAlign='center'
-    ctx.fillText(opt, bx+bw/2+8, by+26)
+    ctx.fillText(opt, bx+cellW/2+10, by+28)
   })
 })()
 
-// ─── CATCH SCENE ───────────────────────────────────────────────────────────
+// ── CATCH SCENE ───────────────────────────────────────────────────────────────
 ;(function(){
-  const canvas = document.getElementById('catchCanvas')
-  const ctx = canvas.getContext('2d')
-  const W=360, H=500
+  const canvas=document.getElementById('catchCanvas')
+  const ctx=canvas.getContext('2d')
+  const W=360,H=500
+  drawBattleBg(ctx,W,H,0.45)  // Pidgey faded (weakened)
+  const panY=Math.floor(H*0.48)
 
-  // Reuse battle background
-  const sky = ctx.createLinearGradient(0,0,0,H*0.45)
-  sky.addColorStop(0, '#c8f0e8'); sky.addColorStop(1, '#d8f8f0')
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.45)
+  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 4, 20, false)    // low HP, orange
+  drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
 
-  // Ground platforms
-  ctx.fillStyle='#b8e8a0'
-  ctx.beginPath(); ctx.ellipse(W*0.68, H*0.25, 55, 14, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#98c880'
-  ctx.beginPath(); ctx.ellipse(W*0.68, H*0.26, 52, 10, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#c8d890'
-  ctx.beginPath(); ctx.ellipse(W*0.32, H*0.40, 68, 17, 0, 0, Math.PI*2); ctx.fill()
-
-  // Lower panel
-  ctx.fillStyle='#e8e0c8'; ctx.fillRect(0,H*0.45,W,H*0.55)
-  ctx.fillStyle='#d0c8b0'; ctx.fillRect(0,H*0.45,W,3)
-
-  // Pidgey — faint/weakened (greyed out)
-  const ox=W*0.68, oy=H*0.19
-  ctx.globalAlpha=0.5
-  ctx.fillStyle='#b89060'
-  ctx.beginPath(); ctx.ellipse(ox, oy, 22, 18, -0.2, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#987040'
-  ctx.beginPath(); ctx.ellipse(ox-6, oy-8, 10, 8, -0.4, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#d0a878'
-  ctx.beginPath(); ctx.ellipse(ox+4, oy-12, 6, 5, 0.2, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#ffcc00'
-  ctx.beginPath(); ctx.moveTo(ox+8,oy-12); ctx.lineTo(ox+13,oy-10); ctx.lineTo(ox+8,oy-8); ctx.fill()
-  ctx.globalAlpha=1.0
-
-  // Charmander (player side, at rest)
-  const px=W*0.28, py=H*0.375
-  ctx.fillStyle='#e87830'
-  ctx.beginPath(); ctx.ellipse(px, py, 26, 22, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f0a060'
-  ctx.beginPath(); ctx.ellipse(px, py+4, 14, 12, 0, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#e87830'
-  ctx.beginPath()
-  ctx.moveTo(px+18,py+10); ctx.quadraticCurveTo(px+38,py+8,px+35,py-8)
-  ctx.lineTo(px+30,py-4); ctx.quadraticCurveTo(px+26,py+6,px+18,py+10); ctx.fill()
-  ctx.fillStyle='#ffaa00'; ctx.beginPath(); ctx.arc(px+35,py-10,5,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(px+37,py-13,3,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#e87830'; ctx.beginPath(); ctx.arc(px,py-20,14,0,Math.PI*2); ctx.fill()
-  ctx.fillRect(px-16,py-28,5,8); ctx.fillRect(px+11,py-28,5,8)
-
-  // ── POKÉBALL mid-air ──
-  const bx=W*0.62, by=H*0.17
-  const br=16
-  // shadow on ground
+  // Pokéball mid-air
+  const bx=W*0.62, by=H*0.14, br=18
+  // ball shadow on platform
   ctx.fillStyle='rgba(0,0,0,0.2)'
-  ctx.beginPath(); ctx.ellipse(W*0.68,H*0.28,14,5,0,0,Math.PI*2); ctx.fill()
-  // Ball upper half (red)
+  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.26,15,5,0,0,Math.PI*2); ctx.fill()
+  // red top
   ctx.fillStyle='#e03028'
-  ctx.beginPath(); ctx.arc(bx, by, br, Math.PI, 0); ctx.fill()
-  // Ball upper shine
-  ctx.fillStyle='rgba(255,255,255,0.35)'
-  ctx.beginPath(); ctx.arc(bx-4, by-5, 5, 0, Math.PI*2); ctx.fill()
-  // Ball lower half (white)
+  ctx.beginPath(); ctx.arc(bx,by,br,Math.PI,0); ctx.fill()
+  // shine
+  ctx.fillStyle='rgba(255,255,255,0.32)'
+  ctx.beginPath(); ctx.arc(bx-5,by-6,6,0,Math.PI*2); ctx.fill()
+  // white bottom
   ctx.fillStyle='#f0f0f0'
-  ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI); ctx.fill()
-  // Horizontal stripe
-  ctx.fillStyle='#181818'
-  ctx.fillRect(bx-br, by-2, br*2, 4)
-  // Centre button
-  ctx.fillStyle='#181818'
-  ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f0f0f0'
-  ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI*2); ctx.fill()
-  // Sparkle lines
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI); ctx.fill()
+  // band
+  ctx.fillStyle='#181818'; ctx.fillRect(bx-br,by-2,br*2,4)
+  // centre button
+  ctx.beginPath(); ctx.arc(bx,by,6,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.fill()
+  // sparkle rays
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
-  for(let a=0;a<6;a++){
-    const ang=a*Math.PI/3
+  for(let a=0;a<8;a++){
+    const ang=a*Math.PI/4
     ctx.beginPath()
-    ctx.moveTo(bx+Math.cos(ang)*(br+3), by+Math.sin(ang)*(br+3))
-    ctx.lineTo(bx+Math.cos(ang)*(br+8), by+Math.sin(ang)*(br+8))
+    ctx.moveTo(bx+Math.cos(ang)*(br+4),by+Math.sin(ang)*(br+4))
+    ctx.lineTo(bx+Math.cos(ang)*(br+11),by+Math.sin(ang)*(br+11))
     ctx.stroke()
   }
+  // sparkle stars
+  ctx.fillStyle='#ffd700'
+  [[bx-28,by-18],[bx+26,by-22],[bx-18,by+24]].forEach(([sx,sy])=>{
+    ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fill()
+  })
 
-  // HP box (opponent weakened — orange bar)
-  function hpBox2(hbx, hby, name, level, hp, maxHp, isPlayer) {
-    const bw=170, bh=46
-    ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.fillRect(hbx+2,hby+2,bw,bh)
-    ctx.fillStyle='#f0ece8'; ctx.beginPath(); ctx.roundRect(hbx,hby,bw,bh,4); ctx.fill()
-    ctx.strokeStyle='#707060'; ctx.lineWidth=1.5
-    ctx.beginPath(); ctx.roundRect(hbx,hby,bw,bh,4); ctx.stroke()
-    ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='left'
-    ctx.fillText(name.toUpperCase(), hbx+8, hby+15)
-    ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
-    ctx.fillText('Lv'+level, hbx+bw-34, hby+15)
-    ctx.fillStyle='#484838'; ctx.font='bold 9px "Courier New"'; ctx.fillText('HP', hbx+8, hby+33)
-    ctx.fillStyle='#505040'; ctx.fillRect(hbx+24, hby+26, bw-32, 7)
-    const pct=hp/maxHp
-    ctx.fillStyle=pct>0.5?'#50d050':pct>0.25?'#e8a020':'#e03020'
-    ctx.fillRect(hbx+24, hby+26, Math.floor((bw-32)*pct), 7)
-    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(hbx+24,hby+26,Math.floor((bw-32)*pct),3)
-  }
-  hpBox2(8, H*0.45+8, 'PIDGEY', 5, 5, 20, false)
-  hpBox2(W-178, H*0.45+54, 'CHARMANDER', 5, 28, 35, true)
+  // Catch panel
+  const dlgY=panY+110
+  ctx.fillStyle=C.menuBg
+  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
+  ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.stroke()
+  ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText('▶ You threw a Pokéball!', 14, dlgY-17)
 
-  // Action panel showing "Throw Pokéball"
-  const mY = H*0.45+108
-  ctx.fillStyle='#f0ece8'
-  ctx.beginPath(); ctx.roundRect(4, mY, W-8, H-mY-8, 4); ctx.fill()
-  ctx.strokeStyle='#707060'; ctx.lineWidth=1
-  ctx.beginPath(); ctx.roundRect(4, mY, W-8, H-mY-8, 4); ctx.stroke()
+  // Result panel
+  const rvH=H-dlgY-4
+  ctx.fillStyle=C.menuBg
+  ctx.beginPath(); ctx.roundRect(4,dlgY,W-8,rvH,3); ctx.fill()
+  ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(4,dlgY,W-8,rvH,3); ctx.stroke()
 
-  // Pokéball result text
-  ctx.fillStyle='#181808'; ctx.font='bold 12px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('Gotcha! PIDGEY was caught!', W/2, mY+28)
-
-  // Shake indicators
-  ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
-  ctx.fillText('●  ●  ●', W/2, mY+52)
-  ctx.fillStyle='#4ecdc4'; ctx.font='9px "Courier New"'
-  ctx.fillText('3 shakes = caught!', W/2, mY+68)
-
-  // Pokéball icon row
+  // shake dots
+  ctx.fillStyle='#181808'; ctx.font='bold 18px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('● ● ●', W/2, dlgY+28)
+  // mini pokéballs (caught×3)
   for(let i=0;i<3;i++){
-    const bxi=W/2-44+i*44, byi=mY+82
-    ctx.fillStyle='#e03028'
-    ctx.beginPath(); ctx.arc(bxi,byi,9,Math.PI,0); ctx.fill()
-    ctx.fillStyle='#f0f0f0'
-    ctx.beginPath(); ctx.arc(bxi,byi,9,0,Math.PI); ctx.fill()
-    ctx.fillStyle='#181818'; ctx.fillRect(bxi-9,byi-1,18,2)
-    ctx.beginPath(); ctx.arc(bxi,byi,3,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bxi,byi,1.5,0,Math.PI*2); ctx.fill()
+    const bi=W/2-40+i*40, byi=dlgY+52
+    ctx.fillStyle='#e03028'; ctx.beginPath(); ctx.arc(bi,byi,9,Math.PI,0); ctx.fill()
+    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bi,byi,9,0,Math.PI); ctx.fill()
+    ctx.fillStyle='#181818'; ctx.fillRect(bi-9,byi-1,18,2)
+    ctx.beginPath(); ctx.arc(bi,byi,3,0,Math.PI*2); ctx.fill()
+    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bi,byi,1.5,0,Math.PI*2); ctx.fill()
   }
-
-  // "New Pokémon added to Pokédex!"
-  ctx.fillStyle='#0f3460'; ctx.beginPath(); ctx.roundRect(20, mY+106, W-40, 28, 6); ctx.fill()
+  ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('Gotcha! PIDGEY was caught!', W/2, dlgY+82)
+  // pokedex banner
+  ctx.fillStyle='#0f3460'; ctx.beginPath(); ctx.roundRect(20,dlgY+96,W-40,28,6); ctx.fill()
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=1
-  ctx.beginPath(); ctx.roundRect(20, mY+106, W-40, 28, 6); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(20,dlgY+96,W-40,28,6); ctx.stroke()
   ctx.fillStyle='#ffd700'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('★  PIDGEY added to Pokédex!  ★', W/2, mY+124)
+  ctx.fillText('★  PIDGEY added to Pokédex!  ★', W/2, dlgY+114)
 })()
 </script>
 </body>
