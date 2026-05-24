@@ -33,11 +33,15 @@
 </div>
 
 <div class="section">
-  <h2>2 · Characters (actual FireRed/Ruby GBA sprites)</h2>
+  <h2>2 · Characters (Boy / Girl selection)</h2>
   <div class="row">
     <div class="col">
-      <canvas id="charCanvas" width="500" height="200"></canvas>
-      <div class="label">Player sprite sheet · scaled ×3 and ×6</div>
+      <canvas id="charCanvas" width="260" height="220"></canvas>
+      <div class="label">Character sprites — Boy &amp; Girl at map scale and zoomed</div>
+    </div>
+    <div class="col">
+      <canvas id="charSelectCanvas" width="260" height="220"></canvas>
+      <div class="label">Character selection UI (AddProfile screen)</div>
     </div>
   </div>
 </div>
@@ -47,11 +51,15 @@
   <div class="row">
     <div class="col">
       <canvas id="battleCanvas" width="360" height="500"></canvas>
-      <div class="label">Wild battle — move select</div>
+      <div class="label">Wild battle — move select (Ruby HP layout)</div>
     </div>
     <div class="col">
       <canvas id="battleQ" width="360" height="500"></canvas>
       <div class="label">Question popup</div>
+    </div>
+    <div class="col">
+      <canvas id="battleAnim" width="360" height="500"></canvas>
+      <div class="label">Battle animation — attack + shake frames</div>
     </div>
   </div>
 </div>
@@ -62,6 +70,10 @@
     <div class="col">
       <canvas id="catchCanvas" width="360" height="500"></canvas>
       <div class="label">Fight vs Catch choice → Pokéball thrown</div>
+    </div>
+    <div class="col">
+      <canvas id="ballThrow" width="360" height="500"></canvas>
+      <div class="label">Pokéball throw arc animation frames</div>
     </div>
   </div>
 </div>
@@ -90,10 +102,12 @@ const C = {
 // ── LOAD ALL IMAGES THEN DRAW EVERYTHING ─────────────────────────────────────
 const SPRITES = {}
 const toLoad = {
-  pallet:  'sprites/littleroot.gif',
-  route:   'sprites/route101.gif',
-  hero:    'sprites/fr_hero.gif',
-  houses:  'sprites/rs_houses.gif',
+  pallet:   'sprites/littleroot.gif',
+  route:    'sprites/route101.gif',
+  hero:     'sprites/fr_hero.gif',
+  houses:   'sprites/rs_houses.gif',
+  pidgeyF:  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png',
+  charBack: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/4.png',
 }
 
 let loaded = 0
@@ -102,9 +116,12 @@ const total = Object.keys(toLoad).length
 function onAllLoaded() {
   drawMaps()
   drawCharacters()
+  drawCharSelect()
   drawBattleScene('battleCanvas')
   drawBattleQuestion()
+  drawBattleAnim()
   drawCatchScene()
+  drawBallThrow()
 }
 
 for (const [key, src] of Object.entries(toLoad)) {
@@ -148,6 +165,84 @@ function drawPlayerSprite(ctx, cx, cy, s=1) {
   f(-5,-2,1,8,'#c08030'); f(4,-2,1,8,'#c08030')
 }
 
+// ── FEMALE SPRITE (May/Leaf style — white bandana, red top, blue shorts) ─────
+function drawFemaleSprite(ctx, cx, cy, s=1) {
+  const f=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(cx+x*s,cy+y*s,w*s,h*s) }
+  ctx.fillStyle='rgba(0,0,0,0.22)'
+  ctx.beginPath(); ctx.ellipse(cx,cy+12*s,6*s,2*s,0,0,Math.PI*2); ctx.fill()
+  // shoes
+  f(-4,10,3,2,'#201010'); f(1,10,3,2,'#201010')
+  // shorts / skirt (blue)
+  f(-3,4,6,7,'#2850b8')
+  // top (red-orange)
+  f(-4,-4,8,9,'#d04828')
+  f(-6,-3,2,5,'#d04828'); f(4,-3,2,5,'#d04828')
+  // white collar
+  f(-2,-4,4,2,'#f0f0f0')
+  // hands (skin)
+  f(-7,2,2,2,'#e8b870'); f(5,2,2,2,'#e8b870')
+  // neck + head (skin)
+  f(-2,-5,4,2,'#e8b870')
+  f(-3,-13,6,9,'#e8b870')
+  // hair — dark brown pigtails
+  f(-4,-13,6,2,'#503820')
+  f(-5,-7,2,6,'#503820')
+  f(3,-7,2,6,'#503820')
+  // bandana (white)
+  f(-4,-17,8,5,'#f0f0f0')
+  f(-5,-14,1,3,'#f0f0f0'); f(4,-14,1,3,'#f0f0f0')
+  // bandana tie (orange dots)
+  f(-2,-17,1,2,'#e87830'); f(1,-17,1,2,'#e87830')
+  // eyes
+  f(-2,-9,1,1,'#201010'); f(1,-9,1,1,'#201010')
+  // backpack strap hint
+  f(-5,-2,1,8,'#c08030'); f(4,-2,1,8,'#c08030')
+}
+
+// ── SECTION 2b: CHARACTER SELECTION UI ───────────────────────────────────────
+function drawCharSelect() {
+  const canvas = document.getElementById('charSelectCanvas')
+  const ctx    = canvas.getContext('2d')
+  const CW=260, CH=220
+  ctx.imageSmoothingEnabled = false
+
+  // Screen bg (dark navy, matches app)
+  ctx.fillStyle='#0f3460'
+  ctx.fillRect(0,0,CW,CH)
+
+  // Header
+  ctx.fillStyle='#ffd700'; ctx.font='bold 11px Courier New'; ctx.textAlign='center'
+  ctx.fillText('New Trainer', CW/2, 20)
+
+  // "Character" label
+  ctx.fillStyle='#aaaaaa'; ctx.font='10px Courier New'
+  ctx.fillText('Character', CW/2, 40)
+
+  // Boy card (left, unselected)
+  const cx1=18, cy1=48, cw=98, ch=128
+  ctx.fillStyle='#1a1a2e'
+  ctx.beginPath(); ctx.roundRect(cx1,cy1,cw,ch,10); ctx.fill()
+  ctx.strokeStyle='#506060'; ctx.lineWidth=1.5
+  ctx.beginPath(); ctx.roundRect(cx1,cy1,cw,ch,10); ctx.stroke()
+  drawPlayerSprite(ctx, cx1+cw/2, cy1+ch-22, 4)
+  ctx.fillStyle='#cccccc'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+  ctx.fillText('BOY', cx1+cw/2, cy1+ch-4)
+
+  // Girl card (right, selected — yellow border)
+  const cx2=144, cy2=48
+  ctx.fillStyle='rgba(255,215,0,0.1)'
+  ctx.beginPath(); ctx.roundRect(cx2,cy2,cw,ch,10); ctx.fill()
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=2
+  ctx.beginPath(); ctx.roundRect(cx2,cy2,cw,ch,10); ctx.stroke()
+  drawFemaleSprite(ctx, cx2+cw/2, cy2+ch-22, 4)
+  ctx.fillStyle='#ffd700'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+  ctx.fillText('GIRL', cx2+cw/2, cy2+ch-4)
+
+  // Caption
+  ctx.fillStyle='#888888'; ctx.font='8px Courier New'
+  ctx.fillText('Tap to choose your character', CW/2, CH-6)
+}
+
 // ── SECTION 1: MAPS ──────────────────────────────────────────────────────────
 function drawMaps() {
   drawMapCanvas('mapPallet', SPRITES.pallet, 180, 130)
@@ -184,89 +279,81 @@ function drawMapCanvas(id, img, srcX, srcY) {
 function drawCharacters() {
   const canvas = document.getElementById('charCanvas')
   const ctx    = canvas.getContext('2d')
-  const CW=500, CH=200
-  ctx.fillStyle = '#78b858'   // Ruby ground green
-  ctx.fillRect(0,0,CW,CH)
-  // subtle ground dots
-  ctx.fillStyle = '#68a848'
-  for(let i=0;i<200;i++)
-    ctx.fillRect(Math.floor(Math.random()*CW),Math.floor(Math.random()*CH),1,1)
+  const CW=260, CH=220
+  canvas.width=CW; canvas.height=CH
 
-  ctx.imageSmoothingEnabled = false
-  const hero = SPRITES.hero
-  if (hero) {
-    // Hero sprite sheet: back-walking sprite is top-left area
-    // The small overworld sprites in the top part of the sheet are ~16px wide
-    // Large bottom sprites: starting around y=175, each ~32px wide
-    // Back-facing large sprite is around x=235, y=175
+  // Ruby grass background with subtle tile grid
+  ctx.fillStyle='#78b858'; ctx.fillRect(0,0,CW,CH)
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1
+  for(let x=0;x<CW;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke()}
+  for(let y=0;y<CH;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke()}
 
-    // Show hero sprite sheet section at ×3 (large bottom sprites, back-facing)
-    const sx=232, sy=175, sw=32, sh=48
-    // ×3 zoom
-    ctx.drawImage(hero, sx,sy,sw,sh, 60,40, sw*3,sh*3)
-    // ×6 zoom
-    ctx.drawImage(hero, sx,sy,sw,sh, 220,10, sw*6,sh*6)
-    // Small walking sprites (top section) ×4
-    ctx.drawImage(hero, 0,0,100,80, 400,20, 100*1,80*1)
-  } else {
-    drawPlayerSprite(ctx, 90, 150, 4)
-    drawPlayerSprite(ctx, 250, 150, 6)
-  }
+  // ── Boy at ×4 ──
+  ctx.fillStyle='#a0e870'; ctx.fillRect(14,12,72,138)
+  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
+  ctx.strokeRect(14,12,72,138)
+  drawPlayerSprite(ctx, 50, 112, 4)
+  ctx.fillStyle='#181808'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
+  ctx.fillText('BOY  ×4', 50, 158)
 
-  ctx.fillStyle='#ffd700'; ctx.font='10px Courier New'; ctx.textAlign='center'
-  ctx.fillText('Back sprite ×3', 108, 192)
-  ctx.fillText('Back sprite ×6', 316, 192)
-  ctx.fillText('Walk sheet', 450, 192)
+  // ── Girl at ×4 ──
+  ctx.fillStyle='#a0e870'; ctx.fillRect(94,12,72,138)
+  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
+  ctx.strokeRect(94,12,72,138)
+  drawFemaleSprite(ctx, 130, 112, 4)
+  ctx.fillStyle='#181808'; ctx.font='bold 9px Courier New'; ctx.textAlign='center'
+  ctx.fillText('GIRL ×4', 130, 158)
+
+  // ── Both at map scale (×2) side by side ──
+  ctx.fillStyle='#90d860'; ctx.fillRect(176,12,72,80)
+  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1
+  ctx.strokeRect(176,12,72,80)
+  drawPlayerSprite(ctx, 200, 66, 2)
+  drawFemaleSprite(ctx, 230, 66, 2)
+  ctx.fillStyle='#181808'; ctx.font='8px Courier New'; ctx.textAlign='center'
+  ctx.fillText('Map scale', 212, 102)
+
+  ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'
+  ctx.fillText('Overworld sprites', CW/2, CH-6)
 }
 
 // ── BATTLE SCENE ─────────────────────────────────────────────────────────────
-function drawBattleBg(ctx, W, H, pidgeyAlpha) {
+// pokemonX/Y allow shifting sprites for attack/shake animation
+function drawBattleBg(ctx, W, H, pidgeyAlpha, pidgeyOffX=0, charOffX=0) {
   // Pale mint sky (Ruby accurate)
   const sky=ctx.createLinearGradient(0,0,0,H*0.48)
   sky.addColorStop(0,C.sky); sky.addColorStop(1,C.skyBot)
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.48)
 
-  // Opponent platform (yellow-green oval)
+  // Opponent platform top-RIGHT (Ruby: enemy on right side)
   ctx.fillStyle=C.enPlTop
-  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.235,56,14,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.72,H*0.235,56,14,0,0,Math.PI*2); ctx.fill()
   ctx.fillStyle=C.enPlBot
-  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.248,52,8,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.72,H*0.248,52,8,0,0,Math.PI*2); ctx.fill()
 
-  // Player platform (sandy-tan oval)
+  // Player platform bottom-LEFT (Ruby: player on left side)
   ctx.fillStyle=C.plPlTop
-  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.400,72,18,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.28,H*0.400,72,18,0,0,Math.PI*2); ctx.fill()
   ctx.fillStyle=C.plPlBot
-  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.412,68,12,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.28,H*0.412,68,12,0,0,Math.PI*2); ctx.fill()
 
-  // Pidgey (opponent) — partially faded if catching
-  ctx.globalAlpha=pidgeyAlpha
-  const ox=W*0.70, oy=H*0.185
-  ctx.fillStyle='#c89860'
-  ctx.beginPath(); ctx.ellipse(ox,oy,22,17,-0.15,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#a07040'
-  ctx.beginPath(); ctx.ellipse(ox-5,oy-7,10,8,-0.3,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#d8b880'
-  ctx.beginPath(); ctx.ellipse(ox+4,oy-12,7,5,0.2,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f0c830'
-  ctx.beginPath(); ctx.moveTo(ox+8,oy-12); ctx.lineTo(ox+14,oy-10); ctx.lineTo(ox+8,oy-8); ctx.fill()
-  ctx.fillStyle='#806030'
-  ctx.beginPath(); ctx.ellipse(ox+10,oy+2,16,8,0.3,0,Math.PI*2); ctx.fill()
-  ctx.globalAlpha=1
+  // Pidgey (opponent, top-RIGHT) — faded if catching
+  ctx.globalAlpha = pidgeyAlpha
+  const pidgey = SPRITES.pidgeyF
+  if (pidgey) {
+    const sz = 80
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(pidgey, W*0.72 - sz/2 + pidgeyOffX, H*0.08, sz, sz)
+  }
+  ctx.globalAlpha = 1
 
-  // Charmander (player) from behind
-  const ppx=W*0.28, ppy=H*0.37
-  ctx.fillStyle='#e87830'
-  ctx.beginPath(); ctx.ellipse(ppx,ppy,26,22,0,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f0a058'
-  ctx.beginPath(); ctx.ellipse(ppx,ppy+4,14,12,0,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#e87830'
-  ctx.beginPath()
-  ctx.moveTo(ppx+18,ppy+10); ctx.quadraticCurveTo(ppx+38,ppy+8,ppx+35,ppy-8)
-  ctx.lineTo(ppx+30,ppy-4); ctx.quadraticCurveTo(ppx+26,ppy+6,ppx+18,ppy+10); ctx.fill()
-  ctx.fillStyle='#ffaa00'; ctx.beginPath(); ctx.arc(ppx+35,ppy-10,5,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(ppx+37,ppy-13,3,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#e87830'; ctx.beginPath(); ctx.arc(ppx,ppy-20,14,0,Math.PI*2); ctx.fill()
-  ctx.fillRect(ppx-16,ppy-28,5,8); ctx.fillRect(ppx+11,ppy-28,5,8)
+  // Charmander back sprite (player, bottom-LEFT)
+  const charBack = SPRITES.charBack
+  if (charBack) {
+    const sz = 96
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(charBack, W*0.25 - sz/2 + charOffX, H*0.24, sz, sz)
+  }
 
   // Bottom panel
   const panY=Math.floor(H*0.48)
@@ -306,8 +393,9 @@ function drawBattleScene(id) {
   drawBattleBg(ctx,W,H,1.0)
   const panY=Math.floor(H*0.48)
 
-  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 18, 20, false)
-  drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
+  // Ruby layout: opponent HP top-LEFT, player HP bottom-RIGHT
+  drawHpBox(ctx, 6, 8, 'PIDGEY', 5, 18, 20, false)
+  drawHpBox(ctx, W-182, panY-58, 'CHARMANDER', 5, 28, 35, true)
 
   const dlgY=panY+110
   // "What will X do?" box
@@ -412,9 +500,9 @@ function drawCatchScene() {
   drawBattleBg(ctx,W,H,0.5)
   const panY=Math.floor(H*0.48)
 
-  // Pidgey low HP (red bar)
-  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 4, 20, false)
-  drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
+  // Ruby layout: opponent HP top-LEFT, player HP bottom-RIGHT
+  drawHpBox(ctx, 6, 8, 'PIDGEY', 5, 4, 20, false)
+  drawHpBox(ctx, W-182, panY-58, 'CHARMANDER', 5, 28, 35, true)
 
   const dlgY=panY+110
 
@@ -458,6 +546,155 @@ function drawCatchScene() {
   ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(barX,barY,Math.floor(barW*catchPct),3)
   ctx.fillStyle='#484838'; ctx.font='7px "Courier New"'; ctx.textAlign='left'
   ctx.fillText('Catch rate: HIGH', barX, barY+barH+9)
+}
+
+// ── BATTLE ANIMATION FRAMES ───────────────────────────────────────────────────
+function drawBattleAnim() {
+  const canvas=document.getElementById('battleAnim')
+  const ctx=canvas.getContext('2d')
+  const W=360, H=500
+  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H)
+
+  const panY=Math.floor(H*0.48)
+  const fH=Math.floor((H-20)/3)-8  // height per frame strip
+
+  const frames=[
+    { label:'1. ATTACK — Charmander lurches forward', charOffX:22, pidgeyOffX:0,  pidgeyA:1.0, logTxt:'Charmander used SCRATCH!' },
+    { label:'2. HIT — Pidgey shakes (damage flash)',  charOffX:0,  pidgeyOffX:-10, pidgeyA:0.5, logTxt:'It\'s super effective!' },
+    { label:'3. HP DRAINS — bar animates down',       charOffX:0,  pidgeyOffX:0,  pidgeyA:1.0, logTxt:'Pidgey lost 12 HP' },
+  ]
+
+  frames.forEach((fr, i) => {
+    const fy = 10+i*(fH+8)
+    // mini battle scene
+    ctx.save()
+    ctx.beginPath(); ctx.rect(0,fy,W,fH); ctx.clip()
+    ctx.translate(0, fy - Math.floor(H*0.12))   // shift scene up to fit in strip
+    ctx.scale(0.78, 0.78)
+    drawBattleBg(ctx, W/0.78, H/0.78, fr.pidgeyA, fr.pidgeyOffX, fr.charOffX)
+    // HP boxes (Ruby layout, scaled coords)
+    drawHpBox(ctx, 6, 10, 'PIDGEY', 5, i===2?6:18, 20, false)
+    drawHpBox(ctx, W/0.78-182, panY/0.78-58, 'CHARMANDER', 5, 28, 35, true)
+    ctx.restore()
+
+    // frame label overlay
+    ctx.fillStyle='rgba(0,0,0,0.55)'
+    ctx.fillRect(0, fy+fH-22, W, 22)
+    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'; ctx.textAlign='left'
+    ctx.fillText(fr.label, 8, fy+fH-7)
+  })
+
+  ctx.fillStyle='#4ecdc4'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+  ctx.fillText('Battle Animation Storyboard', W/2, H-4)
+}
+
+// ── POKÉBALL THROW ARC ────────────────────────────────────────────────────────
+function drawBallThrow() {
+  const canvas=document.getElementById('ballThrow')
+  const ctx=canvas.getContext('2d')
+  const W=360, H=500
+  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H)
+
+  const panY=Math.floor(H*0.48)
+  const fH=Math.floor((H-20)/4)-6
+
+  function drawPokeball(ctx, bx, by, r, open=false) {
+    // ball body
+    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2)
+    ctx.fillStyle=open?'#888888':'#e82020'; ctx.fill()
+    ctx.strokeStyle='#181818'; ctx.lineWidth=1.5; ctx.stroke()
+    // white bottom half
+    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI); ctx.fillStyle='#f8f8f8'; ctx.fill()
+    // dividing line
+    ctx.beginPath(); ctx.moveTo(bx-r,by); ctx.lineTo(bx+r,by)
+    ctx.strokeStyle='#181818'; ctx.lineWidth=1.5; ctx.stroke()
+    // centre button
+    ctx.beginPath(); ctx.arc(bx,by,r*0.28,0,Math.PI*2)
+    ctx.fillStyle='#f8f8f8'; ctx.fill()
+    ctx.strokeStyle='#181818'; ctx.lineWidth=1; ctx.stroke()
+    if(open){
+      // sparkle dots
+      ctx.fillStyle='#ffd700'
+      for(let a=0;a<6;a++){
+        const ang=a/6*Math.PI*2, dist=r*1.6
+        ctx.beginPath(); ctx.arc(bx+Math.cos(ang)*dist,by+Math.sin(ang)*dist,2,0,Math.PI*2); ctx.fill()
+      }
+    }
+  }
+
+  const arcFrames=[
+    { label:'1. Throw — ball leaves hand (left, low)', t:0.05 },
+    { label:'2. Mid-arc — ball climbs (center, high)',  t:0.45 },
+    { label:'3. Approach — ball descends (right, mid)', t:0.80 },
+    { label:'4. Contact — ball opens, sparkles!',       t:1.00, open:true },
+  ]
+
+  // Arc params: from player left to opponent right
+  const x0=W*0.18, y0=panY*0.74
+  const x1=W*0.72, y1=panY*0.22
+  const arcPeak = panY*0.03  // control point above midpoint
+
+  arcFrames.forEach((fr, i) => {
+    const fy=10+i*(fH+6)
+    // mini sky strip
+    const skyG=ctx.createLinearGradient(0,fy,0,fy+fH*0.8)
+    skyG.addColorStop(0,'#b8ecdc'); skyG.addColorStop(1,'#d0f4ec')
+    ctx.fillStyle=skyG; ctx.fillRect(0,fy,W,fH*0.8)
+    // ground
+    ctx.fillStyle='#c8a878'; ctx.fillRect(0,fy+fH*0.8,W,fH*0.2)
+
+    // platforms (tiny)
+    ctx.fillStyle=C.enPlTop
+    ctx.beginPath(); ctx.ellipse(W*0.72,fy+fH*0.65,44,10,0,0,Math.PI*2); ctx.fill()
+    ctx.fillStyle=C.plPlTop
+    ctx.beginPath(); ctx.ellipse(W*0.22,fy+fH*0.82,56,14,0,0,Math.PI*2); ctx.fill()
+
+    // Pidgey (faded at t=1)
+    const pidgey=SPRITES.pidgeyF
+    if(pidgey){
+      ctx.globalAlpha=fr.t>=1?0.2:0.9
+      ctx.imageSmoothingEnabled=false
+      ctx.drawImage(pidgey, W*0.72-40, fy+fH*0.3, 64, 64)
+      ctx.globalAlpha=1
+    }
+
+    // Charmander back sprite
+    const charBack=SPRITES.charBack
+    if(charBack){
+      ctx.imageSmoothingEnabled=false
+      ctx.drawImage(charBack, W*0.18-42, fy+fH*0.44, 72, 72)
+    }
+
+    // arc path (dotted preview)
+    ctx.setLineDash([3,5]); ctx.strokeStyle='rgba(255,215,0,0.3)'; ctx.lineWidth=1.5
+    ctx.beginPath()
+    const mx=(x0+x1)/2, my=arcPeak+(fy-panY*0.5*0.3)
+    ctx.moveTo(x0,y0+fy-panY*0.5*0.7)
+    ctx.quadraticCurveTo(mx,my,x1,y1+fy-panY*0.5*0.3)
+    ctx.stroke(); ctx.setLineDash([])
+
+    // ball position along arc (quadratic bezier)
+    const t=fr.t
+    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*mx + t*t*x1
+    const by = (1-t)*(1-t)*(y0+fy-panY*0.5*0.7) + 2*(1-t)*t*my + t*t*(y1+fy-panY*0.5*0.3)
+    const r = fr.t>=1 ? 14 : 9
+    // rotation shadow
+    if(!fr.open){
+      ctx.save(); ctx.translate(bx,by); ctx.rotate(t*Math.PI*3)
+      drawPokeball(ctx,0,0,r)
+      ctx.restore()
+    } else {
+      drawPokeball(ctx,bx,by,r,true)
+    }
+
+    // label
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,fy+fH-20,W,20)
+    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'; ctx.textAlign='left'
+    ctx.fillText(fr.label, 8, fy+fH-5)
+  })
+
+  ctx.fillStyle='#4ecdc4'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
+  ctx.fillText('Pokéball Throw Animation', W/2, H-4)
 }
 </script>
 </body>
