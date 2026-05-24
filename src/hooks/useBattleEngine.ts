@@ -1,3 +1,4 @@
+import React from 'react'
 import { useBattleStore } from '../store/battleStore'
 import { useProfileStore } from '../store/profileStore'
 import { useQuestions } from './useQuestions'
@@ -7,7 +8,7 @@ import { expGained, getLevel, calculateStat } from '../utils/exp'
 import { pickQuestion } from '../utils/questionPicker'
 import pokemonJson from '../data/pokemon.json'
 import movesJson from '../data/moves.json'
-import { PokemonData, MoveData, PartyPokemon } from '../types/game'
+import { PokemonData, MoveData, PartyPokemon, Question } from '../types/game'
 
 const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
@@ -31,12 +32,30 @@ export function useBattleEngine() {
   const { getQuestionsForProfile } = useQuestions()
   const { updateProfile } = useFirestoreProfile()
 
+  // Cache questions for the current battle so we don't hit Firestore on every move
+  const questionCacheRef = React.useRef<Question[] | null>(null)
+  const cacheProfileIdRef = React.useRef<string | null>(null)
+
+  async function getQuestions(): Promise<Question[]> {
+    const profileId = profile?.id ?? null
+    if (questionCacheRef.current && cacheProfileIdRef.current === profileId) {
+      return questionCacheRef.current
+    }
+    if (!profile) return []
+    const qs = await getQuestionsForProfile(profile)
+    questionCacheRef.current = qs
+    cacheProfileIdRef.current = profileId
+    return qs
+  }
+
   async function selectMove(index: number) {
     if (!profile) return
     store.setSelectedMoveIndex(index)
     store.setPhase('question')
-    const questions = await getQuestionsForProfile(profile)
-    const q = pickQuestion(questions, store.usedQuestionIds)
+    const questions = await getQuestions()
+    // Use getState() to avoid stale closure — usedQuestionIds may have changed since last render
+    const { usedQuestionIds } = useBattleStore.getState()
+    const q = pickQuestion(questions, usedQuestionIds)
     if (q) {
       store.setQuestion(q)
       if (q.id) store.addUsedQuestionId(q.id)

@@ -21,9 +21,9 @@ async function hashPin(pin: string): Promise<string> {
 
 function defaultSubjects(): SubjectSettings {
   return {
-    english: { enabled: true, types: ['vocabulary', 'grammar', 'synonyms', 'fillBlank'] },
-    maths: { enabled: true, types: ['arithmetic', 'wordProblems', 'shapes'] },
-    chinese: { enabled: true, types: ['characterRecognition', 'pinyin', 'vocabulary'] },
+    english: { enabled: true, types: [] },
+    maths:   { enabled: true, types: [] },
+    chinese: { enabled: true, types: [] },
   }
 }
 
