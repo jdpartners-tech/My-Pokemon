@@ -288,9 +288,9 @@ function drawCharMap() {
   const CW=260, CH=220
   canvas.width=CW; canvas.height=CH
 
-  const TILE=24  // tile size in this preview
+  const TILE=24
 
-  // Draw a small Ruby-style tile grid (grass + path)
+  // Ruby-style tile grid
   const tileColors = ['#78b858','#78b858','#c8a878','#78b858','#78b858',
                       '#78b858','#c8a878','#c8a878','#c8a878','#78b858',
                       '#78b858','#78b858','#c8a878','#78b858','#78b858']
@@ -301,63 +301,61 @@ function drawCharMap() {
       ctx.fillRect(c*TILE,r*TILE,TILE,TILE)
     }
   }
-
-  // Subtle tile grid lines
   ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1
   for(let x=0;x<CW;x+=TILE){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke()}
   for(let y=0;y<CH;y+=TILE){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke()}
-
-  // Grass detail
   ctx.font='10px serif'; ctx.textAlign='center'
-  ;[[1,0],[3,1],[0,2],[4,0],[2,3],[1,4],[3,3]].forEach(([c,r])=>{
-    if(tileColors[(r*(COLS)+c)%tileColors.length]==='#78b858'){
-      ctx.fillStyle='#68a848'
-      ctx.fillText('ʷ', c*TILE+TILE/2, r*TILE+TILE*0.7)
+  ;[[1,0],[3,1],[0,2],[4,0],[2,3]].forEach(([c,r])=>{
+    if(tileColors[(r*COLS+c)%tileColors.length]==='#78b858'){
+      ctx.fillStyle='#68a848'; ctx.fillText('ʷ', c*TILE+TILE/2, r*TILE+TILE*0.7)
     }
   })
 
-  // Sprite dimensions at map scale: crop front-facing frame from each sheet, draw at ×4
-  const sw=16*4, sh=22*4  // 64×88px at ×4
+  // Character positions (centred on tile)
+  const boyX=TILE*1.5, girlX=CW-TILE*2.5, charY=CH*0.38
+  // Overworld size: 16×22 native, ×3.5 ≈ 56×77 on map
+  const artW=34, artH=52
 
-  // Use chroma-keyed canvases so the background is transparent over tiles
-  // ── Male (Brendan/Red) — fr_hero.gif, front row at y=14 ──
-  const maleOW = SPRITES.maleOW
-  if(maleOW){
-    ctx.imageSmoothingEnabled=false
-    ctx.drawImage(maleOW, 4, 14, 16, 22, TILE*1.5-sw/2, CH*0.3-sh/2, sw, sh)
-  }
-  ctx.fillStyle='rgba(0,0,0,0.65)'
-  ctx.beginPath(); ctx.roundRect(TILE*1.5-28, CH*0.3+sh/2+2, 56, 14, 3); ctx.fill()
-  ctx.fillStyle='#ffd700'; ctx.font='bold 8px Courier New'; ctx.textAlign='center'
-  ctx.fillText('BOY', TILE*1.5, CH*0.3+sh/2+12)
+  // Shadow ellipse under each character
+  ;[boyX, girlX].forEach(cx => {
+    ctx.fillStyle='rgba(0,0,0,0.25)'
+    ctx.beginPath(); ctx.ellipse(cx, charY+artH/2+2, 10, 4, 0, 0, Math.PI*2); ctx.fill()
+  })
 
-  // ── Female (Leaf) — fr_heroine.gif, front row at y=2 ──
-  const femOW = SPRITES.femOW
-  if(femOW){
-    ctx.imageSmoothingEnabled=false
-    ctx.drawImage(femOW, 4, 2, 16, 22, CW-TILE*2-sw/2, CH*0.3-sh/2, sw, sh)
-  }
-  ctx.fillStyle='rgba(0,0,0,0.65)'
-  ctx.beginPath(); ctx.roundRect(CW-TILE*2-28, CH*0.3+sh/2+2, 56, 14, 3); ctx.fill()
-  ctx.fillStyle='#ffd700'; ctx.font='bold 8px Courier New'; ctx.textAlign='center'
-  ctx.fillText('GIRL', CW-TILE*2, CH*0.3+sh/2+12)
+  // Draw official character art — PNG has real alpha so no chroma key needed
+  const brendan = SPRITES.brendan, may = SPRITES.may
+  if(brendan){ ctx.imageSmoothingEnabled=true; ctx.drawImage(brendan, boyX-artW/2, charY-artH/2, artW, artH) }
+  if(may)    { ctx.imageSmoothingEnabled=true; ctx.drawImage(may,     girlX-artW/2, charY-artH/2, artW, artH) }
 
-  // ── Zoom inset: ×6 scale ──
-  const zx=CW/2-20, zy=CH*0.62, zs=6
+  // Name labels
+  ;[[boyX,'BOY'],[girlX,'GIRL']].forEach(([cx,lbl])=>{
+    ctx.fillStyle='rgba(0,0,0,0.7)'
+    ctx.beginPath(); ctx.roundRect(cx-24, charY+artH/2+6, 48, 13, 3); ctx.fill()
+    ctx.fillStyle='#ffd700'; ctx.font='bold 8px Courier New'; ctx.textAlign='center'
+    ctx.fillText(lbl, cx, charY+artH/2+16)
+  })
+
+  // ── Zoom inset: actual 16px FireRed overworld sprite at ×6 ───────────────────
+  const zs=6, zW=16*zs, zH=22*zs
+  const zx=CW/2-zW-6, zy=CH*0.70
   ctx.fillStyle='rgba(0,0,0,0.55)'
-  ctx.beginPath(); ctx.roundRect(zx-4,zy-4,16*zs*2+20,22*zs+20,4); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(zx-4,zy-4,zW*2+20,zH+24,4); ctx.fill()
+  ctx.fillStyle='#aaa'; ctx.font='7px Courier New'; ctx.textAlign='center'
+  ctx.fillText('actual 16px overworld sprites ×6', zx+zW+4, zy-8)
+
+  const maleOW=SPRITES.maleOW, femOW=SPRITES.femOW
   if(maleOW){
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(maleOW, 4, 14, 16, 22, zx, zy, 16*zs, 22*zs)
+    ctx.drawImage(maleOW, 4, 14, 16, 22, zx, zy, zW, zH)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
-    ctx.fillText('BOY ×6', zx+16*zs/2, zy+22*zs+12)
+    ctx.fillText('BOY', zx+zW/2, zy+zH+12)
   }
   if(femOW){
-    const ox=zx+16*zs+10
+    const ox=zx+zW+10
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(femOW, 4, 2, 16, 22, ox, zy, 16*zs, 22*zs)
+    ctx.drawImage(femOW, 4, 2, 16, 22, ox, zy, zW, zH)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
-    ctx.fillText('GIRL ×6', ox+16*zs/2, zy+22*zs+12)
+    ctx.fillText('GIRL', ox+zW/2, zy+zH+12)
   }
 }
 
