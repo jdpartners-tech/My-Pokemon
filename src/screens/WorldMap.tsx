@@ -102,15 +102,18 @@ export default function WorldMap() {
     }
 
     // Draw player from sprite sheet — front-facing walking frame, pixelated.
-    // fr_hero.gif:     front row sx=4, sy=14, sw=16, sh=22
-    // fr_heroine.gif:  front row sx=4, sy=2,  sw=16, sh=22
+    // fr_hero.gif:    front-facing sprite starts at sx=28, sy=35, sw=16, sh=22
+    // fr_heroine.gif: front-facing sprite starts at sx=13, sy=14, sw=16, sh=28
     const gender = profile?.gender === 'female' ? 'female' : 'male'
     const isFemale = gender === 'female'
     const rawSheet = OW_SHEETS[gender]
     if (rawSheet.complete && rawSheet.naturalWidth > 0 && !OW_CANVASES[gender]) {
       OW_CANVASES[gender] = applyChromaKey(rawSheet)
     }
-    const sx = 4, sy = isFemale ? 2 : 14, sw = 16, sh = 22
+    const sx = isFemale ? 13 : 28
+    const sy = isFemale ? 14 : 35
+    const sw = 16
+    const sh = isFemale ? 28 : 22
     const dw = TILE * 1.4, dh = TILE * 1.8
     const dx = hw * TILE + TILE / 2 - dw / 2
     const dy = hh * TILE + TILE / 2 - dh / 2

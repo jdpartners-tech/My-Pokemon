@@ -346,14 +346,14 @@ function drawCharMap() {
   const maleOW=SPRITES.maleOW, femOW=SPRITES.femOW
   if(maleOW){
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(maleOW, 4, 14, 16, 22, zx, zy, zW, zH)
+    ctx.drawImage(maleOW, 28, 35, 16, 22, zx, zy, zW, zH)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
     ctx.fillText('BOY', zx+zW/2, zy+zH+12)
   }
   if(femOW){
     const ox=zx+zW+10
     ctx.imageSmoothingEnabled=false
-    ctx.drawImage(femOW, 4, 2, 16, 22, ox, zy, zW, zH)
+    ctx.drawImage(femOW, 13, 14, 16, 28, ox, zy, zW, zH)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
     ctx.fillText('GIRL', ox+zW/2, zy+zH+12)
   }
@@ -398,7 +398,7 @@ function drawMapCanvas(id, img, srcX, srcY) {
 }
 
 // ── SECTION 2: CHARACTERS — both sprite sheets side by side ──────────────────
-function drawSheetPanel(ctx, img, x, y, w, h, label, highlightY) {
+function drawSheetPanel(ctx, img, x, y, w, h, label, highlightY, highlightX=4) {
   ctx.fillStyle='#78b8d8'; ctx.fillRect(x,y,w,h)  // light blue bg like GBA
 
   if(img) {
@@ -408,8 +408,8 @@ function drawSheetPanel(ctx, img, x, y, w, h, label, highlightY) {
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(img, x, y, w, sh)
 
-    // Red highlight box around the front-facing walking sprite row
-    const hx = x + 4*scale, hy = y + highlightY*scale
+    // Red highlight box around the front-facing walking sprite
+    const hx = x + highlightX*scale, hy = y + highlightY*scale
     const hw = 16*scale, hh = 22*scale
     ctx.strokeStyle='#ff4040'; ctx.lineWidth=2
     ctx.strokeRect(hx-1, hy-1, hw+2, hh+2)
@@ -418,7 +418,7 @@ function drawSheetPanel(ctx, img, x, y, w, h, label, highlightY) {
     const zW=16*4, zH=22*4
     const zx=x+w-zW-6, zy=y+h-zH-18
     ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(zx-2,zy-2,zW+4,zH+4)
-    ctx.drawImage(img, 4, highlightY, 16, 22, zx, zy, zW, zH)
+    ctx.drawImage(img, highlightX, highlightY, 16, 22, zx, zy, zW, zH)
     ctx.fillStyle='#ffd700'; ctx.font='8px Courier New'; ctx.textAlign='center'
     ctx.fillText('×4', zx+zW/2, zy+zH+11)
   }
@@ -437,10 +437,10 @@ function drawCharacters() {
   ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,CW,CH)
 
   const pw=(CW-30)/2, ph=CH-10
-  // Male: front-facing walking sprite is at row y≈14 in fr_hero.gif
-  drawSheetPanel(ctx, SPRITES.maleSheet,  10,     5, pw, ph, 'BOY  — FireRed/Ruby hero (Red)',  14)
-  // Female: front-facing walking sprite at row y≈2 in fr_heroine.gif
-  drawSheetPanel(ctx, SPRITES.femSheet,   20+pw,  5, pw, ph, 'GIRL — FireRed heroine (Leaf)',    2)
+  // Male: front-facing walking sprite starts at sx=28, sy=35
+  drawSheetPanel(ctx, SPRITES.maleSheet,  10,     5, pw, ph, 'BOY  — FireRed/Ruby hero (Red)',  35, 28)
+  // Female: front-facing walking sprite starts at sx=13, sy=14
+  drawSheetPanel(ctx, SPRITES.femSheet,   20+pw,  5, pw, ph, 'GIRL — FireRed heroine (Leaf)',   14, 13)
 }
 
 // ── BATTLE SCENE ─────────────────────────────────────────────────────────────
