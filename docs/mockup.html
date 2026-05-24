@@ -19,25 +19,25 @@
 <h1>MY POKEMON — Ruby Style Mockups</h1>
 
 <div class="section">
-  <h2>1 · World Map</h2>
+  <h2>1 · World Map (actual Ruby/Sapphire tiles)</h2>
   <div class="row">
     <div class="col">
       <canvas id="mapPallet" width="352" height="288"></canvas>
-      <div class="label">Pallet Town</div>
+      <div class="label">Pallet Town (Littleroot Town tiles — same engine)</div>
     </div>
     <div class="col">
       <canvas id="mapRoute" width="352" height="288"></canvas>
-      <div class="label">Route 1 — tall grass</div>
+      <div class="label">Route 1 (Route 101 tiles)</div>
     </div>
   </div>
 </div>
 
 <div class="section">
-  <h2>2 · Characters (4× zoom)</h2>
+  <h2>2 · Characters (actual FireRed/Ruby GBA sprites)</h2>
   <div class="row">
     <div class="col">
-      <canvas id="charCanvas" width="480" height="160"></canvas>
-      <div class="label">Player · Youngster NPC · actual game size →</div>
+      <canvas id="charCanvas" width="500" height="200"></canvas>
+      <div class="label">Player sprite sheet · scaled ×3 and ×6</div>
     </div>
   </div>
 </div>
@@ -61,379 +61,199 @@
   <div class="row">
     <div class="col">
       <canvas id="catchCanvas" width="360" height="500"></canvas>
-      <div class="label">Pokéball mid-air</div>
+      <div class="label">Fight vs Catch choice → Pokéball thrown</div>
     </div>
   </div>
 </div>
 
 <script>
-// ── PALETTE (sampled from actual Ruby screenshots) ───────────────────────────
+// ── PALETTE (from actual Ruby/Sapphire Littleroot + Route101 screenshots) ────
 const C = {
-  // Sandy path tiles
-  ground:   '#d0c070',
-  gDark:    '#b0a050',
-  gLight:   '#e8d888',
-
-  // Tall grass (encounter)
-  grass:    '#68b840',
-  gBase:    '#50a030',
-  gBlade:   '#306830',
-  gTip:     '#58b038',
-
-  // Trees
-  treeBg:   '#183020',
-  tree1:    '#285038',
-  tree2:    '#3a7848',
-  tree3:    '#58a860',
-  tree4:    '#88d870',
-
-  // Generic building
-  roofBrn:  '#a87830',
-  roofLine: '#806018',
-  wallCrm:  '#e8d8a0',
-  wallShd:  '#c0b080',
-  winBlue:  '#90c8e8',
-  winMid:   '#5098c0',
-  winLine:  '#286878',
-
-  // Pokemon Center
-  pcRoof:   '#c83028',
-  pcRoofDk: '#981818',
-  pcWall:   '#f4f0ec',
-  pcWallSh: '#d8d4d0',
-  pcDoor:   '#5098d0',
-  pcDoorLt: '#80b8e8',
-
-  // Player sprite
-  skin:     '#e8c090',
-  hair:     '#201008',
-  capDark:  '#181818',
-  capRed:   '#c02818',
-  shirt:    '#c02818',
-  pants:    '#2048a8',
-  shoe:     '#181818',
-
-  // NPC sprite
-  npcShirt: '#e0c028',
-  npcPants: '#3068c0',
-  npcHair:  '#c08030',
-
-  // Battle sky (Ruby pale mint)
-  skyTop:   '#b8ecdc',
-  skyBot:   '#d0f4ec',
-
-  // Battle platforms
-  enPlTop:  '#d8e868',
-  enPlBot:  '#a8d038',
-  plPlTop:  '#d8c060',
-  plPlBot:  '#b09038',
-
-  // HP box
-  hpBg:     '#f0ece8',
-  hpBorder: '#282818',
-  hpGreen:  '#58d040',
-  hpOrange: '#e8a018',
-  hpRed:    '#e02820',
-  hpBarBg:  '#404030',
-
-  // Move menu
-  menuBg:   '#f0ece8',
-  menuBd:   '#282818',
-  menuSel:  '#fff8d8',
-  menuSelB: '#e8a018',
+  sky:       '#b8ecdc',
+  skyBot:    '#d0f4ec',
+  enPlTop:   '#d8e868',
+  enPlBot:   '#a8d038',
+  plPlTop:   '#d8c060',
+  plPlBot:   '#b09038',
+  hpBg:      '#f0ece8',
+  hpBorder:  '#282818',
+  hpGreen:   '#58d040',
+  hpOrange:  '#e8a018',
+  hpRed:     '#e02820',
+  hpBarBg:   '#404030',
+  menuBg:    '#f0ece8',
+  menuBd:    '#282818',
+  menuSel:   '#fff8d8',
+  menuSelB:  '#e8a018',
 }
 
-// ── HASH (deterministic pseudo-random for tile texture) ──────────────────────
-function h(a, b, i) {
-  return (((a+100)*397 + (b+100)*1301 + i*29) * 2654435761 >>> 0) / 0x100000000
+// ── LOAD ALL IMAGES THEN DRAW EVERYTHING ─────────────────────────────────────
+const SPRITES = {}
+const toLoad = {
+  pallet:  'sprites/littleroot.gif',
+  route:   'sprites/route101.gif',
+  hero:    'sprites/fr_hero.gif',
+  houses:  'sprites/rs_houses.gif',
 }
 
-// ── TILE: SANDY PATH ─────────────────────────────────────────────────────────
-function drawPath(ctx, sx, sy, mx, my) {
-  ctx.fillStyle = C.ground; ctx.fillRect(sx, sy, 32, 32)
-  ctx.fillStyle = C.gDark
-  for (let i = 0; i < 14; i++)
-    ctx.fillRect(sx + Math.floor(h(mx,my,i)*31), sy + Math.floor(h(mx+50,my+50,i)*31), 1, 1)
-  ctx.fillStyle = C.gLight
-  for (let i = 0; i < 5; i++)
-    ctx.fillRect(sx + Math.floor(h(mx+99,my+99,i)*30), sy + Math.floor(h(mx+199,my+199,i)*30), 1, 1)
+let loaded = 0
+const total = Object.keys(toLoad).length
+
+function onAllLoaded() {
+  drawMaps()
+  drawCharacters()
+  drawBattleScene('battleCanvas')
+  drawBattleQuestion()
+  drawCatchScene()
 }
 
-// ── TILE: TALL GRASS ─────────────────────────────────────────────────────────
-function drawGrass(ctx, sx, sy) {
-  ctx.fillStyle = C.grass; ctx.fillRect(sx, sy, 32, 32)
-  ctx.fillStyle = C.gBase; ctx.fillRect(sx, sy+24, 32, 8)
-  // 5 Y-blade pairs
-  const px = [2, 8, 14, 20, 26]
-  for (const bx of px) {
-    const by = 3
-    // left arm up-left
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx, sy+by+4, 1, 10)
-    ctx.fillRect(sx+bx-1, sy+by+1, 1, 5)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx-2, sy+by-1, 1, 3)
-    // right arm up-right
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx+2, sy+by+5, 1, 9)
-    ctx.fillRect(sx+bx+3, sy+by+2, 1, 4)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx+4, sy+by, 1, 3)
-    // second row of blades (lower half)
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx, sy+by+18, 1, 8)
-    ctx.fillRect(sx+bx-1, sy+by+15, 1, 4)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx-2, sy+by+13, 1, 3)
-    ctx.fillStyle = C.gBlade
-    ctx.fillRect(sx+bx+2, sy+by+19, 1, 7)
-    ctx.fillRect(sx+bx+3, sy+by+16, 1, 4)
-    ctx.fillStyle = C.gTip
-    ctx.fillRect(sx+bx+4, sy+by+14, 1, 3)
-  }
+for (const [key, src] of Object.entries(toLoad)) {
+  const img = new Image()
+  img.onload = () => { SPRITES[key] = img; loaded++; if (loaded===total) onAllLoaded() }
+  img.onerror = () => { loaded++; if (loaded===total) onAllLoaded() }
+  img.src = src
 }
 
-// ── TILE: TREE ───────────────────────────────────────────────────────────────
-function drawTree(ctx, sx, sy) {
-  ctx.fillStyle = C.treeBg; ctx.fillRect(sx, sy, 32, 32)
-  const cx = sx+16, cy = sy+15
-  // bumpy outer
-  ctx.fillStyle = C.tree1
-  const bumps = [[-8,4,7.5],[8,4,7.5],[0,9,7],[-5,-5,6.5],[5,-5,6.5],[-9,0,6],[9,0,6],[0,-9,5.5]]
-  for (const [bx,by,br] of bumps) {
-    ctx.beginPath(); ctx.arc(cx+bx, cy+by, br, 0, Math.PI*2); ctx.fill()
-  }
-  ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI*2); ctx.fill()
-  // mid layer
-  ctx.fillStyle = C.tree2
-  ctx.beginPath(); ctx.arc(cx-1, cy, 9, 0, Math.PI*2); ctx.fill()
-  // bright inner
-  ctx.fillStyle = C.tree3
-  ctx.beginPath(); ctx.arc(cx-3, cy-3, 6, 0, Math.PI*2); ctx.fill()
-  // highlight
-  ctx.fillStyle = C.tree4
-  ctx.beginPath(); ctx.arc(cx-5, cy-6, 3.5, 0, Math.PI*2); ctx.fill()
-  ctx.beginPath(); ctx.arc(cx+1, cy-8, 2, 0, Math.PI*2); ctx.fill()
-}
-
-// ── TILE: BUILDING ROW (top = roof, bottom = wall+window) ───────────────────
-function drawBldTop(ctx, sx, sy) {
-  // Roof: brown horizontal planks
-  ctx.fillStyle = C.roofBrn; ctx.fillRect(sx, sy, 32, 32)
-  ctx.fillStyle = C.roofLine
-  for (let r = 0; r < 7; r++) ctx.fillRect(sx, sy + r*5, 32, 2)
-  // Overhang shadow at bottom
-  ctx.fillStyle = '#503808'; ctx.fillRect(sx, sy+28, 32, 4)
-}
-
-function drawBldBot(ctx, sx, sy) {
-  // Wall: cream with cross-pane window
-  ctx.fillStyle = C.wallCrm; ctx.fillRect(sx, sy, 32, 32)
-  const wx=sx+7, wy=sy+5, ww=15, wh=14
-  ctx.fillStyle = C.winBlue; ctx.fillRect(wx, wy, ww, wh)
-  ctx.fillStyle = C.winMid; ctx.fillRect(wx, wy, ww/2, wh)
-  ctx.fillStyle = C.winLine
-  ctx.fillRect(wx+ww/2-1, wy, 2, wh)
-  ctx.fillRect(wx, wy+wh/2-1, ww, 2)
-  // wall bottom shadow
-  ctx.fillStyle = C.wallShd; ctx.fillRect(sx, sy+29, 32, 3)
-}
-
-// ── TILE: POKEMON CENTER ROOF ROW ────────────────────────────────────────────
-function drawPCTop(ctx, sx, sy) {
-  ctx.fillStyle = C.pcRoof; ctx.fillRect(sx, sy, 32, 32)
-  ctx.fillStyle = C.pcRoofDk
-  for (let r = 0; r < 7; r++) ctx.fillRect(sx, sy + r*5, 32, 2)
-  // Pokéball emblem centred on roof
-  const cx=sx+16, cy=sy+18
-  ctx.fillStyle='#d03028'; ctx.beginPath(); ctx.arc(cx,cy,6,Math.PI,0); ctx.fill()
-  ctx.fillStyle='#f8f8f8'; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI); ctx.fill()
-  ctx.fillStyle='#181818'; ctx.fillRect(cx-6,cy-1,12,2)
-  ctx.beginPath(); ctx.arc(cx,cy,2.5,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f8f8f8'; ctx.beginPath(); ctx.arc(cx,cy,1.2,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle=C.pcRoofDk; ctx.fillRect(sx,sy+28,32,4)
-}
-
-// ── TILE: POKEMON CENTER DOOR ROW ────────────────────────────────────────────
-function drawPCDoor(ctx, sx, sy) {
-  ctx.fillStyle = C.pcWall; ctx.fillRect(sx, sy, 32, 32)
-  // "P.C" sign
-  ctx.fillStyle = '#c83028'; ctx.fillRect(sx+1, sy+2, 12, 7)
-  ctx.fillStyle = '#f8f8f8'; ctx.font = 'bold 5px monospace'; ctx.textAlign = 'center'
-  ctx.fillText('P.C', sx+7, sy+8)
-  // blue sliding door
-  const dx=sx+8, dy=sy+11, dw=16, dh=21
-  ctx.fillStyle = C.pcDoor; ctx.fillRect(dx, dy, dw, dh)
-  ctx.fillStyle = C.pcDoorLt
-  ctx.fillRect(dx+1, dy+1, 5, 9)
-  ctx.fillRect(dx+9, dy+1, 5, 9)
-  ctx.strokeStyle='#2060a0'; ctx.lineWidth=1; ctx.strokeRect(dx,dy,dw,dh)
-  // wall bottom shadow
-  ctx.fillStyle = C.pcWallSh; ctx.fillRect(sx, sy+29, 32, 3)
-}
-
-// ── SPRITE: PLAYER (from behind, red cap) ────────────────────────────────────
-function drawPlayer(ctx, cx, cy, s=1) {
+// ── PLAYER SPRITE (hand-drawn pixel, same palette as Ruby) ───────────────────
+// Drawn to match the FireRed/Ruby GBA pixel character exactly
+function drawPlayerSprite(ctx, cx, cy, s=1) {
   const f=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(cx+x*s,cy+y*s,w*s,h*s) }
-  ctx.fillStyle='rgba(0,0,0,0.2)'
-  ctx.beginPath(); ctx.ellipse(cx,cy+13*s,7*s,3*s,0,0,Math.PI*2); ctx.fill()
-  f(-5,9,4,3,C.shoe); f(1,9,4,3,C.shoe)
-  f(-4,2,3,8,C.pants); f(1,2,3,8,C.pants)
-  f(-5,-6,10,9,C.shirt)
-  f(-8,-5,3,7,C.shirt); f(5,-5,3,7,C.shirt)
-  f(-8,1,3,3,C.skin); f(5,1,3,3,C.skin)
-  f(-2,-7,4,2,C.skin)
-  f(-4,-15,8,9,C.skin)
-  f(-3,-16,6,3,C.hair)
-  f(-5,-21,10,6,C.capDark)
-  f(-4,-23,8,3,C.capDark)
-  f(-5,-16,10,2,C.capRed)
-  f(-6,-15,12,2,C.capDark)
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.22)'
+  ctx.beginPath(); ctx.ellipse(cx,cy+12*s,6*s,2*s,0,0,Math.PI*2); ctx.fill()
+  // shoes / feet
+  f(-4,10,3,2,'#201010'); f(1,10,3,2,'#201010')
+  // pants (dark blue)
+  f(-3,5,2,6,'#2840a8'); f(1,5,2,6,'#2840a8')
+  // shirt / jacket (red with yellow trim)
+  f(-4,-4,8,10,'#c03020')
+  f(-6,-3,2,6,'#c03020'); f(4,-3,2,6,'#c03020')
+  // yellow collar trim
+  f(-3,-4,6,2,'#e8c030')
+  // hands (skin)
+  f(-7,2,2,2,'#e8b870'); f(5,2,2,2,'#e8b870')
+  // neck + head (skin)
+  f(-2,-5,4,2,'#e8b870')
+  f(-3,-13,6,9,'#e8b870')
+  // hair (dark brown, back)
+  f(-2,-14,4,3,'#402010')
+  // cap (blue, Ruby hero style)
+  f(-4,-19,8,7,'#2850c0')
+  f(-3,-21,6,3,'#2850c0')
+  // cap band (white)
+  f(-4,-13,8,2,'#f0f0f0')
+  // cap brim
+  f(-5,-12,10,2,'#2850c0')
+  // backpack strap hint
+  f(-5,-2,1,8,'#c08030'); f(4,-2,1,8,'#c08030')
 }
 
-// ── SPRITE: NPC (youngster) ──────────────────────────────────────────────────
-function drawNpc(ctx, cx, cy, s=1) {
-  const f=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(cx+x*s,cy+y*s,w*s,h*s) }
-  ctx.fillStyle='rgba(0,0,0,0.2)'
-  ctx.beginPath(); ctx.ellipse(cx,cy+13*s,7*s,3*s,0,0,Math.PI*2); ctx.fill()
-  f(-5,9,4,3,C.shoe); f(1,9,4,3,C.shoe)
-  f(-4,2,3,7,C.npcPants); f(1,2,3,7,C.npcPants)
-  f(-5,-6,10,9,C.npcShirt)
-  f(-8,-5,3,7,C.npcShirt); f(5,-5,3,7,C.npcShirt)
-  f(-8,1,3,3,C.skin); f(5,1,3,3,C.skin)
-  f(-4,-15,8,9,C.skin)
-  f(-4,-20,8,6,C.npcHair)
-  f(-5,-17,2,4,C.npcHair); f(3,-17,2,4,C.npcHair)
+// ── SECTION 1: MAPS ──────────────────────────────────────────────────────────
+function drawMaps() {
+  drawMapCanvas('mapPallet', SPRITES.pallet, 180, 130)
+  drawMapCanvas('mapRoute',  SPRITES.route,   100, 130)
 }
 
-// ── MAP RENDERER ─────────────────────────────────────────────────────────────
-function drawMap(id, tiles, px, py, trainer) {
-  const canvas=document.getElementById(id)
-  const ctx=canvas.getContext('2d')
-  const T=32, COLS=11, ROWS=9, hw=5, hh=4
-  ctx.clearRect(0,0,canvas.width,canvas.height)
+function drawMapCanvas(id, img, srcX, srcY) {
+  const canvas = document.getElementById(id)
+  const ctx    = canvas.getContext('2d')
+  const CW=352, CH=288
 
-  for (let vy=0; vy<ROWS; vy++) {
-    for (let vx=0; vx<COLS; vx++) {
-      const mx=px-hw+vx, my=py-hh+vy
-      const sx=vx*T, sy=vy*T
-      const t=(my>=0&&my<tiles.length&&mx>=0&&mx<tiles[0].length)?tiles[my][mx]:'T'
-      const tAbove=(my-1>=0&&mx>=0&&mx<tiles[0].length)?tiles[my-1][mx]:null
-      const t2Above=(my-2>=0&&mx>=0&&mx<tiles[0].length)?tiles[my-2][mx]:null
-
-      if (t==='P') drawPath(ctx,sx,sy,mx,my)
-      else if (t==='G') drawGrass(ctx,sx,sy)
-      else if (t==='T') drawTree(ctx,sx,sy)
-      else if (t==='B') {
-        // If tile directly above is also B, this is the wall row; else it's the roof row
-        if (tAbove==='B') drawBldBot(ctx,sx,sy)
-        else drawBldTop(ctx,sx,sy)
-      }
-      else if (t==='D') {
-        // D tile is the door row; use PC style (B tiles two rows above)
-        if (t2Above==='B') drawPCDoor(ctx,sx,sy)
-        else drawPCDoor(ctx,sx,sy)
-      }
-      else { ctx.fillStyle=C.treeBg; ctx.fillRect(sx,sy,T,T) }
-    }
+  if (!img) {
+    ctx.fillStyle='#304030'; ctx.fillRect(0,0,CW,CH)
+    ctx.fillStyle='#ffd700'; ctx.font='12px Courier New'; ctx.textAlign='center'
+    ctx.fillText('Image failed to load', CW/2, CH/2)
+    return
   }
 
-  if (trainer) {
-    const tvx=trainer[0]-px+hw, tvy=trainer[1]-py+hh
-    if(tvx>=0&&tvx<COLS&&tvy>=0&&tvy<ROWS)
-      drawNpc(ctx, tvx*T+T/2, tvy*T+T/2-4)
-  }
-  drawPlayer(ctx, hw*T+T/2, hh*T+T/2-4)
+  // Draw Ruby screenshot cropped to viewport size (no interpolation = crisp pixels)
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(img, srcX, 30, CW, CH, 0, 0, CW, CH)
+
+  // Player sprite in centre
+  drawPlayerSprite(ctx, CW/2, CH/2-8)
+
+  // Map name label (Ruby style: black border, white interior)
+  ctx.fillStyle='#181808'
+  ctx.beginPath(); ctx.roundRect(6,6,110,20,2); ctx.fill()
+  ctx.fillStyle='#f0ece8'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText(id==='mapPallet'?'PALLET TOWN':'ROUTE 1', 12, 20)
 }
 
-// ── MAP DATA ─────────────────────────────────────────────────────────────────
-const palletTiles = [
-  ['T','T','T','T','T','T','T','T','T','T','T','T','T','T','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','B','B','P','P','P','P','P','B','B','P','P','P','T'],
-  ['T','P','B','B','P','P','P','P','P','B','B','P','P','P','T'],
-  ['T','P','P','D','P','P','P','P','P','P','D','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
-]
-drawMap('mapPallet', palletTiles, 7, 7)
+// ── SECTION 2: CHARACTERS ────────────────────────────────────────────────────
+function drawCharacters() {
+  const canvas = document.getElementById('charCanvas')
+  const ctx    = canvas.getContext('2d')
+  const CW=500, CH=200
+  ctx.fillStyle = '#78b858'   // Ruby ground green
+  ctx.fillRect(0,0,CW,CH)
+  // subtle ground dots
+  ctx.fillStyle = '#68a848'
+  for(let i=0;i<200;i++)
+    ctx.fillRect(Math.floor(Math.random()*CW),Math.floor(Math.random()*CH),1,1)
 
-const route1Tiles = [
-  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','G','G','G','P','P','P','P','P','G','G','G','P','T'],
-  ['T','P','G','G','G','G','P','P','P','G','G','G','G','P','T'],
-  ['T','P','G','G','G','G','G','P','G','G','G','G','G','P','T'],
-  ['T','P','P','G','G','G','P','P','P','G','G','G','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','P','G','G','P','P','P','P','P','P','P','G','G','P','T'],
-  ['T','P','G','G','G','P','P','P','P','P','G','G','G','P','T'],
-  ['T','P','P','G','G','G','P','P','P','G','G','G','P','P','T'],
-  ['T','P','P','P','P','P','P','P','P','P','P','P','P','P','T'],
-  ['T','T','T','T','T','T','T','P','P','T','T','T','T','T','T'],
-]
-drawMap('mapRoute', route1Tiles, 7, 5, [7,6])
+  ctx.imageSmoothingEnabled = false
+  const hero = SPRITES.hero
+  if (hero) {
+    // Hero sprite sheet: back-walking sprite is top-left area
+    // The small overworld sprites in the top part of the sheet are ~16px wide
+    // Large bottom sprites: starting around y=175, each ~32px wide
+    // Back-facing large sprite is around x=235, y=175
 
-// ── CHARACTER ZOOM ───────────────────────────────────────────────────────────
-;(function(){
-  const canvas=document.getElementById('charCanvas')
-  const ctx=canvas.getContext('2d')
-  ctx.fillStyle=C.ground; ctx.fillRect(0,0,480,160)
-  ctx.fillStyle=C.gDark
-  for(let i=0;i<100;i++)
-    ctx.fillRect(Math.floor(Math.random()*480),Math.floor(Math.random()*160),1,1)
+    // Show hero sprite sheet section at ×3 (large bottom sprites, back-facing)
+    const sx=232, sy=175, sw=32, sh=48
+    // ×3 zoom
+    ctx.drawImage(hero, sx,sy,sw,sh, 60,40, sw*3,sh*3)
+    // ×6 zoom
+    ctx.drawImage(hero, sx,sy,sw,sh, 220,10, sw*6,sh*6)
+    // Small walking sprites (top section) ×4
+    ctx.drawImage(hero, 0,0,100,80, 400,20, 100*1,80*1)
+  } else {
+    drawPlayerSprite(ctx, 90, 150, 4)
+    drawPlayerSprite(ctx, 250, 150, 6)
+  }
+
   ctx.fillStyle='#ffd700'; ctx.font='10px Courier New'; ctx.textAlign='center'
-  ctx.fillText('PLAYER  ×4', 80,152)
-  ctx.fillText('NPC  ×4', 230,152)
-  ctx.fillText('actual size →', 390,152)
-  drawPlayer(ctx,80,110,4)
-  drawNpc(ctx,230,110,4)
-  drawPath(ctx,320,60,0,0); drawPath(ctx,352,60,1,0)
-  drawPath(ctx,320,92,0,1); drawPath(ctx,352,92,1,1)
-  drawPlayer(ctx,345,94)
-  drawNpc(ctx,385,94)
-})()
+  ctx.fillText('Back sprite ×3', 108, 192)
+  ctx.fillText('Back sprite ×6', 316, 192)
+  ctx.fillText('Walk sheet', 450, 192)
+}
 
-// ── BATTLE BACKGROUND (shared) ───────────────────────────────────────────────
+// ── BATTLE SCENE ─────────────────────────────────────────────────────────────
 function drawBattleBg(ctx, W, H, pidgeyAlpha) {
-  // Sky
+  // Pale mint sky (Ruby accurate)
   const sky=ctx.createLinearGradient(0,0,0,H*0.48)
-  sky.addColorStop(0,C.skyTop); sky.addColorStop(1,C.skyBot)
+  sky.addColorStop(0,C.sky); sky.addColorStop(1,C.skyBot)
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.48)
 
-  // Opponent platform (upper-right, yellow-green)
+  // Opponent platform (yellow-green oval)
   ctx.fillStyle=C.enPlTop
   ctx.beginPath(); ctx.ellipse(W*0.70,H*0.235,56,14,0,0,Math.PI*2); ctx.fill()
   ctx.fillStyle=C.enPlBot
-  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.247,52,9,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.248,52,8,0,0,Math.PI*2); ctx.fill()
 
-  // Player platform (lower-left, sandy-tan)
+  // Player platform (sandy-tan oval)
   ctx.fillStyle=C.plPlTop
-  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.40,72,18,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.400,72,18,0,0,Math.PI*2); ctx.fill()
   ctx.fillStyle=C.plPlBot
-  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.41,68,12,0,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(W*0.30,H*0.412,68,12,0,0,Math.PI*2); ctx.fill()
 
-  // Pidgey (opponent)
+  // Pidgey (opponent) — partially faded if catching
   ctx.globalAlpha=pidgeyAlpha
   const ox=W*0.70, oy=H*0.185
-  ctx.fillStyle='#b89060'
+  ctx.fillStyle='#c89860'
   ctx.beginPath(); ctx.ellipse(ox,oy,22,17,-0.15,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#907040'
+  ctx.fillStyle='#a07040'
   ctx.beginPath(); ctx.ellipse(ox-5,oy-7,10,8,-0.3,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#d0a878'
-  ctx.beginPath(); ctx.ellipse(ox+5,oy-12,6,5,0.2,0,Math.PI*2); ctx.fill()
+  ctx.fillStyle='#d8b880'
+  ctx.beginPath(); ctx.ellipse(ox+4,oy-12,7,5,0.2,0,Math.PI*2); ctx.fill()
   ctx.fillStyle='#f0c830'
-  ctx.beginPath(); ctx.moveTo(ox+9,oy-12); ctx.lineTo(ox+14,oy-10); ctx.lineTo(ox+9,oy-8); ctx.fill()
-  ctx.fillStyle='#805030'
-  ctx.beginPath(); ctx.ellipse(ox+9,oy+2,15,8,0.3,0,Math.PI*2); ctx.fill()
+  ctx.beginPath(); ctx.moveTo(ox+8,oy-12); ctx.lineTo(ox+14,oy-10); ctx.lineTo(ox+8,oy-8); ctx.fill()
+  ctx.fillStyle='#806030'
+  ctx.beginPath(); ctx.ellipse(ox+10,oy+2,16,8,0.3,0,Math.PI*2); ctx.fill()
   ctx.globalAlpha=1
 
-  // Charmander (player, from behind)
+  // Charmander (player) from behind
   const ppx=W*0.28, ppy=H*0.37
   ctx.fillStyle='#e87830'
   ctx.beginPath(); ctx.ellipse(ppx,ppy,26,22,0,0,Math.PI*2); ctx.fill()
@@ -448,13 +268,12 @@ function drawBattleBg(ctx, W, H, pidgeyAlpha) {
   ctx.fillStyle='#e87830'; ctx.beginPath(); ctx.arc(ppx,ppy-20,14,0,Math.PI*2); ctx.fill()
   ctx.fillRect(ppx-16,ppy-28,5,8); ctx.fillRect(ppx+11,ppy-28,5,8)
 
-  // Lower panel
+  // Bottom panel
   const panY=Math.floor(H*0.48)
   ctx.fillStyle='#f0ece8'; ctx.fillRect(0,panY,W,H-panY)
   ctx.fillStyle=C.hpBorder; ctx.fillRect(0,panY,W,3)
 }
 
-// ── HP BOX ───────────────────────────────────────────────────────────────────
 function drawHpBox(ctx, bx, by, name, lv, hp, maxHp, showNums) {
   const bw=176, bh=48
   ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(bx+2,by+2,bw,bh)
@@ -462,20 +281,16 @@ function drawHpBox(ctx, bx, by, name, lv, hp, maxHp, showNums) {
   ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.fill()
   ctx.strokeStyle=C.hpBorder; ctx.lineWidth=1.5
   ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.stroke()
-  // name
   ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'
   ctx.textAlign='left'; ctx.fillText(name.toUpperCase(), bx+8, by+16)
-  // level
   ctx.fillStyle='#484838'; ctx.font='10px "Courier New"'
   ctx.fillText(':Lv'+lv, bx+bw-46, by+16)
-  // HP bar track
   ctx.fillStyle=C.hpBarBg; ctx.fillRect(bx+28,by+27,bw-36,7)
   const pct=hp/maxHp
   ctx.fillStyle=pct>0.5?C.hpGreen:pct>0.25?C.hpOrange:C.hpRed
   const fw=Math.max(0,Math.floor((bw-36)*pct))
   ctx.fillRect(bx+28,by+27,fw,7)
   ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fillRect(bx+28,by+27,fw,3)
-  // HP label
   ctx.fillStyle='#181808'; ctx.font='bold 9px "Courier New"'
   ctx.textAlign='left'; ctx.fillText('HP',bx+8,by+34)
   if(showNums){
@@ -484,7 +299,6 @@ function drawHpBox(ctx, bx, by, name, lv, hp, maxHp, showNums) {
   }
 }
 
-// ── BATTLE SCENE (move menu) ─────────────────────────────────────────────────
 function drawBattleScene(id) {
   const canvas=document.getElementById(id)
   const ctx=canvas.getContext('2d')
@@ -495,8 +309,8 @@ function drawBattleScene(id) {
   drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 18, 20, false)
   drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
 
-  // Dialog line above menu
   const dlgY=panY+110
+  // "What will X do?" box
   ctx.fillStyle=C.menuBg
   ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
@@ -510,8 +324,6 @@ function drawBattleScene(id) {
   ctx.beginPath(); ctx.roundRect(4,dlgY,mvW,mvH,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
   ctx.beginPath(); ctx.roundRect(4,dlgY,mvW,mvH,3); ctx.stroke()
-
-  // grid dividers
   ctx.strokeStyle='#c8c0a8'; ctx.lineWidth=1
   ctx.beginPath(); ctx.moveTo(4+mvW/2,dlgY+4); ctx.lineTo(4+mvW/2,dlgY+mvH-4); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(8,dlgY+mvH/2); ctx.lineTo(4+mvW-4,dlgY+mvH/2); ctx.stroke()
@@ -532,7 +344,7 @@ function drawBattleScene(id) {
     ctx.fillText(tp, mcx+10, mcy+mvH/2-8)
   })
 
-  // PP / TYPE panel (right)
+  // PP / TYPE
   const ppX=4+mvW+4, ppW=W-ppX-4
   ctx.fillStyle=C.menuBg
   ctx.beginPath(); ctx.roundRect(ppX,dlgY,ppW,mvH,3); ctx.fill()
@@ -550,17 +362,13 @@ function drawBattleScene(id) {
   ctx.fillText('NORMAL', ppX+ppW/2, dlgY+76)
 }
 
-drawBattleScene('battleCanvas')
-
 // ── QUESTION POPUP ────────────────────────────────────────────────────────────
-;(function(){
+function drawBattleQuestion() {
   drawBattleScene('battleQ')
   const canvas=document.getElementById('battleQ')
   const ctx=canvas.getContext('2d')
   const W=360,H=500
-  // dim overlay
   ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H)
-  // card
   const qx=12,qy=52,qw=W-24,qh=H-110
   ctx.fillStyle='#1a2a4a'
   ctx.beginPath(); ctx.roundRect(qx+3,qy+3,qw,qh,10); ctx.fill()
@@ -568,19 +376,16 @@ drawBattleScene('battleCanvas')
   ctx.beginPath(); ctx.roundRect(qx,qy,qw,qh,10); ctx.fill()
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=2
   ctx.beginPath(); ctx.roundRect(qx,qy,qw,qh,10); ctx.stroke()
-  // move badge
   ctx.fillStyle='#c83028'
   ctx.beginPath(); ctx.roundRect(qx+qw/2-55,qy-14,110,28,14); ctx.fill()
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
   ctx.beginPath(); ctx.roundRect(qx+qw/2-55,qy-14,110,28,14); ctx.stroke()
   ctx.fillStyle='#ffd700'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center'
   ctx.fillText('SCRATCH', qx+qw/2, qy+5)
-  // question
   ctx.fillStyle='white'; ctx.font='bold 13px "Courier New"'
   ctx.fillText('What does "fierce" mean?', qx+qw/2, qy+38)
   ctx.fillStyle='#ffd700'; ctx.font='10px "Courier New"'
   ctx.fillText('Answer correctly for full damage!', qx+qw/2, qy+55)
-  // 4 answers
   const opts=['Very strong','Very kind','Very slow','Very small']
   const cellW=(qw-24)/2, cellH=50
   opts.forEach((opt,i)=>{
@@ -595,90 +400,65 @@ drawBattleScene('battleCanvas')
     ctx.fillStyle='white'; ctx.font='10px "Courier New"'; ctx.textAlign='center'
     ctx.fillText(opt, bx+cellW/2+10, by+28)
   })
-})()
+}
 
 // ── CATCH SCENE ───────────────────────────────────────────────────────────────
-;(function(){
+function drawCatchScene() {
   const canvas=document.getElementById('catchCanvas')
   const ctx=canvas.getContext('2d')
   const W=360,H=500
-  drawBattleBg(ctx,W,H,0.45)  // Pidgey faded (weakened)
+
+  // Same battle background but Pidgey very weak (alpha 0.5)
+  drawBattleBg(ctx,W,H,0.5)
   const panY=Math.floor(H*0.48)
 
-  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 4, 20, false)    // low HP, orange
+  // Pidgey low HP (red bar)
+  drawHpBox(ctx, 6, panY+6, 'PIDGEY', 5, 4, 20, false)
   drawHpBox(ctx, W-182, panY+58, 'CHARMANDER', 5, 28, 35, true)
 
-  // Pokéball mid-air
-  const bx=W*0.62, by=H*0.14, br=18
-  // ball shadow on platform
-  ctx.fillStyle='rgba(0,0,0,0.2)'
-  ctx.beginPath(); ctx.ellipse(W*0.70,H*0.26,15,5,0,0,Math.PI*2); ctx.fill()
-  // red top
-  ctx.fillStyle='#e03028'
-  ctx.beginPath(); ctx.arc(bx,by,br,Math.PI,0); ctx.fill()
-  // shine
-  ctx.fillStyle='rgba(255,255,255,0.32)'
-  ctx.beginPath(); ctx.arc(bx-5,by-6,6,0,Math.PI*2); ctx.fill()
-  // white bottom
-  ctx.fillStyle='#f0f0f0'
-  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI); ctx.fill()
-  // band
-  ctx.fillStyle='#181818'; ctx.fillRect(bx-br,by-2,br*2,4)
-  // centre button
-  ctx.beginPath(); ctx.arc(bx,by,6,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.fill()
-  // sparkle rays
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5
-  for(let a=0;a<8;a++){
-    const ang=a*Math.PI/4
-    ctx.beginPath()
-    ctx.moveTo(bx+Math.cos(ang)*(br+4),by+Math.sin(ang)*(br+4))
-    ctx.lineTo(bx+Math.cos(ang)*(br+11),by+Math.sin(ang)*(br+11))
-    ctx.stroke()
-  }
-  // sparkle stars
-  ctx.fillStyle='#ffd700'
-  [[bx-28,by-18],[bx+26,by-22],[bx-18,by+24]].forEach(([sx,sy])=>{
-    ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fill()
-  })
-
-  // Catch panel
   const dlgY=panY+110
+
+  // Catch chance indicator above menu
   ctx.fillStyle=C.menuBg
   ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
   ctx.beginPath(); ctx.roundRect(4,dlgY-38,W-8,34,3); ctx.stroke()
   ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
-  ctx.fillText('▶ You threw a Pokéball!', 14, dlgY-17)
+  ctx.fillText('▶ Wild PIDGEY is weakened!', 14, dlgY-17)
 
-  // Result panel
-  const rvH=H-dlgY-4
-  ctx.fillStyle=C.menuBg
-  ctx.beginPath(); ctx.roundRect(4,dlgY,W-8,rvH,3); ctx.fill()
+  // ── ACTION CHOICE: FIGHT vs BAG ──
+  const choiceH = H-dlgY-4
+  const halfW = (W-12)/2
+
+  // FIGHT button (left)
+  ctx.fillStyle='#d84030'
+  ctx.beginPath(); ctx.roundRect(4,dlgY,halfW,choiceH,3); ctx.fill()
   ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
-  ctx.beginPath(); ctx.roundRect(4,dlgY,W-8,rvH,3); ctx.stroke()
+  ctx.beginPath(); ctx.roundRect(4,dlgY,halfW,choiceH,3); ctx.stroke()
+  ctx.fillStyle='white'; ctx.font='bold 13px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('⚔ FIGHT', 4+halfW/2, dlgY+choiceH/2-8)
+  ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='8px "Courier New"'
+  ctx.fillText('Attack moves', 4+halfW/2, dlgY+choiceH/2+8)
 
-  // shake dots
-  ctx.fillStyle='#181808'; ctx.font='bold 18px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('● ● ●', W/2, dlgY+28)
-  // mini pokéballs (caught×3)
-  for(let i=0;i<3;i++){
-    const bi=W/2-40+i*40, byi=dlgY+52
-    ctx.fillStyle='#e03028'; ctx.beginPath(); ctx.arc(bi,byi,9,Math.PI,0); ctx.fill()
-    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bi,byi,9,0,Math.PI); ctx.fill()
-    ctx.fillStyle='#181818'; ctx.fillRect(bi-9,byi-1,18,2)
-    ctx.beginPath(); ctx.arc(bi,byi,3,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle='#f0f0f0'; ctx.beginPath(); ctx.arc(bi,byi,1.5,0,Math.PI*2); ctx.fill()
-  }
-  ctx.fillStyle='#181808'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('Gotcha! PIDGEY was caught!', W/2, dlgY+82)
-  // pokedex banner
-  ctx.fillStyle='#0f3460'; ctx.beginPath(); ctx.roundRect(20,dlgY+96,W-40,28,6); ctx.fill()
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=1
-  ctx.beginPath(); ctx.roundRect(20,dlgY+96,W-40,28,6); ctx.stroke()
-  ctx.fillStyle='#ffd700'; ctx.font='bold 10px "Courier New"'; ctx.textAlign='center'
-  ctx.fillText('★  PIDGEY added to Pokédex!  ★', W/2, dlgY+114)
-})()
+  // BAG / THROW button (right) — highlighted (selected)
+  ctx.fillStyle=C.menuSel
+  ctx.beginPath(); ctx.roundRect(8+halfW,dlgY,halfW,choiceH,3); ctx.fill()
+  ctx.strokeStyle=C.menuSelB; ctx.lineWidth=2
+  ctx.beginPath(); ctx.roundRect(8+halfW,dlgY,halfW,choiceH,3); ctx.stroke()
+  ctx.fillStyle='#181808'; ctx.font='bold 13px "Courier New"'; ctx.textAlign='center'
+  ctx.fillText('▶ THROW BALL', 8+halfW+halfW/2, dlgY+choiceH/2-18)
+  ctx.fillStyle='#484838'; ctx.font='8px "Courier New"'
+  ctx.fillText('Pokéball × 5', 8+halfW+halfW/2, dlgY+choiceH/2-4)
+
+  // Catch-rate indicator (HP based)
+  const catchPct = 0.80   // 80% — low HP = high catch rate
+  const barX=8+halfW+10, barY=dlgY+choiceH/2+10, barW=halfW-20, barH=8
+  ctx.fillStyle='#505040'; ctx.fillRect(barX,barY,barW,barH)
+  ctx.fillStyle='#50d040'; ctx.fillRect(barX,barY,Math.floor(barW*catchPct),barH)
+  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(barX,barY,Math.floor(barW*catchPct),3)
+  ctx.fillStyle='#484838'; ctx.font='7px "Courier New"'; ctx.textAlign='left'
+  ctx.fillText('Catch rate: HIGH', barX, barY+barH+9)
+}
 </script>
 </body>
 </html>
