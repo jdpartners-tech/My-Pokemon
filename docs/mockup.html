@@ -119,9 +119,9 @@ function onAllLoaded() {
   drawCharSelect()
   drawBattleScene('battleCanvas')
   drawBattleQuestion()
-  drawBattleAnim()
+  startBattleAnim()
   drawCatchScene()
-  drawBallThrow()
+  startBallThrow()
 }
 
 for (const [key, src] of Object.entries(toLoad)) {
@@ -341,18 +341,18 @@ function drawBattleBg(ctx, W, H, pidgeyAlpha, pidgeyOffX=0, charOffX=0) {
   ctx.globalAlpha = pidgeyAlpha
   const pidgey = SPRITES.pidgeyF
   if (pidgey) {
-    const sz = 80
+    const sz = 130
     ctx.imageSmoothingEnabled = false
-    ctx.drawImage(pidgey, W*0.72 - sz/2 + pidgeyOffX, H*0.08, sz, sz)
+    ctx.drawImage(pidgey, W*0.72 - sz/2 + pidgeyOffX, H*0.04, sz, sz)
   }
   ctx.globalAlpha = 1
 
   // Charmander back sprite (player, bottom-LEFT)
   const charBack = SPRITES.charBack
   if (charBack) {
-    const sz = 96
+    const sz = 150
     ctx.imageSmoothingEnabled = false
-    ctx.drawImage(charBack, W*0.25 - sz/2 + charOffX, H*0.24, sz, sz)
+    ctx.drawImage(charBack, W*0.25 - sz/2 + charOffX, H*0.20, sz, sz)
   }
 
   // Bottom panel
@@ -548,153 +548,162 @@ function drawCatchScene() {
   ctx.fillText('Catch rate: HIGH', barX, barY+barH+9)
 }
 
-// ── BATTLE ANIMATION FRAMES ───────────────────────────────────────────────────
-function drawBattleAnim() {
+// ── SHARED: POKÉBALL DRAWING ──────────────────────────────────────────────────
+function drawPokeball(ctx, bx, by, r, open=false, sparkleAngle=0) {
+  ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2)
+  ctx.fillStyle=open?'#888':'#e82020'; ctx.fill()
+  ctx.strokeStyle='#181818'; ctx.lineWidth=Math.max(1,r*0.15); ctx.stroke()
+  ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI); ctx.fillStyle='#f8f8f8'; ctx.fill()
+  ctx.beginPath(); ctx.moveTo(bx-r,by); ctx.lineTo(bx+r,by)
+  ctx.strokeStyle='#181818'; ctx.lineWidth=Math.max(1,r*0.15); ctx.stroke()
+  ctx.beginPath(); ctx.arc(bx,by,r*0.28,0,Math.PI*2)
+  ctx.fillStyle='#f8f8f8'; ctx.fill()
+  ctx.strokeStyle='#181818'; ctx.lineWidth=1; ctx.stroke()
+  if(open){
+    ctx.fillStyle='#ffd700'
+    for(let a=0;a<8;a++){
+      const ang=sparkleAngle+a/8*Math.PI*2, dist=r*1.7
+      ctx.beginPath(); ctx.arc(bx+Math.cos(ang)*dist,by+Math.sin(ang)*dist,r*0.18,0,Math.PI*2); ctx.fill()
+    }
+  }
+}
+
+// ── BATTLE ANIMATION (live rAF) ───────────────────────────────────────────────
+function startBattleAnim() {
   const canvas=document.getElementById('battleAnim')
   const ctx=canvas.getContext('2d')
   const W=360, H=500
-  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H)
-
   const panY=Math.floor(H*0.48)
-  const fH=Math.floor((H-20)/3)-8  // height per frame strip
+  // cycle phases (seconds): idle, attack, snap, shake ×3, hp-drain, pause
+  const PHASES=[1.2, 0.22, 0.12, 0.55, 0.55, 0.8]
+  const TOTAL=PHASES.reduce((s,x)=>s+x,0)
+  let t0=null
 
-  const frames=[
-    { label:'1. ATTACK — Charmander lurches forward', charOffX:22, pidgeyOffX:0,  pidgeyA:1.0, logTxt:'Charmander used SCRATCH!' },
-    { label:'2. HIT — Pidgey shakes (damage flash)',  charOffX:0,  pidgeyOffX:-10, pidgeyA:0.5, logTxt:'It\'s super effective!' },
-    { label:'3. HP DRAINS — bar animates down',       charOffX:0,  pidgeyOffX:0,  pidgeyA:1.0, logTxt:'Pidgey lost 12 HP' },
-  ]
+  function phaseOf(t){
+    let acc=0
+    for(let i=0;i<PHASES.length;i++){
+      acc+=PHASES[i]; if(t<acc) return {phase:i, p:(acc-PHASES[i]===0?t:(t-(acc-PHASES[i]))/PHASES[i])}
+    }
+    return {phase:PHASES.length-1,p:1}
+  }
 
-  frames.forEach((fr, i) => {
-    const fy = 10+i*(fH+8)
-    // mini battle scene
-    ctx.save()
-    ctx.beginPath(); ctx.rect(0,fy,W,fH); ctx.clip()
-    ctx.translate(0, fy - Math.floor(H*0.12))   // shift scene up to fit in strip
-    ctx.scale(0.78, 0.78)
-    drawBattleBg(ctx, W/0.78, H/0.78, fr.pidgeyA, fr.pidgeyOffX, fr.charOffX)
-    // HP boxes (Ruby layout, scaled coords)
-    drawHpBox(ctx, 6, 10, 'PIDGEY', 5, i===2?6:18, 20, false)
-    drawHpBox(ctx, W/0.78-182, panY/0.78-58, 'CHARMANDER', 5, 28, 35, true)
-    ctx.restore()
+  function frame(ts){
+    if(!t0) t0=ts
+    const elapsed=((ts-t0)/1000)%TOTAL
+    const {phase,p}=phaseOf(elapsed)
 
-    // frame label overlay
-    ctx.fillStyle='rgba(0,0,0,0.55)'
-    ctx.fillRect(0, fy+fH-22, W, 22)
-    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'; ctx.textAlign='left'
-    ctx.fillText(fr.label, 8, fy+fH-7)
-  })
+    let charOffX=0, pidgeyOffX=0, pidgeyAlpha=1
+    let hpPidgey=18, logMsg='▶ What will CHARMANDER do?'
 
-  ctx.fillStyle='#4ecdc4'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
-  ctx.fillText('Battle Animation Storyboard', W/2, H-4)
+    if(phase===1){charOffX=p*26; logMsg='▶ Charmander used SCRATCH!'}
+    else if(phase===2){charOffX=(1-p)*26; pidgeyAlpha=p<0.5?0.3:1; logMsg='▶ Charmander used SCRATCH!'}
+    else if(phase===3){pidgeyOffX=Math.sin(p*Math.PI*5)*10; logMsg='▶ Pidgey took 12 damage!'}
+    else if(phase===4){hpPidgey=Math.round(18-p*12); logMsg='▶ Pidgey has '+(18-Math.round(p*12))+' HP left!'}
+    else if(phase===5){hpPidgey=6; logMsg='▶ Pidgey has 6 HP left!'}
+
+    ctx.clearRect(0,0,W,H)
+    drawBattleBg(ctx,W,H,pidgeyAlpha,pidgeyOffX,charOffX)
+    drawHpBox(ctx,6,8,'PIDGEY',5,hpPidgey,20,false)
+    drawHpBox(ctx,W-182,panY-58,'CHARMANDER',5,28,35,true)
+
+    // Dialog box
+    ctx.fillStyle=C.menuBg
+    ctx.beginPath(); ctx.roundRect(4,panY+6,W-8,34,3); ctx.fill()
+    ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(4,panY+6,W-8,34,3); ctx.stroke()
+    ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText(logMsg, 14, panY+28)
+
+    requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
 }
 
-// ── POKÉBALL THROW ARC ────────────────────────────────────────────────────────
-function drawBallThrow() {
+// ── POKÉBALL THROW ANIMATION (live rAF) ───────────────────────────────────────
+function startBallThrow() {
   const canvas=document.getElementById('ballThrow')
   const ctx=canvas.getContext('2d')
   const W=360, H=500
-  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H)
-
   const panY=Math.floor(H*0.48)
-  const fH=Math.floor((H-20)/4)-6
 
-  function drawPokeball(ctx, bx, by, r, open=false) {
-    // ball body
-    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2)
-    ctx.fillStyle=open?'#888888':'#e82020'; ctx.fill()
-    ctx.strokeStyle='#181818'; ctx.lineWidth=1.5; ctx.stroke()
-    // white bottom half
-    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI); ctx.fillStyle='#f8f8f8'; ctx.fill()
-    // dividing line
-    ctx.beginPath(); ctx.moveTo(bx-r,by); ctx.lineTo(bx+r,by)
-    ctx.strokeStyle='#181818'; ctx.lineWidth=1.5; ctx.stroke()
-    // centre button
-    ctx.beginPath(); ctx.arc(bx,by,r*0.28,0,Math.PI*2)
-    ctx.fillStyle='#f8f8f8'; ctx.fill()
-    ctx.strokeStyle='#181818'; ctx.lineWidth=1; ctx.stroke()
-    if(open){
-      // sparkle dots
-      ctx.fillStyle='#ffd700'
-      for(let a=0;a<6;a++){
-        const ang=a/6*Math.PI*2, dist=r*1.6
-        ctx.beginPath(); ctx.arc(bx+Math.cos(ang)*dist,by+Math.sin(ang)*dist,2,0,Math.PI*2); ctx.fill()
-      }
+  // Arc end-points (match larger sprite positions)
+  const x0=W*0.20, y0=H*0.42   // player hand
+  const x1=W*0.72, y1=H*0.14   // opponent position
+  const mx=(x0+x1)/2, my=H*0.03 // bezier control (peak)
+
+  // Phase durations (sec): pre-throw pause, arc, open flash, 3 shakes, caught pause, reset
+  const PHASES=[0.6, 0.7, 0.25, 0.7, 0.9, 0.5]
+  const TOTAL=PHASES.reduce((s,x)=>s+x,0)
+  let t0=null
+
+  function phaseOf(t){
+    let acc=0
+    for(let i=0;i<PHASES.length;i++){
+      acc+=PHASES[i]; if(t<acc) return {phase:i, p:(t-(acc-PHASES[i]))/PHASES[i]}
+    }
+    return {phase:PHASES.length-1,p:1}
+  }
+
+  function bezier(t){
+    return {
+      x:(1-t)*(1-t)*x0+2*(1-t)*t*mx+t*t*x1,
+      y:(1-t)*(1-t)*y0+2*(1-t)*t*my+t*t*y1
     }
   }
 
-  const arcFrames=[
-    { label:'1. Throw — ball leaves hand (left, low)', t:0.05 },
-    { label:'2. Mid-arc — ball climbs (center, high)',  t:0.45 },
-    { label:'3. Approach — ball descends (right, mid)', t:0.80 },
-    { label:'4. Contact — ball opens, sparkles!',       t:1.00, open:true },
-  ]
+  function frame(ts){
+    if(!t0) t0=ts
+    const elapsed=((ts-t0)/1000)%TOTAL
+    const {phase,p}=phaseOf(elapsed)
 
-  // Arc params: from player left to opponent right
-  const x0=W*0.18, y0=panY*0.74
-  const x1=W*0.72, y1=panY*0.22
-  const arcPeak = panY*0.03  // control point above midpoint
+    const pidgeyAlpha = phase>=2 ? (phase>=5?1:0.15) : 1
+    ctx.clearRect(0,0,W,H)
+    drawBattleBg(ctx,W,H,pidgeyAlpha)
+    drawHpBox(ctx,6,8,'PIDGEY',5,4,20,false)
+    drawHpBox(ctx,W-182,panY-58,'CHARMANDER',5,28,35,true)
 
-  arcFrames.forEach((fr, i) => {
-    const fy=10+i*(fH+6)
-    // mini sky strip
-    const skyG=ctx.createLinearGradient(0,fy,0,fy+fH*0.8)
-    skyG.addColorStop(0,'#b8ecdc'); skyG.addColorStop(1,'#d0f4ec')
-    ctx.fillStyle=skyG; ctx.fillRect(0,fy,W,fH*0.8)
-    // ground
-    ctx.fillStyle='#c8a878'; ctx.fillRect(0,fy+fH*0.8,W,fH*0.2)
+    let logMsg='▶ Wild PIDGEY is weakened!'
+    if(phase===0) logMsg='▶ Go! Pokéball!'
+    else if(phase===1) logMsg='▶ ...'
+    else if(phase<=3) logMsg='▶ One...  Two...  Three...'
+    else if(phase>=4) logMsg='▶ Gotcha! PIDGEY was caught!'
 
-    // platforms (tiny)
-    ctx.fillStyle=C.enPlTop
-    ctx.beginPath(); ctx.ellipse(W*0.72,fy+fH*0.65,44,10,0,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle=C.plPlTop
-    ctx.beginPath(); ctx.ellipse(W*0.22,fy+fH*0.82,56,14,0,0,Math.PI*2); ctx.fill()
+    // Dialog
+    ctx.fillStyle=C.menuBg
+    ctx.beginPath(); ctx.roundRect(4,panY+6,W-8,34,3); ctx.fill()
+    ctx.strokeStyle=C.menuBd; ctx.lineWidth=1.5
+    ctx.beginPath(); ctx.roundRect(4,panY+6,W-8,34,3); ctx.stroke()
+    ctx.fillStyle='#181808'; ctx.font='11px "Courier New"'; ctx.textAlign='left'
+    ctx.fillText(logMsg,14,panY+28)
 
-    // Pidgey (faded at t=1)
-    const pidgey=SPRITES.pidgeyF
-    if(pidgey){
-      ctx.globalAlpha=fr.t>=1?0.2:0.9
-      ctx.imageSmoothingEnabled=false
-      ctx.drawImage(pidgey, W*0.72-40, fy+fH*0.3, 64, 64)
-      ctx.globalAlpha=1
-    }
-
-    // Charmander back sprite
-    const charBack=SPRITES.charBack
-    if(charBack){
-      ctx.imageSmoothingEnabled=false
-      ctx.drawImage(charBack, W*0.18-42, fy+fH*0.44, 72, 72)
-    }
-
-    // arc path (dotted preview)
-    ctx.setLineDash([3,5]); ctx.strokeStyle='rgba(255,215,0,0.3)'; ctx.lineWidth=1.5
-    ctx.beginPath()
-    const mx=(x0+x1)/2, my=arcPeak+(fy-panY*0.5*0.3)
-    ctx.moveTo(x0,y0+fy-panY*0.5*0.7)
-    ctx.quadraticCurveTo(mx,my,x1,y1+fy-panY*0.5*0.3)
-    ctx.stroke(); ctx.setLineDash([])
-
-    // ball position along arc (quadratic bezier)
-    const t=fr.t
-    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*mx + t*t*x1
-    const by = (1-t)*(1-t)*(y0+fy-panY*0.5*0.7) + 2*(1-t)*t*my + t*t*(y1+fy-panY*0.5*0.3)
-    const r = fr.t>=1 ? 14 : 9
-    // rotation shadow
-    if(!fr.open){
-      ctx.save(); ctx.translate(bx,by); ctx.rotate(t*Math.PI*3)
-      drawPokeball(ctx,0,0,r)
+    if(phase===0){
+      // waiting — draw ball at hand
+      drawPokeball(ctx,x0,y0,9)
+    } else if(phase===1){
+      // flying arc
+      const {x,y}=bezier(p)
+      ctx.save(); ctx.translate(x,y); ctx.rotate(p*Math.PI*5)
+      drawPokeball(ctx,0,0,9)
       ctx.restore()
+    } else if(phase===2){
+      // open flash
+      drawPokeball(ctx,x1,y1,14,true,p*Math.PI)
+    } else if(phase===3){
+      // 3 shakes
+      const shakeX=Math.sin(p*Math.PI*6)*7
+      drawPokeball(ctx,x1+shakeX,y1,12)
+    } else if(phase===4){
+      // caught sparkles
+      drawPokeball(ctx,x1,y1,12,true,p*Math.PI*2)
+      ctx.fillStyle='#ffd700'; ctx.font='bold 15px "Courier New"'; ctx.textAlign='center'
+      ctx.fillText('PIDGEY was caught!',W/2,panY-8)
     } else {
-      drawPokeball(ctx,bx,by,r,true)
+      drawPokeball(ctx,x1,y1,10)
     }
 
-    // label
-    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,fy+fH-20,W,20)
-    ctx.fillStyle='#ffd700'; ctx.font='bold 9px Courier New'; ctx.textAlign='left'
-    ctx.fillText(fr.label, 8, fy+fH-5)
-  })
-
-  ctx.fillStyle='#4ecdc4'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'
-  ctx.fillText('Pokéball Throw Animation', W/2, H-4)
+    requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
 }
 </script>
 </body>
