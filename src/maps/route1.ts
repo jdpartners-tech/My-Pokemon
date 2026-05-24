@@ -52,4 +52,5 @@ export const route1: MapData = {
     { x: 7, y: 19, targetMap: 'route1',  targetX: 7, targetY: 18 },
     { x: 8, y: 19, targetMap: 'route1',  targetX: 8, targetY: 18 },
   ],
+  doors: [],
 }

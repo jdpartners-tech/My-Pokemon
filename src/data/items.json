@@ -1,0 +1,34 @@
+[
+  {
+    "id": "potion",
+    "name": "Potion",
+    "description": "Restores 20 HP",
+    "price": 300,
+    "effect": "heal",
+    "power": 20
+  },
+  {
+    "id": "super-potion",
+    "name": "Super Potion",
+    "description": "Restores 50 HP",
+    "price": 700,
+    "effect": "heal",
+    "power": 50
+  },
+  {
+    "id": "hyper-potion",
+    "name": "Hyper Potion",
+    "description": "Restores 200 HP",
+    "price": 1200,
+    "effect": "heal",
+    "power": 200
+  },
+  {
+    "id": "revive",
+    "name": "Revive",
+    "description": "Revives a fainted Pokémon to half HP",
+    "price": 1500,
+    "effect": "revive",
+    "power": 0
+  }
+]

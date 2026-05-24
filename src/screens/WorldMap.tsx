@@ -2,12 +2,17 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
 import { useBattleStore } from '../store/battleStore'
+import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import { getMap } from '../maps/index'
 import { MapData, TileType, TrainerNpc } from '../maps/types'
 import { buildPartyPokemon } from '../utils/exp'
 import pokemonJson from '../data/pokemon.json'
+import itemsJson from '../data/items.json'
 import DPad from '../components/DPad'
-import { PokemonData } from '../types/game'
+import ShopModal from '../components/ShopModal'
+import { PokemonData, ItemData } from '../types/game'
+
+const ITEMS = itemsJson as ItemData[]
 
 const TILE = 32
 const COLS = 11
@@ -55,11 +60,13 @@ function applyChromaKey(img: HTMLImageElement): HTMLCanvasElement {
 export default function WorldMap() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
+  const { updateProfile } = useFirestoreProfile()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [currentMapId, setCurrentMapId] = useState('pallet')
   const [px, setPx] = useState(7)
   const [py, setPy] = useState(6)
   const [dialogue, setDialogue] = useState<string | null>(null)
+  const [shopOpen, setShopOpen] = useState(false)
   const mapRef = useRef<MapData>(getMap('pallet'))
 
   useEffect(() => { if (!profile) navigate('/') }, [profile, navigate])
@@ -127,7 +134,8 @@ export default function WorldMap() {
       ctx.fillText(isFemale ? '👧' : '🧒', hw * TILE + TILE / 2, hh * TILE + TILE * 0.8)
       rawSheet.onload = () => drawMap(px, py)
     }
-  }, [profile?.gender, px, py, drawMap])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.gender, px, py])
 
   useEffect(() => {
     mapRef.current = getMap(currentMapId)
@@ -153,6 +161,17 @@ export default function WorldMap() {
             setPx(exit.targetX)
             setPy(exit.targetY)
           }, 0)
+          return prevPy
+        }
+
+        const door = map.doors.find(d => d.x === nx && d.y === ny)
+        if (door?.type === 'pokecenter') {
+          setDialogue("Nurse Joy: Welcome! We'll restore your Pokémon to full health. ♥")
+          setTimeout(() => healParty(), 1200)
+          return prevPy
+        }
+        if (door?.type === 'pokemart') {
+          setShopOpen(true)
           return prevPy
         }
 
@@ -232,6 +251,34 @@ export default function WorldMap() {
     setTimeout(() => navigate('/battle'), 500)
   }
 
+  async function healParty() {
+    if (!profile?.id || !profile.party?.length) return
+    const healedParty = profile.party.map(p => ({ ...p, currentHp: p.maxHp }))
+    try {
+      await updateProfile(profile.id, { party: healedParty })
+      useProfileStore.getState().setProfile({ ...profile, party: healedParty })
+      setDialogue('All your Pokémon have been healed! ♥')
+    } catch {
+      setDialogue('Healing failed — please try again.')
+    }
+  }
+
+  async function handleBuy(itemId: string) {
+    if (!profile?.id) return
+    const item = ITEMS.find(i => i.id === itemId)
+    if (!item || profile.money < item.price) return
+    const newMoney = profile.money - item.price
+    const existingIdx = (profile.bag ?? []).findIndex(b => b.itemId === itemId)
+    const newBag = existingIdx >= 0
+      ? (profile.bag ?? []).map((b, i) => i === existingIdx ? { ...b, qty: b.qty + 1 } : b)
+      : [...(profile.bag ?? []), { itemId, qty: 1 }]
+    const updates = { money: newMoney, bag: newBag }
+    try {
+      await updateProfile(profile.id, updates)
+      useProfileStore.getState().setProfile({ ...profile, ...updates })
+    } catch { /* silent */ }
+  }
+
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center gap-4 p-4">
       <div className="flex justify-between items-center w-full max-w-sm">
@@ -266,6 +313,14 @@ export default function WorldMap() {
       )}
 
       <DPad onMove={(dx, dy) => { if (dialogue) setDialogue(null); else move(dx, dy) }} />
+
+      {shopOpen && profile && (
+        <ShopModal
+          profile={profile}
+          onBuy={handleBuy}
+          onClose={() => setShopOpen(false)}
+        />
+      )}
     </div>
   )
 }

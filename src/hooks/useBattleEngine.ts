@@ -8,7 +8,12 @@ import { expGained, getLevel, calculateStat } from '../utils/exp'
 import { pickQuestion } from '../utils/questionPicker'
 import pokemonJson from '../data/pokemon.json'
 import movesJson from '../data/moves.json'
-import { PokemonData, MoveData, PartyPokemon, Question } from '../types/game'
+import itemsJson from '../data/items.json'
+import { PokemonData, MoveData, PartyPokemon, Question, ItemData } from '../types/game'
+
+const itemMap = Object.fromEntries(
+  (itemsJson as ItemData[]).map(i => [i.id, i])
+) as Record<string, ItemData>
 
 const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
@@ -149,10 +154,18 @@ export function useBattleEngine() {
     store.addExpToPlayer(exp)
     store.addLog(`${getName(playerPokemon)} gained ${exp} EXP!`)
 
+    store.setExpAnimating(true)
+    await delay(1000)
+    store.setExpAnimating(false)
+
     const newXp = playerPokemon.xp + exp
     const newLevel = getLevel(newXp)
     if (newLevel > playerPokemon.level) {
+      store.setLeveledUp(true)
       store.addLog(`${getName(playerPokemon)} grew to Lv.${newLevel}!`)
+      await delay(800)
+      store.setLeveledUp(false)
+
       const pokeInfo = pokemonMap[playerPokemon.pokemonId]
       if (
         pokeInfo?.evolvesAtLevel &&
@@ -160,8 +173,11 @@ export function useBattleEngine() {
         pokeInfo.evolvesTo != null
       ) {
         const evolvedData = pokemonMap[pokeInfo.evolvesTo]
+        store.setPhase('evolving')
+        await delay(2400)
         store.evolvePlayer(pokeInfo.evolvesTo, evolvedData?.name ?? getName(playerPokemon))
         store.addLog(`${getName(playerPokemon)} evolved into ${evolvedData?.name ?? 'a new form'}!`)
+        await delay(600)
       }
     }
 
@@ -195,5 +211,38 @@ export function useBattleEngine() {
     store.setPhase('player_turn')
   }
 
-  return { selectMove, handleAnswer, continueBattle }
+  async function useItemInBattle(itemId: string) {
+    const item = itemMap[itemId]
+    if (!item || !profile?.id) return
+    const state = useBattleStore.getState()
+    const { playerPokemon } = state
+    if (!playerPokemon) return
+
+    if (item.effect === 'heal' && playerPokemon.currentHp <= 0) return
+    if (item.effect === 'revive' && playerPokemon.currentHp > 0) return
+
+    store.setPhase('animating')
+
+    if (item.effect === 'heal') {
+      store.healPlayer(item.power)
+      store.addLog(`Used ${item.name}! ${getName(playerPokemon)} restored ${item.power} HP.`)
+    } else if (item.effect === 'revive') {
+      const halfHp = Math.floor(playerPokemon.maxHp / 2)
+      store.healPlayer(halfHp)
+      store.addLog(`Used ${item.name}! ${getName(playerPokemon)} was revived!`)
+    }
+
+    const newBag = (profile.bag ?? [])
+      .map(b => b.itemId === itemId ? { ...b, qty: b.qty - 1 } : b)
+      .filter(b => b.qty > 0)
+    try {
+      await updateProfile(profile.id, { bag: newBag })
+      useProfileStore.getState().setProfile({ ...profile, bag: newBag })
+    } catch { /* silent */ }
+
+    await delay(600)
+    await opponentTurn()
+  }
+
+  return { selectMove, handleAnswer, continueBattle, useItemInBattle }
 }

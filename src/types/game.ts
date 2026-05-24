@@ -61,6 +61,20 @@ export interface BoxPokemon {
   xp: number
 }
 
+export interface BagItem {
+  itemId: string
+  qty: number
+}
+
+export interface ItemData {
+  id: string
+  name: string
+  description: string
+  price: number
+  effect: 'heal' | 'revive'
+  power: number
+}
+
 // ─── Education / questions ────────────────────────────────────────
 export type SubjectType = 'english' | 'maths' | 'chinese'
 
@@ -105,6 +119,7 @@ export interface Profile {
   subjects: SubjectSettings
   party: PartyPokemon[]
   box: BoxPokemon[]
+  bag: BagItem[]
   pokedex: Record<string, 'caught' | 'seen' | 'unseen'>
   badges: string[]
   money: number
@@ -158,7 +173,7 @@ export interface GameMap {
 // ─── Battle state ─────────────────────────────────────────────────
 export type BattlePhase =
   | 'idle' | 'player_turn' | 'question' | 'animating'
-  | 'opponent_turn' | 'catch' | 'win' | 'lose' | 'escaped'
+  | 'opponent_turn' | 'catch' | 'win' | 'lose' | 'escaped' | 'evolving'
 
 export interface ActivePokemon extends PartyPokemon {
   name: string

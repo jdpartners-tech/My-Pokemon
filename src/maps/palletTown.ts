@@ -30,4 +30,8 @@ export const palletTown: MapData = {
     { x: 7, y: 11, targetMap: 'route1', targetX: 7, targetY: 0 },
     { x: 8, y: 11, targetMap: 'route1', targetX: 8, targetY: 0 },
   ],
+  doors: [
+    { x: 3,  y: 4, type: 'pokecenter' },
+    { x: 10, y: 4, type: 'pokemart'   },
+  ],
 }

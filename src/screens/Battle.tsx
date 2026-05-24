@@ -1,26 +1,44 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBattleStore } from '../store/battleStore'
 import { useBattleEngine } from '../hooks/useBattleEngine'
+import { useProfileStore } from '../store/profileStore'
 import PokemonSprite from '../components/PokemonSprite'
 import HpBar from '../components/HpBar'
 import MoveSelector from '../components/MoveSelector'
 import QuestionPopup from '../components/QuestionPopup'
 import BattleLog from '../components/BattleLog'
+import BagMenu from '../components/BagMenu'
 import movesJson from '../data/moves.json'
 import { MoveData } from '../types/game'
+import { expForLevel } from '../utils/exp'
 
 export default function Battle() {
   const navigate = useNavigate()
   const {
     playerPokemon, opponentPokemon, phase,
     question, selectedMoveIndex, log,
+    expAnimating, leveledUp,
   } = useBattleStore()
-  const { selectMove, handleAnswer } = useBattleEngine()
+  const { selectMove, handleAnswer, useItemInBattle } = useBattleEngine()
+  const profile = useProfileStore(s => s.profile)
+  const [bagOpen, setBagOpen] = useState(false)
+  const [flashOn, setFlashOn] = useState(false)
 
   useEffect(() => {
     if (phase === 'idle') navigate('/map')
   }, [phase, navigate])
+
+  useEffect(() => {
+    if (phase !== 'evolving') { setFlashOn(false); return }
+    setFlashOn(true)
+    const timers: ReturnType<typeof setTimeout>[] = []
+    ;[400, 800, 1200, 1600, 2000].forEach((ms, i) => {
+      timers.push(setTimeout(() => setFlashOn(i % 2 === 0 ? false : true), ms))
+    })
+    timers.push(setTimeout(() => setFlashOn(false), 2400))
+    return () => timers.forEach(clearTimeout)
+  }, [phase])
 
   if (!playerPokemon || !opponentPokemon) return null
 
@@ -29,7 +47,7 @@ export default function Battle() {
   ) as Record<string, MoveData>
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col relative">
       {/* Battle scene */}
       <div className="relative bg-gradient-to-b from-sky-400 to-green-600 h-56 overflow-hidden flex-shrink-0">
         {/* Opponent top-right: front artwork */}
@@ -46,13 +64,34 @@ export default function Battle() {
         {/* Player bottom-left: back sprite (Ruby-style — you see your own Pokemon from behind) */}
         <div className="absolute bottom-3 left-3 flex flex-col items-start gap-1">
           <PokemonSprite pokemonId={playerPokemon.pokemonId} variant="ruby-back" size={140} />
-          <div className="bg-white/90 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 min-w-32">
+          <div className={`bg-white/90 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 min-w-32 transition-all ${leveledUp ? 'ring-2 ring-yellow-400 shadow-yellow-400/60 shadow-lg' : ''}`}>
             <div className="flex justify-between">
               <span className="capitalize">{playerPokemon.nickname || `Pokemon #${playerPokemon.pokemonId}`}</span>
               <span>Lv.{playerPokemon.level}</span>
             </div>
             <HpBar current={playerPokemon.currentHp} max={playerPokemon.maxHp} />
             <div className="text-right text-gray-600">{playerPokemon.currentHp}/{playerPokemon.maxHp}</div>
+            {(() => {
+              const lvFloor = expForLevel(playerPokemon.level)
+              const lvCeil  = expForLevel(playerPokemon.level + 1)
+              const pct = Math.min(1, (playerPokemon.xp - lvFloor) / (lvCeil - lvFloor))
+              return (
+                <div className="mt-1">
+                  <div className="flex justify-between text-[9px] text-gray-500">
+                    <span>EXP</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-400 rounded-full"
+                      style={{
+                        width: `${pct * 100}%`,
+                        transition: expAnimating ? 'width 1s ease-out' : 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>
@@ -73,6 +112,12 @@ export default function Battle() {
               onSelect={selectMove}
               disabled={false}
             />
+            <button
+              onClick={() => setBagOpen(true)}
+              className="mt-2 w-full bg-[#1a1a2e] border border-gray-600 text-gray-300 font-bold py-2 rounded-xl text-sm"
+            >
+              BAG
+            </button>
           </>
         )}
         {(phase === 'opponent_turn' || phase === 'animating') && (
@@ -110,6 +155,23 @@ export default function Battle() {
           moveName={moveMap[playerPokemon.moves[selectedMoveIndex]?.moveId]?.name ?? 'Move'}
           question={question}
           onAnswer={handleAnswer}
+        />
+      )}
+
+      {/* Bag menu overlay */}
+      {bagOpen && profile && (
+        <BagMenu
+          bag={profile.bag ?? []}
+          onUse={(itemId) => { setBagOpen(false); useItemInBattle(itemId) }}
+          onClose={() => setBagOpen(false)}
+        />
+      )}
+
+      {/* Evolution flash overlay */}
+      {phase === 'evolving' && (
+        <div
+          className="absolute inset-0 z-50 pointer-events-none transition-opacity duration-300"
+          style={{ backgroundColor: 'white', opacity: flashOn ? 1 : 0 }}
         />
       )}
     </div>

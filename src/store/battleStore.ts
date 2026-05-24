@@ -30,6 +30,12 @@ interface BattleState {
   throwPokeball: () => void
   resetBattle: () => void
 
+  expAnimating: boolean
+  leveledUp: boolean
+  setExpAnimating: (v: boolean) => void
+  setLeveledUp: (v: boolean) => void
+  healPlayer: (amount: number) => void
+
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
   handleAnswer: (correct: boolean) => void
@@ -46,6 +52,8 @@ const initialState = {
   selectedMoveIndex: null,
   log: [],
   usedQuestionIds: new Set<string>(),
+  expAnimating: false,
+  leveledUp: false,
 }
 
 export const useBattleStore = create<BattleState>((set) => ({
@@ -130,6 +138,19 @@ export const useBattleStore = create<BattleState>((set) => ({
   }),
 
   throwPokeball: () => set({ phase: 'catch' }),
+
+  setExpAnimating: (v) => set({ expAnimating: v }),
+  setLeveledUp: (v) => set({ leveledUp: v }),
+
+  healPlayer: (amount) => set((state) => {
+    if (!state.playerPokemon) return {}
+    return {
+      playerPokemon: {
+        ...state.playerPokemon,
+        currentHp: Math.min(state.playerPokemon.maxHp, state.playerPokemon.currentHp + amount),
+      },
+    }
+  }),
 
   resetBattle: () => set({ ...initialState, usedQuestionIds: new Set() }),
 

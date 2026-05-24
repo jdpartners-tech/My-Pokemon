@@ -23,6 +23,14 @@ export interface Exit {
   targetY: number
 }
 
+export type DoorInteractionType = 'pokecenter' | 'pokemart' | 'home' | 'gym'
+
+export interface DoorInteraction {
+  x: number
+  y: number
+  type: DoorInteractionType
+}
+
 export interface MapData {
   id: string
   name: string
@@ -32,4 +40,5 @@ export interface MapData {
   wildPokemon: WildEntry[]
   trainers: TrainerNpc[]
   exits: Exit[]
+  doors: DoorInteraction[]
 }
