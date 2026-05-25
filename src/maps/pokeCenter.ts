@@ -25,7 +25,7 @@ export const pokeCenter: MapData = {
   wildPokemon: [],
   trainers: [],
   exits: [
-    { x: 5, y: 8, targetMap: 'pallet', targetX: 5, targetY: 8 },
+    { x: 5, y: 8, targetMap: 'pallet', targetX: 4, targetY: 7 },
   ],
   doors: [],
 }

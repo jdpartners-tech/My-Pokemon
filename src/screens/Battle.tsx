@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useBattleStore } from '../store/battleStore'
 import { useBattleEngine } from '../hooks/useBattleEngine'
 import { useProfileStore } from '../store/profileStore'
+import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import BagMenu from '../components/BagMenu'
 import movesJson from '../data/moves.json'
 import pokemonJson from '../data/pokemon.json'
@@ -102,6 +103,7 @@ export default function Battle() {
   } = useBattleStore()
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
+  const { updateProfile } = useFirestoreProfile()
   const [bagOpen, setBagOpen] = useState(false)
   const [flashOn, setFlashOn] = useState(false)
   const [hoveredMove, setHoveredMove] = useState(0)
@@ -639,7 +641,27 @@ export default function Battle() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '20px 0', flex: 1, justifyContent: 'center' }}>
             <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 18, fontFamily: MONO }}>You blacked out...</div>
             <button
-              onClick={() => navigate('/map')}
+              onClick={async () => {
+                if (profile?.id && profile.party?.length) {
+                  const healedParty = profile.party.map(p => ({ ...p, currentHp: p.maxHp }))
+                  try {
+                    await updateProfile(profile.id, {
+                      party: healedParty,
+                      playerX: 4,
+                      playerY: 7,
+                      currentRoute: 'pallet',
+                    })
+                    useProfileStore.getState().setProfile({
+                      ...profile,
+                      party: healedParty,
+                      playerX: 4,
+                      playerY: 7,
+                      currentRoute: 'pallet',
+                    })
+                  } catch { /* silent */ }
+                }
+                navigate('/map')
+              }}
               style={{
                 background: '#ffd700', color: '#181808',
                 fontWeight: 'bold', padding: '10px 32px',
