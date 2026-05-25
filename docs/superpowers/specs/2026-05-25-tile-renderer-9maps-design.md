@@ -275,14 +275,63 @@ Volcano Trail ◀──north── Cinnabar Town ◀──east── Trainer Roa
 
 ---
 
-## 6. Files Changed / Created
+## 6. Battle Enhancement — Party Switching
+
+### Problem
+
+When the active Pokémon faints the player is immediately shown "You blacked out" with no chance to send out another party member.
+
+### Solution
+
+Add a `'switch_pokemon'` phase to `battleStore`. When the active Pokémon's HP reaches 0, check whether any other party member has HP > 0. If yes, enter `'switch_pokemon'` phase and show a party selection screen. If no healthy Pokémon remain, enter `'lose'` as before.
+
+### battleStore changes (`src/store/battleStore.ts`)
+
+```ts
+// Add to state:
+party: PartyPokemon[]          // full party passed in at battle start
+switchPokemon: (index: number) => void
+
+// Add to phase union:
+type BattlePhase = 'idle' | 'player_turn' | 'opponent_turn' | 'animating'
+                 | 'question' | 'catch' | 'win' | 'lose' | 'evolving'
+                 | 'switch_pokemon'   // ← new
+```
+
+**`startBattle(wildPokemon, playerPokemon, party)`** — store the full party alongside the active Pokémon.
+
+**On faint:** instead of going straight to `'lose'`, check `party.some(p => p !== playerPokemon && p.currentHp > 0)`. If true → `phase = 'switch_pokemon'`. If false → `phase = 'lose'`.
+
+**`switchPokemon(index)`** — sets `playerPokemon = party[index]`, then `phase = 'player_turn'`.
+
+**After `'win'` or `'lose'`** — save ALL party members' current HP to Firestore (not just the active one).
+
+### Party selection UI (`src/screens/BattleScreen.tsx`)
+
+When `phase === 'switch_pokemon'`:
+- Show overlay: "Choose your next Pokémon!"
+- List all party members with name, level, HP bar
+- Fainted members (currentHp ≤ 0) are greyed out and not selectable
+- Selecting a healthy member calls `switchPokemon(index)` and battle resumes at `'player_turn'`
+
+### Files changed
+
+- `src/store/battleStore.ts` — add `party`, `switchPokemon`, `'switch_pokemon'` phase
+- `src/screens/BattleScreen.tsx` — add party selection UI for `'switch_pokemon'` phase
+- `src/screens/WorldMap.tsx` — pass full party into `startBattle()`
+
+---
+
+## 7. Files Changed / Created
 
 ### Modified
 - `src/maps/types.ts` — add new tile types + `BuildingOverlay` interface
-- `src/screens/WorldMap.tsx` — replace GBA renderer with tile renderer
+- `src/screens/WorldMap.tsx` — replace GBA renderer with tile renderer; pass party to startBattle
 - `src/maps/palletTown.ts` — redesign with new tile types and layout
 - `src/maps/route1.ts` → rename to `sunlitMeadow.ts`, update layout + Pokemon
 - `src/maps/index.ts` — register all 9 maps
+- `src/store/battleStore.ts` — add party switching (section 6)
+- `src/screens/BattleScreen.tsx` — add party selection UI (section 6)
 
 ### New files
 - `src/maps/viridianForest.ts`
