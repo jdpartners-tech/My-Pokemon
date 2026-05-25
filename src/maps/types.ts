@@ -1,4 +1,13 @@
-export type TileType = 'path' | 'grass' | 'tree' | 'water' | 'building' | 'door' | 'gym'
+export type TileType =
+  | 'path' | 'grass' | 'tree' | 'water' | 'building' | 'door' | 'gym'
+  | 'land' | 'flower' | 'flower2' | 'fence' | 'brush'
+
+export interface BuildingOverlay {
+  x: number         // map tile col of image top-left
+  y: number         // map tile row of image top-left
+  image: string     // filename in public/tiles/ (e.g. 'tile_building_big.png')
+  heightTiles: number  // rendered height in tiles; width is computed proportionally
+}
 
 export interface WildEntry {
   pokemonId: number
@@ -42,5 +51,6 @@ export interface MapData {
   trainers: TrainerNpc[]
   exits: Exit[]
   doors: DoorInteraction[]
+  buildingOverlays?: BuildingOverlay[]
   isInterior?: boolean
 }
