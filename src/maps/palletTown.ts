@@ -16,7 +16,7 @@ export const palletTown: MapData = {
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  2: PC x=1-5, Shop x=8-12
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  3
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  4
-    [T,B,B,B,B,B,P,P,B,B,B,B,B,D,T],  // row  5: Shop ends; door x=13 (green door in image)
+    [T,B,B,B,B,B,P,P,B,B,B,D,B,P,T],  // row  5: Shop ends; door x=11 (green door in image)
     [T,B,B,B,D,B,P,P,P,P,P,P,P,P,T],  // row  6: PC door x=4 (glass entrance in image)
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  7
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  8
@@ -41,6 +41,6 @@ export const palletTown: MapData = {
     { x: 10, y: 11, targetMap: 'route1',     targetX: 10, targetY: 0 },
   ],
   doors: [
-    { x: 13, y: 5, type: 'pokemart' },
+    { x: 11, y: 5, type: 'pokemart' },
   ],
 }
