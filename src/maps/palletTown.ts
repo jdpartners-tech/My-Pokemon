@@ -17,7 +17,7 @@ export const palletTown: MapData = {
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  3
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  4
     [T,B,B,B,B,B,P,P,B,B,B,D,B,P,T],  // row  5: Shop ends; door x=11 (green door in image)
-    [T,B,B,B,D,B,P,P,P,P,P,P,P,P,T],  // row  6: PC door x=4 (glass entrance in image)
+    [T,B,B,D,D,B,P,P,P,P,P,P,P,P,T],  // row  6: PC doors x=3-4 (2-tile glass entrance)
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  7
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  8
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  9
@@ -31,6 +31,7 @@ export const palletTown: MapData = {
   wildPokemon: [],
   trainers: [],
   exits: [
+    { x: 3,  y: 6,  targetMap: 'pokecenter', targetX: 5,  targetY: 6 },
     { x: 4,  y: 6,  targetMap: 'pokecenter', targetX: 5,  targetY: 6 },
     { x: 4,  y: 11, targetMap: 'route1',     targetX: 4,  targetY: 0 },
     { x: 5,  y: 11, targetMap: 'route1',     targetX: 5,  targetY: 0 },

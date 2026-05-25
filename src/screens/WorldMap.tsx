@@ -392,23 +392,7 @@ export default function WorldMap() {
         drawProp(ctx, src, vx * TILE, vy * TILE, ov.heightTiles * TILE)
       }
 
-      // ── Pass 3: Door visuals ──────────────────────────────────────────────
-      for (let vy = 0; vy < ROWS; vy++) {
-        for (let vx = 0; vx < COLS; vx++) {
-          const mx = playerX - hw + vx
-          const my = playerY - hh + vy
-          if (my < 0 || my >= map.height || mx < 0 || mx >= map.width) continue
-          if (map.tiles[my][mx] !== 'door') continue
-          const x = vx * TILE, y = vy * TILE
-          ctx.fillStyle = '#9c4f1e'; ctx.fillRect(x + 5, y + 3, TILE - 10, TILE - 5)
-          ctx.fillStyle = '#c97233'
-          ctx.fillRect(x + 6, y + 4, (TILE - 14) / 2, TILE - 9)
-          ctx.fillRect(x + TILE / 2 + 2, y + 4, (TILE - 14) / 2, TILE - 9)
-          ctx.fillStyle = '#f0c840'; ctx.fillRect(x + TILE / 2 - 2, y + TILE / 2, 4, 3)
-        }
-      }
-
-      // ── Pass 4: NPC trainers ──────────────────────────────────────────────
+      // ── Pass 3: NPC trainers ──────────────────────────────────────────────
       for (const t of map.trainers) {
         const vx = t.x - playerX + hw
         const vy = t.y - playerY + hh
