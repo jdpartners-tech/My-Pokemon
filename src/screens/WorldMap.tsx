@@ -23,7 +23,7 @@ const ENCOUNTER_RATE = 0.1
 const TILE_FILES: Record<string, string> = {
   grass:    'tiles/Background.png',
   land:     'tiles/tile_land1.png',
-  tree:     'tiles/tile_tree.png',
+  tree:     'tiles/tile_tree.png?v=2',
   flower:   'tiles/tile_flower.png',
   flower2:  'tiles/tile_flower2.png',
   bldBig:   'tiles/tile_building_big.png',
@@ -528,6 +528,7 @@ export default function WorldMap() {
       }
       if (e.key in DIRS) {
         e.preventDefault()
+        if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
         if (dialogue) { setDialogue(null); return }
         const [dx, dy] = DIRS[e.key]
         move(dx, dy)
@@ -688,7 +689,11 @@ export default function WorldMap() {
         </div>
       )}
 
-      <DPad onMove={(dx, dy) => { if (dialogue) setDialogue(null); else move(dx, dy) }} />
+      <DPad onMove={(dx, dy) => {
+        if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
+        if (dialogue) { setDialogue(null); return }
+        move(dx, dy)
+      }} />
 
       {shopOpen && profile && (
         <ShopModal
