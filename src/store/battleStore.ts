@@ -1,10 +1,11 @@
 import { create } from 'zustand'
-import type { BattlePhase, PartyPokemon, Question } from '../types/game'
+import type { BattlePhase, PartyPokemon, Question, StatusCondition } from '../types/game'
 
 interface BattleState {
   phase: BattlePhase
   playerPokemon: PartyPokemon | null
   opponentPokemon: PartyPokemon | null
+  party: PartyPokemon[]
   isWildBattle: boolean
   trainerName: string | null
   question: Question | null
@@ -13,8 +14,9 @@ interface BattleState {
   usedQuestionIds: Set<string>
 
   // Actions
-  startWildBattle: (player: PartyPokemon, opponent: PartyPokemon) => void
-  startTrainerBattle: (player: PartyPokemon, opponent: PartyPokemon, trainerName: string) => void
+  startWildBattle: (player: PartyPokemon, opponent: PartyPokemon, party: PartyPokemon[]) => void
+  startTrainerBattle: (player: PartyPokemon, opponent: PartyPokemon, trainerName: string, party: PartyPokemon[]) => void
+  switchPokemon: (index: number) => void
   setPhase: (phase: BattlePhase) => void
   setQuestion: (question: Question) => void
   clearQuestion: () => void
@@ -56,6 +58,13 @@ interface BattleState {
   setBallAnimPhase: (n: number) => void
   setBallCaught: (v: boolean) => void
 
+  answerResult: { wasCorrect: boolean; correctAnswer: string } | null
+  setAnswerResult: (r: { wasCorrect: boolean; correctAnswer: string } | null) => void
+
+  setPlayerStatus: (status: StatusCondition, sleepTurns?: number) => void
+  setOpponentStatus: (status: StatusCondition, sleepTurns?: number) => void
+  healOpponent: (amount: number) => void
+
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
   handleAnswer: (correct: boolean) => void
@@ -66,6 +75,7 @@ const initialState = {
   phase: 'idle' as BattlePhase,
   playerPokemon: null,
   opponentPokemon: null,
+  party: [] as PartyPokemon[],
   isWildBattle: false,
   ballAnimPhase: 0,
   ballCaught: false,
@@ -82,31 +92,43 @@ const initialState = {
   opponentAttacking: false,
   playerFlash: false,
   playerShakeX: 0,
+  answerResult: null,
 }
 
 export const useBattleStore = create<BattleState>((set) => ({
   ...initialState,
 
-  startWildBattle: (player, opponent) => set({
+  startWildBattle: (player, opponent, party) => set({
     ...initialState,
     phase: 'player_turn',
     playerPokemon: player,
     opponentPokemon: opponent,
+    party,
     isWildBattle: true,
     trainerName: null,
     log: [`A wild ${opponent.pokemonId} appeared!`],
     usedQuestionIds: new Set(),
   }),
 
-  startTrainerBattle: (player, opponent, trainerName) => set({
+  startTrainerBattle: (player, opponent, trainerName, party) => set({
     ...initialState,
     phase: 'player_turn',
     playerPokemon: player,
     opponentPokemon: opponent,
+    party,
     isWildBattle: false,
     trainerName,
     log: [`${trainerName} sent out ${opponent.pokemonId}!`],
     usedQuestionIds: new Set(),
+  }),
+
+  switchPokemon: (index) => set((state) => {
+    const incoming = state.party[index]
+    if (!incoming || incoming.currentHp <= 0) return {}
+    const updated = state.party.map((p, i) =>
+      i === index ? state.playerPokemon! : p
+    ).filter(Boolean) as PartyPokemon[]
+    return { playerPokemon: incoming, party: updated }
   }),
 
   setPhase: (phase) => set({ phase }),
@@ -186,10 +208,32 @@ export const useBattleStore = create<BattleState>((set) => ({
     }
   }),
 
+  setPlayerStatus: (status, sleepTurns = 0) => set((state) => {
+    if (!state.playerPokemon) return {}
+    return { playerPokemon: { ...state.playerPokemon, status, sleepTurns } }
+  }),
+
+  setOpponentStatus: (status, sleepTurns = 0) => set((state) => {
+    if (!state.opponentPokemon) return {}
+    return { opponentPokemon: { ...state.opponentPokemon, status, sleepTurns } }
+  }),
+
+  healOpponent: (amount) => set((state) => {
+    if (!state.opponentPokemon) return {}
+    return {
+      opponentPokemon: {
+        ...state.opponentPokemon,
+        currentHp: Math.min(state.opponentPokemon.maxHp, state.opponentPokemon.currentHp + amount),
+      },
+    }
+  }),
+
   resetBattle: () => set({ ...initialState, usedQuestionIds: new Set() }),
 
   setBallAnimPhase: (n) => set({ ballAnimPhase: n }),
   setBallCaught: (v) => set({ ballCaught: v }),
+
+  setAnswerResult: (r) => set({ answerResult: r }),
 
   // Stubs — replaced by useBattleEngine in Task 13
   selectMove: (index) => set({ selectedMoveIndex: index, phase: 'question' }),

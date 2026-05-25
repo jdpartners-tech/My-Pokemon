@@ -98,9 +98,9 @@ export default function Battle() {
     playerPokemon, opponentPokemon, phase, question, selectedMoveIndex, log,
     expAnimating, leveledUp, playerAttacking, opponentFlash, shakeX,
     opponentAttacking, playerFlash, playerShakeX,
-    isWildBattle, ballAnimPhase, ballCaught,
+    isWildBattle, ballAnimPhase, ballCaught, party, answerResult,
   } = useBattleStore()
-  const { selectMove, handleAnswer, useItemInBattle, attemptCatch } = useBattleEngine()
+  const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
   const [bagOpen, setBagOpen] = useState(false)
   const [flashOn, setFlashOn] = useState(false)
@@ -214,13 +214,22 @@ export default function Battle() {
     )
   }
 
+  const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+    burn:      { label: 'BRN', color: '#fff', bg: '#e84040' },
+    paralysis: { label: 'PAR', color: '#181808', bg: '#f8d030' },
+    sleep:     { label: 'SLP', color: '#fff', bg: '#6868a8' },
+    poison:    { label: 'PSN', color: '#fff', bg: '#a040a0' },
+    freeze:    { label: 'FRZ', color: '#181808', bg: '#98d8d8' },
+  }
+
   function HpBox({
     name, level, currentHp, maxHp, showNums = false,
-    xp, glow = false,
+    xp, glow = false, status,
   }: {
     name: string; level: number; currentHp: number; maxHp: number
-    showNums?: boolean; xp?: number; glow?: boolean
+    showNums?: boolean; xp?: number; glow?: boolean; status?: string | null
   }) {
+    const badge = status ? STATUS_BADGE[status] : null
     return (
       <div style={{
         width: 176, background: MENU_BG, border: `1.5px solid ${MENU_BD}`,
@@ -230,8 +239,16 @@ export default function Battle() {
           : '2px 2px 0 rgba(0,0,0,0.12)',
         fontFamily: MONO,
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 11, fontWeight: 'bold', color: '#181808' }}>{name}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 'bold', color: '#181808' }}>{name}</span>
+            {badge && (
+              <span style={{
+                fontSize: 8, fontWeight: 'bold', color: badge.color,
+                background: badge.bg, borderRadius: 2, padding: '1px 3px',
+              }}>{badge.label}</span>
+            )}
+          </div>
           <span style={{ fontSize: 10, color: '#484838' }}>:Lv{level}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
@@ -286,6 +303,7 @@ export default function Battle() {
             level={opponentPokemon.level}
             currentHp={opponentPokemon.currentHp}
             maxHp={opponentPokemon.maxHp}
+            status={opponentPokemon.status}
           />
         </div>
 
@@ -339,6 +357,7 @@ export default function Battle() {
             showNums
             xp={expPct}
             glow={leveledUp}
+            status={playerPokemon.status}
           />
         </div>
 
@@ -462,19 +481,26 @@ export default function Battle() {
                 BAG
               </button>
               {/* BALL — only in wild battles */}
-              {isWildBattle && (
-                <button
-                  onClick={() => useBattleStore.getState().throwPokeball()}
-                  style={{
-                    background: '#e82020', border: `1px solid ${MENU_BD}`,
-                    borderRadius: 3, padding: '4px 0',
-                    fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
-                    cursor: 'pointer', fontFamily: MONO, marginTop: 2,
-                  }}
-                >
-                  BALL
-                </button>
-              )}
+              {isWildBattle && (() => {
+                const ballCount = (profile?.bag ?? []).find(b => b.itemId === 'pokeball')?.qty ?? 0
+                return (
+                  <button
+                    onClick={() => ballCount > 0 && useBattleStore.getState().throwPokeball()}
+                    disabled={ballCount === 0}
+                    style={{
+                      background: ballCount > 0 ? '#e82020' : '#666',
+                      border: `1px solid ${MENU_BD}`,
+                      borderRadius: 3, padding: '4px 0',
+                      fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
+                      cursor: ballCount > 0 ? 'pointer' : 'default',
+                      fontFamily: MONO, marginTop: 2,
+                      opacity: ballCount > 0 ? 1 : 0.5,
+                    }}
+                  >
+                    BALL ×{ballCount}
+                  </button>
+                )
+              })()}
               {/* RUN — only in wild battles */}
               {isWildBattle && (
                 <button
@@ -570,6 +596,44 @@ export default function Battle() {
           </div>
         )}
 
+        {/* ── SWITCH POKEMON ── */}
+        {phase === 'switch_pokemon' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px', flex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 'bold', color: '#484838', fontFamily: MONO, padding: '2px 4px' }}>
+              Choose a Pokémon:
+            </div>
+            {party.map((p, i) => {
+              const pName = (p.nickname || pokemonDataMap[p.pokemonId]?.name || `#${p.pokemonId}`).toUpperCase()
+              const fainted = p.currentHp <= 0
+              return (
+                <button
+                  key={i}
+                  disabled={fainted}
+                  onClick={() => switchToPartyMember(i)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    background: fainted ? '#e0d8c8' : '#fff8d8',
+                    border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
+                    padding: '4px 8px', cursor: fainted ? 'default' : 'pointer',
+                    fontFamily: MONO, opacity: fainted ? 0.5 : 1,
+                  }}
+                >
+                  <img
+                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.pokemonId}.png`}
+                    alt=""
+                    style={{ width: 32, height: 32, imageRendering: 'pixelated' }}
+                  />
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{ fontSize: 10, fontWeight: 'bold', color: '#181808' }}>{pName}</div>
+                    <div style={{ fontSize: 9, color: '#484838' }}>Lv{p.level}  HP: {p.currentHp}/{p.maxHp}</div>
+                  </div>
+                  {fainted && <span style={{ fontSize: 9, color: '#e02820' }}>FNT</span>}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* ── LOSE ── */}
         {phase === 'lose' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '20px 0', flex: 1, justifyContent: 'center' }}>
@@ -633,6 +697,37 @@ export default function Battle() {
                   <span style={{ color: 'white', fontSize: 10 }}>{opt}</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Wrong answer feedback overlay ── */}
+      {answerResult && !answerResult.wasCorrect && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 45,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            background: '#16213e', border: '2px solid #e02820',
+            borderRadius: 10, padding: '24px 20px', textAlign: 'center',
+            fontFamily: MONO, maxWidth: 280,
+          }}>
+            <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>
+              ✗ Wrong Answer
+            </div>
+            <div style={{ color: '#aaaaaa', fontSize: 11, marginBottom: 6 }}>
+              The correct answer was:
+            </div>
+            <div style={{
+              color: '#ffd700', fontWeight: 'bold', fontSize: 13,
+              background: '#0f3460', borderRadius: 6, padding: '8px 12px',
+            }}>
+              {answerResult.correctAnswer}
+            </div>
+            <div style={{ color: '#4ecdc4', fontSize: 10, marginTop: 12 }}>
+              The attack missed...
             </div>
           </div>
         </div>

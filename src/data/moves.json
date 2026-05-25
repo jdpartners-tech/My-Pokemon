@@ -1,0 +1,6056 @@
+[
+  {
+    "id": "10000000-volt-thunderbolt",
+    "name": "10,000,000 Volt Thunderbolt",
+    "type": "electric",
+    "category": "special",
+    "power": 195,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "absorb",
+    "name": "Absorb",
+    "type": "grass",
+    "category": "special",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "accelerock",
+    "name": "Accelerock",
+    "type": "rock",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "acid",
+    "name": "Acid",
+    "type": "poison",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "acid-spray",
+    "name": "Acid Spray",
+    "type": "poison",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -2
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "acrobatics",
+    "name": "Acrobatics",
+    "type": "flying",
+    "category": "physical",
+    "power": 55,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "aerial-ace",
+    "name": "Aerial Ace",
+    "type": "flying",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "aeroblast",
+    "name": "Aeroblast",
+    "type": "flying",
+    "category": "special",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "air-cutter",
+    "name": "Air Cutter",
+    "type": "flying",
+    "category": "special",
+    "power": 60,
+    "accuracy": 95,
+    "pp": 25,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "air-slash",
+    "name": "Air Slash",
+    "type": "flying",
+    "category": "special",
+    "power": 75,
+    "accuracy": 95,
+    "pp": 15
+  },
+  {
+    "id": "alluring-voice",
+    "name": "Alluring Voice",
+    "type": "fairy",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "anchor-shot",
+    "name": "Anchor Shot",
+    "type": "steel",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "ancient-power",
+    "name": "Ancient Power",
+    "type": "rock",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "hp",
+          "change": 1
+        },
+        {
+          "stat": "attack",
+          "change": 1
+        },
+        {
+          "stat": "defense",
+          "change": 1
+        },
+        {
+          "stat": "special-attack",
+          "change": 1
+        },
+        {
+          "stat": "special-defense",
+          "change": 1
+        },
+        {
+          "stat": "speed",
+          "change": 1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "apple-acid",
+    "name": "Apple Acid",
+    "type": "grass",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "aqua-cutter",
+    "name": "Aqua Cutter",
+    "type": "water",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "aqua-jet",
+    "name": "Aqua Jet",
+    "type": "water",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "aqua-step",
+    "name": "Aqua Step",
+    "type": "water",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "aqua-tail",
+    "name": "Aqua Tail",
+    "type": "water",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "arm-thrust",
+    "name": "Arm Thrust",
+    "type": "fighting",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "armor-cannon",
+    "name": "Armor Cannon",
+    "type": "fire",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "assurance",
+    "name": "Assurance",
+    "type": "dark",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "astonish",
+    "name": "Astonish",
+    "type": "ghost",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "astral-barrage",
+    "name": "Astral Barrage",
+    "type": "ghost",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "attack-order",
+    "name": "Attack Order",
+    "type": "bug",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "aura-sphere",
+    "name": "Aura Sphere",
+    "type": "fighting",
+    "category": "special",
+    "power": 80,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "aura-wheel",
+    "name": "Aura Wheel",
+    "type": "electric",
+    "category": "physical",
+    "power": 110,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "aurora-beam",
+    "name": "Aurora Beam",
+    "type": "ice",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "avalanche",
+    "name": "Avalanche",
+    "type": "ice",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "axe-kick",
+    "name": "Axe Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "baddy-bad",
+    "name": "Baddy Bad",
+    "type": "dark",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "barb-barrage",
+    "name": "Barb Barrage",
+    "type": "poison",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "barrage",
+    "name": "Barrage",
+    "type": "normal",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 85,
+    "pp": 20,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "beak-blast",
+    "name": "Beak Blast",
+    "type": "flying",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "behemoth-bash",
+    "name": "Behemoth Bash",
+    "type": "steel",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "behemoth-blade",
+    "name": "Behemoth Blade",
+    "type": "steel",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "belch",
+    "name": "Belch",
+    "type": "poison",
+    "category": "special",
+    "power": 120,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "bind",
+    "name": "Bind",
+    "type": "normal",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 85,
+    "pp": 20,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "bite",
+    "name": "Bite",
+    "type": "dark",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "bitter-blade",
+    "name": "Bitter Blade",
+    "type": "fire",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "bitter-malice",
+    "name": "Bitter Malice",
+    "type": "ghost",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "blast-burn",
+    "name": "Blast Burn",
+    "type": "fire",
+    "category": "special",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "blaze-kick",
+    "name": "Blaze Kick",
+    "type": "fire",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10,
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "blazing-torque",
+    "name": "Blazing Torque",
+    "type": "fire",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "bleakwind-storm",
+    "name": "Bleakwind Storm",
+    "type": "flying",
+    "category": "special",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 10
+  },
+  {
+    "id": "blizzard",
+    "name": "Blizzard",
+    "type": "ice",
+    "category": "special",
+    "power": 110,
+    "accuracy": 70,
+    "pp": 5,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "blood-moon",
+    "name": "Blood Moon",
+    "type": "normal",
+    "category": "special",
+    "power": 140,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "blue-flare",
+    "name": "Blue Flare",
+    "type": "fire",
+    "category": "special",
+    "power": 130,
+    "accuracy": 85,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 20
+    }
+  },
+  {
+    "id": "body-press",
+    "name": "Body Press",
+    "type": "fighting",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "body-slam",
+    "name": "Body Slam",
+    "type": "normal",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "bolt-beak",
+    "name": "Bolt Beak",
+    "type": "electric",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "bolt-strike",
+    "name": "Bolt Strike",
+    "type": "electric",
+    "category": "physical",
+    "power": 130,
+    "accuracy": 85,
+    "pp": 5,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 20
+    }
+  },
+  {
+    "id": "bone-club",
+    "name": "Bone Club",
+    "type": "ground",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 85,
+    "pp": 20
+  },
+  {
+    "id": "bone-rush",
+    "name": "Bone Rush",
+    "type": "ground",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "bonemerang",
+    "name": "Bonemerang",
+    "type": "ground",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "boomburst",
+    "name": "Boomburst",
+    "type": "normal",
+    "category": "special",
+    "power": 140,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "bounce",
+    "name": "Bounce",
+    "type": "flying",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 85,
+    "pp": 5,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "bouncy-bubble",
+    "name": "Bouncy Bubble",
+    "type": "water",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "branch-poke",
+    "name": "Branch Poke",
+    "type": "grass",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 40
+  },
+  {
+    "id": "brave-bird",
+    "name": "Brave Bird",
+    "type": "flying",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": -33
+    }
+  },
+  {
+    "id": "breaking-swipe",
+    "name": "Breaking Swipe",
+    "type": "dragon",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "brick-break",
+    "name": "Brick Break",
+    "type": "fighting",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "brine",
+    "name": "Brine",
+    "type": "water",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "brutal-swing",
+    "name": "Brutal Swing",
+    "type": "dark",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "bubble",
+    "name": "Bubble",
+    "type": "water",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "bubble-beam",
+    "name": "Bubble Beam",
+    "type": "water",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "bug-bite",
+    "name": "Bug Bite",
+    "type": "bug",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "bug-buzz",
+    "name": "Bug Buzz",
+    "type": "bug",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "bulldoze",
+    "name": "Bulldoze",
+    "type": "ground",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "bullet-punch",
+    "name": "Bullet Punch",
+    "type": "steel",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "bullet-seed",
+    "name": "Bullet Seed",
+    "type": "grass",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "burn-up",
+    "name": "Burn Up",
+    "type": "fire",
+    "category": "special",
+    "power": 130,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "burning-jealousy",
+    "name": "Burning Jealousy",
+    "type": "fire",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "buzzy-buzz",
+    "name": "Buzzy Buzz",
+    "type": "electric",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "catastropika",
+    "name": "Catastropika",
+    "type": "electric",
+    "category": "physical",
+    "power": 210,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "ceaseless-edge",
+    "name": "Ceaseless Edge",
+    "type": "dark",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "charge-beam",
+    "name": "Charge Beam",
+    "type": "electric",
+    "category": "special",
+    "power": 50,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": 1
+        }
+      ],
+      "stat_chance": 70
+    }
+  },
+  {
+    "id": "chatter",
+    "name": "Chatter",
+    "type": "flying",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "chilling-water",
+    "name": "Chilling Water",
+    "type": "water",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "chip-away",
+    "name": "Chip Away",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "chloroblast",
+    "name": "Chloroblast",
+    "type": "grass",
+    "category": "special",
+    "power": 150,
+    "accuracy": 95,
+    "pp": 5
+  },
+  {
+    "id": "circle-throw",
+    "name": "Circle Throw",
+    "type": "fighting",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "clamp",
+    "name": "Clamp",
+    "type": "water",
+    "category": "physical",
+    "power": 35,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "clanging-scales",
+    "name": "Clanging Scales",
+    "type": "dragon",
+    "category": "special",
+    "power": 110,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "clangorous-soulblaze",
+    "name": "Clangorous Soulblaze",
+    "type": "dragon",
+    "category": "special",
+    "power": 185,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "clear-smog",
+    "name": "Clear Smog",
+    "type": "poison",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "close-combat",
+    "name": "Close Combat",
+    "type": "fighting",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        },
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "collision-course",
+    "name": "Collision Course",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "combat-torque",
+    "name": "Combat Torque",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "comet-punch",
+    "name": "Comet Punch",
+    "type": "normal",
+    "category": "physical",
+    "power": 18,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "confusion",
+    "name": "Confusion",
+    "type": "psychic",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "constrict",
+    "name": "Constrict",
+    "type": "normal",
+    "category": "physical",
+    "power": 10,
+    "accuracy": 100,
+    "pp": 35,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "core-enforcer",
+    "name": "Core Enforcer",
+    "type": "dragon",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "covet",
+    "name": "Covet",
+    "type": "normal",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "crabhammer",
+    "name": "Crabhammer",
+    "type": "water",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "cross-chop",
+    "name": "Cross Chop",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 5,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "cross-poison",
+    "name": "Cross Poison",
+    "type": "poison",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 10,
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "crunch",
+    "name": "Crunch",
+    "type": "dark",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 20
+    }
+  },
+  {
+    "id": "crush-claw",
+    "name": "Crush Claw",
+    "type": "normal",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 95,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "cut",
+    "name": "Cut",
+    "type": "normal",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 95,
+    "pp": 30
+  },
+  {
+    "id": "dark-pulse",
+    "name": "Dark Pulse",
+    "type": "dark",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "darkest-lariat",
+    "name": "Darkest Lariat",
+    "type": "dark",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dazzling-gleam",
+    "name": "Dazzling Gleam",
+    "type": "fairy",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "diamond-storm",
+    "name": "Diamond Storm",
+    "type": "rock",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": 1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "dig",
+    "name": "Dig",
+    "type": "ground",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dire-claw",
+    "name": "Dire Claw",
+    "type": "poison",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "disarming-voice",
+    "name": "Disarming Voice",
+    "type": "fairy",
+    "category": "special",
+    "power": 40,
+    "accuracy": 101,
+    "pp": 15
+  },
+  {
+    "id": "discharge",
+    "name": "Discharge",
+    "type": "electric",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "dive",
+    "name": "Dive",
+    "type": "water",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dizzy-punch",
+    "name": "Dizzy Punch",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 20
+    }
+  },
+  {
+    "id": "doom-desire",
+    "name": "Doom Desire",
+    "type": "steel",
+    "category": "special",
+    "power": 140,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "double-edge",
+    "name": "Double-Edge",
+    "type": "normal",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": -33
+    }
+  },
+  {
+    "id": "double-hit",
+    "name": "Double Hit",
+    "type": "normal",
+    "category": "physical",
+    "power": 35,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "double-iron-bash",
+    "name": "Double Iron Bash",
+    "type": "steel",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "double-kick",
+    "name": "Double Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "double-shock",
+    "name": "Double Shock",
+    "type": "electric",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "double-slap",
+    "name": "Double Slap",
+    "type": "normal",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "draco-meteor",
+    "name": "Draco Meteor",
+    "type": "dragon",
+    "category": "special",
+    "power": 130,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -2
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "dragon-ascent",
+    "name": "Dragon Ascent",
+    "type": "flying",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "dragon-breath",
+    "name": "Dragon Breath",
+    "type": "dragon",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "dragon-claw",
+    "name": "Dragon Claw",
+    "type": "dragon",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "dragon-darts",
+    "name": "Dragon Darts",
+    "type": "dragon",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dragon-energy",
+    "name": "Dragon Energy",
+    "type": "dragon",
+    "category": "special",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "dragon-hammer",
+    "name": "Dragon Hammer",
+    "type": "dragon",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "dragon-pulse",
+    "name": "Dragon Pulse",
+    "type": "dragon",
+    "category": "special",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dragon-rush",
+    "name": "Dragon Rush",
+    "type": "dragon",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 75,
+    "pp": 10
+  },
+  {
+    "id": "dragon-tail",
+    "name": "Dragon Tail",
+    "type": "dragon",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "drain-punch",
+    "name": "Drain Punch",
+    "type": "fighting",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "draining-kiss",
+    "name": "Draining Kiss",
+    "type": "fairy",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 75
+    }
+  },
+  {
+    "id": "dream-eater",
+    "name": "Dream Eater",
+    "type": "psychic",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "drill-peck",
+    "name": "Drill Peck",
+    "type": "flying",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "drill-run",
+    "name": "Drill Run",
+    "type": "ground",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 95,
+    "pp": 10,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "drum-beating",
+    "name": "Drum Beating",
+    "type": "grass",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "dual-chop",
+    "name": "Dual Chop",
+    "type": "dragon",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 90,
+    "pp": 15,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "dual-wingbeat",
+    "name": "Dual Wingbeat",
+    "type": "flying",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "dynamax-cannon",
+    "name": "Dynamax Cannon",
+    "type": "dragon",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "dynamic-punch",
+    "name": "Dynamic Punch",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 50,
+    "pp": 5,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "earth-power",
+    "name": "Earth Power",
+    "type": "ground",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "earthquake",
+    "name": "Earthquake",
+    "type": "ground",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "echoed-voice",
+    "name": "Echoed Voice",
+    "type": "normal",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "eerie-spell",
+    "name": "Eerie Spell",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "egg-bomb",
+    "name": "Egg Bomb",
+    "type": "normal",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 75,
+    "pp": 10
+  },
+  {
+    "id": "electro-drift",
+    "name": "Electro Drift",
+    "type": "electric",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "electro-shot",
+    "name": "Electro Shot",
+    "type": "electric",
+    "category": "special",
+    "power": 130,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "electroweb",
+    "name": "Electroweb",
+    "type": "electric",
+    "category": "special",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "ember",
+    "name": "Ember",
+    "type": "fire",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "energy-ball",
+    "name": "Energy Ball",
+    "type": "grass",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "eruption",
+    "name": "Eruption",
+    "type": "fire",
+    "category": "special",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "esper-wing",
+    "name": "Esper Wing",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "eternabeam",
+    "name": "Eternabeam",
+    "type": "dragon",
+    "category": "special",
+    "power": 160,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "expanding-force",
+    "name": "Expanding Force",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "explosion",
+    "name": "Explosion",
+    "type": "normal",
+    "category": "physical",
+    "power": 250,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "extrasensory",
+    "name": "Extrasensory",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "extreme-speed",
+    "name": "Extreme Speed",
+    "type": "normal",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "facade",
+    "name": "Facade",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "fairy-wind",
+    "name": "Fairy Wind",
+    "type": "fairy",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "fake-out",
+    "name": "Fake Out",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "false-surrender",
+    "name": "False Surrender",
+    "type": "dark",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 101,
+    "pp": 10
+  },
+  {
+    "id": "false-swipe",
+    "name": "False Swipe",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 40
+  },
+  {
+    "id": "feint",
+    "name": "Feint",
+    "type": "normal",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "feint-attack",
+    "name": "Feint Attack",
+    "type": "dark",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "fell-stinger",
+    "name": "Fell Stinger",
+    "type": "bug",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "fickle-beam",
+    "name": "Fickle Beam",
+    "type": "dragon",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "fiery-dance",
+    "name": "Fiery Dance",
+    "type": "fire",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": 1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "fiery-wrath",
+    "name": "Fiery Wrath",
+    "type": "dark",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "fire-blast",
+    "name": "Fire Blast",
+    "type": "fire",
+    "category": "special",
+    "power": 110,
+    "accuracy": 85,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "fire-fang",
+    "name": "Fire Fang",
+    "type": "fire",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "fire-lash",
+    "name": "Fire Lash",
+    "type": "fire",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "fire-pledge",
+    "name": "Fire Pledge",
+    "type": "fire",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "fire-punch",
+    "name": "Fire Punch",
+    "type": "fire",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "fire-spin",
+    "name": "Fire Spin",
+    "type": "fire",
+    "category": "special",
+    "power": 35,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "first-impression",
+    "name": "First Impression",
+    "type": "bug",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "fishious-rend",
+    "name": "Fishious Rend",
+    "type": "water",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "flame-burst",
+    "name": "Flame Burst",
+    "type": "fire",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "flame-charge",
+    "name": "Flame Charge",
+    "type": "fire",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": 1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "flame-wheel",
+    "name": "Flame Wheel",
+    "type": "fire",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "flamethrower",
+    "name": "Flamethrower",
+    "type": "fire",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "flare-blitz",
+    "name": "Flare Blitz",
+    "type": "fire",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10,
+      "drain": -33
+    }
+  },
+  {
+    "id": "flash-cannon",
+    "name": "Flash Cannon",
+    "type": "steel",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "fleur-cannon",
+    "name": "Fleur Cannon",
+    "type": "fairy",
+    "category": "special",
+    "power": 130,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "flip-turn",
+    "name": "Flip Turn",
+    "type": "water",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "floaty-fall",
+    "name": "Floaty Fall",
+    "type": "flying",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 95,
+    "pp": 15
+  },
+  {
+    "id": "flower-trick",
+    "name": "Flower Trick",
+    "type": "grass",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 101,
+    "pp": 10
+  },
+  {
+    "id": "fly",
+    "name": "Fly",
+    "type": "flying",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 95,
+    "pp": 15
+  },
+  {
+    "id": "flying-press",
+    "name": "Flying Press",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 10
+  },
+  {
+    "id": "focus-blast",
+    "name": "Focus Blast",
+    "type": "fighting",
+    "category": "special",
+    "power": 120,
+    "accuracy": 70,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "focus-punch",
+    "name": "Focus Punch",
+    "type": "fighting",
+    "category": "physical",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "force-palm",
+    "name": "Force Palm",
+    "type": "fighting",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "foul-play",
+    "name": "Foul Play",
+    "type": "dark",
+    "category": "physical",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "freeze-dry",
+    "name": "Freeze-Dry",
+    "type": "ice",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "freeze-shock",
+    "name": "Freeze Shock",
+    "type": "ice",
+    "category": "physical",
+    "power": 140,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "freezing-glare",
+    "name": "Freezing Glare",
+    "type": "psychic",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "freezy-frost",
+    "name": "Freezy Frost",
+    "type": "ice",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "frenzy-plant",
+    "name": "Frenzy Plant",
+    "type": "grass",
+    "category": "special",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "frost-breath",
+    "name": "Frost Breath",
+    "type": "ice",
+    "category": "special",
+    "power": 60,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "crit_rate": 6
+    }
+  },
+  {
+    "id": "fury-attack",
+    "name": "Fury Attack",
+    "type": "normal",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 85,
+    "pp": 20,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "fury-cutter",
+    "name": "Fury Cutter",
+    "type": "bug",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 95,
+    "pp": 20
+  },
+  {
+    "id": "fury-swipes",
+    "name": "Fury Swipes",
+    "type": "normal",
+    "category": "physical",
+    "power": 18,
+    "accuracy": 80,
+    "pp": 15,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "fusion-bolt",
+    "name": "Fusion Bolt",
+    "type": "electric",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "fusion-flare",
+    "name": "Fusion Flare",
+    "type": "fire",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "future-sight",
+    "name": "Future Sight",
+    "type": "psychic",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "gear-grind",
+    "name": "Gear Grind",
+    "type": "steel",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "genesis-supernova",
+    "name": "Genesis Supernova",
+    "type": "psychic",
+    "category": "special",
+    "power": 185,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "giga-drain",
+    "name": "Giga Drain",
+    "type": "grass",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "giga-impact",
+    "name": "Giga Impact",
+    "type": "normal",
+    "category": "physical",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "gigaton-hammer",
+    "name": "Gigaton Hammer",
+    "type": "steel",
+    "category": "physical",
+    "power": 160,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "glacial-lance",
+    "name": "Glacial Lance",
+    "type": "ice",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "glaciate",
+    "name": "Glaciate",
+    "type": "ice",
+    "category": "special",
+    "power": 65,
+    "accuracy": 95,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "glaive-rush",
+    "name": "Glaive Rush",
+    "type": "dragon",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "glitzy-glow",
+    "name": "Glitzy Glow",
+    "type": "psychic",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "grass-pledge",
+    "name": "Grass Pledge",
+    "type": "grass",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "grassy-glide",
+    "name": "Grassy Glide",
+    "type": "grass",
+    "category": "physical",
+    "power": 55,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "grav-apple",
+    "name": "Grav Apple",
+    "type": "grass",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "gunk-shot",
+    "name": "Gunk Shot",
+    "type": "poison",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 80,
+    "pp": 5,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "gust",
+    "name": "Gust",
+    "type": "flying",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "hammer-arm",
+    "name": "Hammer Arm",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "head-charge",
+    "name": "Head Charge",
+    "type": "normal",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": -25
+    }
+  },
+  {
+    "id": "head-smash",
+    "name": "Head Smash",
+    "type": "rock",
+    "category": "physical",
+    "power": 150,
+    "accuracy": 80,
+    "pp": 5,
+    "effect": {
+      "drain": -50
+    }
+  },
+  {
+    "id": "headbutt",
+    "name": "Headbutt",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "headlong-rush",
+    "name": "Headlong Rush",
+    "type": "ground",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "heart-stamp",
+    "name": "Heart Stamp",
+    "type": "psychic",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "heat-wave",
+    "name": "Heat Wave",
+    "type": "fire",
+    "category": "special",
+    "power": 95,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "hex",
+    "name": "Hex",
+    "type": "ghost",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "hidden-power",
+    "name": "Hidden Power",
+    "type": "normal",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "high-horsepower",
+    "name": "High Horsepower",
+    "type": "ground",
+    "category": "physical",
+    "power": 95,
+    "accuracy": 95,
+    "pp": 10
+  },
+  {
+    "id": "high-jump-kick",
+    "name": "High Jump Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 130,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "hold-back",
+    "name": "Hold Back",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 40
+  },
+  {
+    "id": "horn-attack",
+    "name": "Horn Attack",
+    "type": "normal",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "horn-leech",
+    "name": "Horn Leech",
+    "type": "grass",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "hurricane",
+    "name": "Hurricane",
+    "type": "flying",
+    "category": "special",
+    "power": 110,
+    "accuracy": 70,
+    "pp": 10,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "hydro-cannon",
+    "name": "Hydro Cannon",
+    "type": "water",
+    "category": "special",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "hydro-pump",
+    "name": "Hydro Pump",
+    "type": "water",
+    "category": "special",
+    "power": 110,
+    "accuracy": 80,
+    "pp": 5
+  },
+  {
+    "id": "hydro-steam",
+    "name": "Hydro Steam",
+    "type": "water",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "hyper-beam",
+    "name": "Hyper Beam",
+    "type": "normal",
+    "category": "special",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "hyper-drill",
+    "name": "Hyper Drill",
+    "type": "normal",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "hyper-fang",
+    "name": "Hyper Fang",
+    "type": "normal",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "hyper-voice",
+    "name": "Hyper Voice",
+    "type": "normal",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "hyperspace-fury",
+    "name": "Hyperspace Fury",
+    "type": "dark",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 101,
+    "pp": 5
+  },
+  {
+    "id": "hyperspace-hole",
+    "name": "Hyperspace Hole",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 101,
+    "pp": 5
+  },
+  {
+    "id": "ice-ball",
+    "name": "Ice Ball",
+    "type": "ice",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 90,
+    "pp": 20
+  },
+  {
+    "id": "ice-beam",
+    "name": "Ice Beam",
+    "type": "ice",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "ice-burn",
+    "name": "Ice Burn",
+    "type": "ice",
+    "category": "special",
+    "power": 140,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "ice-fang",
+    "name": "Ice Fang",
+    "type": "ice",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "ice-hammer",
+    "name": "Ice Hammer",
+    "type": "ice",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "ice-punch",
+    "name": "Ice Punch",
+    "type": "ice",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "ice-shard",
+    "name": "Ice Shard",
+    "type": "ice",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "ice-spinner",
+    "name": "Ice Spinner",
+    "type": "ice",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "icicle-crash",
+    "name": "Icicle Crash",
+    "type": "ice",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "icicle-spear",
+    "name": "Icicle Spear",
+    "type": "ice",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "icy-wind",
+    "name": "Icy Wind",
+    "type": "ice",
+    "category": "special",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "incinerate",
+    "name": "Incinerate",
+    "type": "fire",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "infernal-parade",
+    "name": "Infernal Parade",
+    "type": "ghost",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "inferno",
+    "name": "Inferno",
+    "type": "fire",
+    "category": "special",
+    "power": 100,
+    "accuracy": 50,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "infestation",
+    "name": "Infestation",
+    "type": "bug",
+    "category": "special",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "iron-head",
+    "name": "Iron Head",
+    "type": "steel",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "iron-tail",
+    "name": "Iron Tail",
+    "type": "steel",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 75,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 30
+    }
+  },
+  {
+    "id": "ivy-cudgel",
+    "name": "Ivy Cudgel",
+    "type": "grass",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "jaw-lock",
+    "name": "Jaw Lock",
+    "type": "dark",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "jet-punch",
+    "name": "Jet Punch",
+    "type": "water",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "judgment",
+    "name": "Judgment",
+    "type": "normal",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "jump-kick",
+    "name": "Jump Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 10
+  },
+  {
+    "id": "karate-chop",
+    "name": "Karate Chop",
+    "type": "fighting",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "knock-off",
+    "name": "Knock Off",
+    "type": "dark",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "kowtow-cleave",
+    "name": "Kowtow Cleave",
+    "type": "dark",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 101,
+    "pp": 10
+  },
+  {
+    "id": "lands-wrath",
+    "name": "Land's Wrath",
+    "type": "ground",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "lash-out",
+    "name": "Lash Out",
+    "type": "dark",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "last-resort",
+    "name": "Last Resort",
+    "type": "normal",
+    "category": "physical",
+    "power": 140,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "last-respects",
+    "name": "Last Respects",
+    "type": "ghost",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "lava-plume",
+    "name": "Lava Plume",
+    "type": "fire",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "leaf-blade",
+    "name": "Leaf Blade",
+    "type": "grass",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "leaf-storm",
+    "name": "Leaf Storm",
+    "type": "grass",
+    "category": "special",
+    "power": 130,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -2
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "leaf-tornado",
+    "name": "Leaf Tornado",
+    "type": "grass",
+    "category": "special",
+    "power": 65,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "leafage",
+    "name": "Leafage",
+    "type": "grass",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 40
+  },
+  {
+    "id": "leech-life",
+    "name": "Leech Life",
+    "type": "bug",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "lets-snuggle-forever",
+    "name": "Let's Snuggle Forever",
+    "type": "fairy",
+    "category": "physical",
+    "power": 190,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "lick",
+    "name": "Lick",
+    "type": "ghost",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "light-of-ruin",
+    "name": "Light of Ruin",
+    "type": "fairy",
+    "category": "special",
+    "power": 140,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "drain": -50
+    }
+  },
+  {
+    "id": "light-that-burns-the-sky",
+    "name": "Light That Burns the Sky",
+    "type": "psychic",
+    "category": "special",
+    "power": 200,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "liquidation",
+    "name": "Liquidation",
+    "type": "water",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "low-sweep",
+    "name": "Low Sweep",
+    "type": "fighting",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "lumina-crash",
+    "name": "Lumina Crash",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "lunge",
+    "name": "Lunge",
+    "type": "bug",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "luster-purge",
+    "name": "Luster Purge",
+    "type": "psychic",
+    "category": "special",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "mach-punch",
+    "name": "Mach Punch",
+    "type": "fighting",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "magical-leaf",
+    "name": "Magical Leaf",
+    "type": "grass",
+    "category": "special",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "magical-torque",
+    "name": "Magical Torque",
+    "type": "fairy",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "magma-storm",
+    "name": "Magma Storm",
+    "type": "fire",
+    "category": "special",
+    "power": 100,
+    "accuracy": 75,
+    "pp": 5,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "magnet-bomb",
+    "name": "Magnet Bomb",
+    "type": "steel",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "make-it-rain",
+    "name": "Make It Rain",
+    "type": "steel",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "malicious-moonsault",
+    "name": "Malicious Moonsault",
+    "type": "dark",
+    "category": "physical",
+    "power": 180,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "malignant-chain",
+    "name": "Malignant Chain",
+    "type": "poison",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "matcha-gotcha",
+    "name": "Matcha Gotcha",
+    "type": "grass",
+    "category": "special",
+    "power": 80,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "mega-drain",
+    "name": "Mega Drain",
+    "type": "grass",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "mega-kick",
+    "name": "Mega Kick",
+    "type": "normal",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 75,
+    "pp": 5
+  },
+  {
+    "id": "mega-punch",
+    "name": "Mega Punch",
+    "type": "normal",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 85,
+    "pp": 20
+  },
+  {
+    "id": "megahorn",
+    "name": "Megahorn",
+    "type": "bug",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "menacing-moonraze-maelstrom",
+    "name": "Menacing Moonraze Maelstrom",
+    "type": "ghost",
+    "category": "special",
+    "power": 200,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "metal-claw",
+    "name": "Metal Claw",
+    "type": "steel",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 95,
+    "pp": 35,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": 1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "meteor-assault",
+    "name": "Meteor Assault",
+    "type": "fighting",
+    "category": "physical",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "meteor-beam",
+    "name": "Meteor Beam",
+    "type": "rock",
+    "category": "special",
+    "power": 120,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "meteor-mash",
+    "name": "Meteor Mash",
+    "type": "steel",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": 1
+        }
+      ],
+      "stat_chance": 20
+    }
+  },
+  {
+    "id": "mighty-cleave",
+    "name": "Mighty Cleave",
+    "type": "rock",
+    "category": "physical",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "mind-blown",
+    "name": "Mind Blown",
+    "type": "fire",
+    "category": "special",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "mirror-shot",
+    "name": "Mirror Shot",
+    "type": "steel",
+    "category": "special",
+    "power": 65,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 30
+    }
+  },
+  {
+    "id": "mist-ball",
+    "name": "Mist Ball",
+    "type": "psychic",
+    "category": "special",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "misty-explosion",
+    "name": "Misty Explosion",
+    "type": "fairy",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "moonblast",
+    "name": "Moonblast",
+    "type": "fairy",
+    "category": "special",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 30
+    }
+  },
+  {
+    "id": "moongeist-beam",
+    "name": "Moongeist Beam",
+    "type": "ghost",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "mortal-spin",
+    "name": "Mortal Spin",
+    "type": "poison",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "mountain-gale",
+    "name": "Mountain Gale",
+    "type": "ice",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "mud-bomb",
+    "name": "Mud Bomb",
+    "type": "ground",
+    "category": "special",
+    "power": 65,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 30
+    }
+  },
+  {
+    "id": "mud-shot",
+    "name": "Mud Shot",
+    "type": "ground",
+    "category": "special",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "mud-slap",
+    "name": "Mud-Slap",
+    "type": "ground",
+    "category": "special",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "muddy-water",
+    "name": "Muddy Water",
+    "type": "water",
+    "category": "special",
+    "power": 90,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 30
+    }
+  },
+  {
+    "id": "multi-attack",
+    "name": "Multi-Attack",
+    "type": "normal",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "mystical-fire",
+    "name": "Mystical Fire",
+    "type": "fire",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "mystical-power",
+    "name": "Mystical Power",
+    "type": "psychic",
+    "category": "special",
+    "power": 70,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "needle-arm",
+    "name": "Needle Arm",
+    "type": "grass",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "night-daze",
+    "name": "Night Daze",
+    "type": "dark",
+    "category": "special",
+    "power": 85,
+    "accuracy": 95,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 40
+    }
+  },
+  {
+    "id": "night-slash",
+    "name": "Night Slash",
+    "type": "dark",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "noxious-torque",
+    "name": "Noxious Torque",
+    "type": "poison",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "nuzzle",
+    "name": "Nuzzle",
+    "type": "electric",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "oblivion-wing",
+    "name": "Oblivion Wing",
+    "type": "flying",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "drain": 75
+    }
+  },
+  {
+    "id": "oceanic-operetta",
+    "name": "Oceanic Operetta",
+    "type": "water",
+    "category": "special",
+    "power": 195,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "octazooka",
+    "name": "Octazooka",
+    "type": "water",
+    "category": "special",
+    "power": 65,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "accuracy",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "ominous-wind",
+    "name": "Ominous Wind",
+    "type": "ghost",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "hp",
+          "change": 1
+        },
+        {
+          "stat": "attack",
+          "change": 1
+        },
+        {
+          "stat": "defense",
+          "change": 1
+        },
+        {
+          "stat": "special-attack",
+          "change": 1
+        },
+        {
+          "stat": "special-defense",
+          "change": 1
+        },
+        {
+          "stat": "speed",
+          "change": 1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "order-up",
+    "name": "Order Up",
+    "type": "dragon",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "origin-pulse",
+    "name": "Origin Pulse",
+    "type": "water",
+    "category": "special",
+    "power": 110,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "outrage",
+    "name": "Outrage",
+    "type": "dragon",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "overdrive",
+    "name": "Overdrive",
+    "type": "electric",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "overheat",
+    "name": "Overheat",
+    "type": "fire",
+    "category": "special",
+    "power": 130,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -2
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "parabolic-charge",
+    "name": "Parabolic Charge",
+    "type": "electric",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "drain": 50
+    }
+  },
+  {
+    "id": "pay-day",
+    "name": "Pay Day",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "payback",
+    "name": "Payback",
+    "type": "dark",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "peck",
+    "name": "Peck",
+    "type": "flying",
+    "category": "physical",
+    "power": 35,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "petal-blizzard",
+    "name": "Petal Blizzard",
+    "type": "grass",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "petal-dance",
+    "name": "Petal Dance",
+    "type": "grass",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "phantom-force",
+    "name": "Phantom Force",
+    "type": "ghost",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "photon-geyser",
+    "name": "Photon Geyser",
+    "type": "psychic",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "pin-missile",
+    "name": "Pin Missile",
+    "type": "bug",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 95,
+    "pp": 20,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "plasma-fists",
+    "name": "Plasma Fists",
+    "type": "electric",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "play-rough",
+    "name": "Play Rough",
+    "type": "fairy",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "pluck",
+    "name": "Pluck",
+    "type": "flying",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "poison-fang",
+    "name": "Poison Fang",
+    "type": "poison",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 50
+    }
+  },
+  {
+    "id": "poison-jab",
+    "name": "Poison Jab",
+    "type": "poison",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "poison-sting",
+    "name": "Poison Sting",
+    "type": "poison",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 100,
+    "pp": 35,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "poison-tail",
+    "name": "Poison Tail",
+    "type": "poison",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 10,
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "pollen-puff",
+    "name": "Pollen Puff",
+    "type": "bug",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "poltergeist",
+    "name": "Poltergeist",
+    "type": "ghost",
+    "category": "physical",
+    "power": 110,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "population-bomb",
+    "name": "Population Bomb",
+    "type": "normal",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "pounce",
+    "name": "Pounce",
+    "type": "bug",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "pound",
+    "name": "Pound",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "powder-snow",
+    "name": "Powder Snow",
+    "type": "ice",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25,
+    "effect": {
+      "ailment": "freeze",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "power-gem",
+    "name": "Power Gem",
+    "type": "rock",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "power-trip",
+    "name": "Power Trip",
+    "type": "dark",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "power-up-punch",
+    "name": "Power-Up Punch",
+    "type": "fighting",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": 1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "power-whip",
+    "name": "Power Whip",
+    "type": "grass",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "precipice-blades",
+    "name": "Precipice Blades",
+    "type": "ground",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "prismatic-laser",
+    "name": "Prismatic Laser",
+    "type": "psychic",
+    "category": "special",
+    "power": 160,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "psybeam",
+    "name": "Psybeam",
+    "type": "psychic",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "psyblade",
+    "name": "Psyblade",
+    "type": "psychic",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "psychic",
+    "name": "Psychic",
+    "type": "psychic",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "psychic-fangs",
+    "name": "Psychic Fangs",
+    "type": "psychic",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "psychic-noise",
+    "name": "Psychic Noise",
+    "type": "psychic",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "psycho-boost",
+    "name": "Psycho Boost",
+    "type": "psychic",
+    "category": "special",
+    "power": 140,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -2
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "psycho-cut",
+    "name": "Psycho Cut",
+    "type": "psychic",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "psyshield-bash",
+    "name": "Psyshield Bash",
+    "type": "psychic",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "psyshock",
+    "name": "Psyshock",
+    "type": "psychic",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "psystrike",
+    "name": "Psystrike",
+    "type": "psychic",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "pulverizing-pancake",
+    "name": "Pulverizing Pancake",
+    "type": "normal",
+    "category": "physical",
+    "power": 210,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "pursuit",
+    "name": "Pursuit",
+    "type": "dark",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "pyro-ball",
+    "name": "Pyro Ball",
+    "type": "fire",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "quick-attack",
+    "name": "Quick Attack",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "rage",
+    "name": "Rage",
+    "type": "normal",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "rage-fist",
+    "name": "Rage Fist",
+    "type": "ghost",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "raging-bull",
+    "name": "Raging Bull",
+    "type": "normal",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "raging-fury",
+    "name": "Raging Fury",
+    "type": "fire",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "rapid-spin",
+    "name": "Rapid Spin",
+    "type": "normal",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 40
+  },
+  {
+    "id": "razor-leaf",
+    "name": "Razor Leaf",
+    "type": "grass",
+    "category": "physical",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 25,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "razor-shell",
+    "name": "Razor Shell",
+    "type": "water",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 95,
+    "pp": 10,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "razor-wind",
+    "name": "Razor Wind",
+    "type": "normal",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "relic-song",
+    "name": "Relic Song",
+    "type": "normal",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "sleep",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "retaliate",
+    "name": "Retaliate",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "revelation-dance",
+    "name": "Revelation Dance",
+    "type": "normal",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "revenge",
+    "name": "Revenge",
+    "type": "fighting",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "rising-voltage",
+    "name": "Rising Voltage",
+    "type": "electric",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "roar-of-time",
+    "name": "Roar of Time",
+    "type": "dragon",
+    "category": "special",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "rock-blast",
+    "name": "Rock Blast",
+    "type": "rock",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "rock-climb",
+    "name": "Rock Climb",
+    "type": "normal",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 85,
+    "pp": 20,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 20
+    }
+  },
+  {
+    "id": "rock-slide",
+    "name": "Rock Slide",
+    "type": "rock",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "rock-smash",
+    "name": "Rock Smash",
+    "type": "fighting",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 50
+    }
+  },
+  {
+    "id": "rock-throw",
+    "name": "Rock Throw",
+    "type": "rock",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "rock-tomb",
+    "name": "Rock Tomb",
+    "type": "rock",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "rock-wrecker",
+    "name": "Rock Wrecker",
+    "type": "rock",
+    "category": "physical",
+    "power": 150,
+    "accuracy": 90,
+    "pp": 5
+  },
+  {
+    "id": "rolling-kick",
+    "name": "Rolling Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 85,
+    "pp": 15
+  },
+  {
+    "id": "rollout",
+    "name": "Rollout",
+    "type": "rock",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 90,
+    "pp": 20
+  },
+  {
+    "id": "round",
+    "name": "Round",
+    "type": "normal",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "sacred-fire",
+    "name": "Sacred Fire",
+    "type": "fire",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 50
+    }
+  },
+  {
+    "id": "sacred-sword",
+    "name": "Sacred Sword",
+    "type": "fighting",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "salt-cure",
+    "name": "Salt Cure",
+    "type": "rock",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "sand-tomb",
+    "name": "Sand Tomb",
+    "type": "ground",
+    "category": "physical",
+    "power": 35,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "sandsear-storm",
+    "name": "Sandsear Storm",
+    "type": "ground",
+    "category": "special",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 10
+  },
+  {
+    "id": "sappy-seed",
+    "name": "Sappy Seed",
+    "type": "grass",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "scald",
+    "name": "Scald",
+    "type": "water",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "scale-shot",
+    "name": "Scale Shot",
+    "type": "dragon",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 90,
+    "pp": 20
+  },
+  {
+    "id": "scorching-sands",
+    "name": "Scorching Sands",
+    "type": "ground",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "scratch",
+    "name": "Scratch",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "searing-shot",
+    "name": "Searing Shot",
+    "type": "fire",
+    "category": "special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "searing-sunraze-smash",
+    "name": "Searing Sunraze Smash",
+    "type": "steel",
+    "category": "physical",
+    "power": 200,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "secret-power",
+    "name": "Secret Power",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "secret-sword",
+    "name": "Secret Sword",
+    "type": "fighting",
+    "category": "special",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "seed-bomb",
+    "name": "Seed Bomb",
+    "type": "grass",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "seed-flare",
+    "name": "Seed Flare",
+    "type": "grass",
+    "category": "special",
+    "power": 120,
+    "accuracy": 85,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -2
+        }
+      ],
+      "stat_chance": 40
+    }
+  },
+  {
+    "id": "self-destruct",
+    "name": "Self-Destruct",
+    "type": "normal",
+    "category": "physical",
+    "power": 200,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "shadow-ball",
+    "name": "Shadow Ball",
+    "type": "ghost",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 20
+    }
+  },
+  {
+    "id": "shadow-bone",
+    "name": "Shadow Bone",
+    "type": "ghost",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "shadow-claw",
+    "name": "Shadow Claw",
+    "type": "ghost",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "shadow-force",
+    "name": "Shadow Force",
+    "type": "ghost",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "shadow-punch",
+    "name": "Shadow Punch",
+    "type": "ghost",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "shadow-sneak",
+    "name": "Shadow Sneak",
+    "type": "ghost",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "shell-side-arm",
+    "name": "Shell Side Arm",
+    "type": "poison",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "shell-trap",
+    "name": "Shell Trap",
+    "type": "fire",
+    "category": "special",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "shock-wave",
+    "name": "Shock Wave",
+    "type": "electric",
+    "category": "special",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "signal-beam",
+    "name": "Signal Beam",
+    "type": "bug",
+    "category": "special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "silver-wind",
+    "name": "Silver Wind",
+    "type": "bug",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "hp",
+          "change": 1
+        },
+        {
+          "stat": "attack",
+          "change": 1
+        },
+        {
+          "stat": "defense",
+          "change": 1
+        },
+        {
+          "stat": "special-attack",
+          "change": 1
+        },
+        {
+          "stat": "special-defense",
+          "change": 1
+        },
+        {
+          "stat": "speed",
+          "change": 1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "sinister-arrow-raid",
+    "name": "Sinister Arrow Raid",
+    "type": "ghost",
+    "category": "physical",
+    "power": 180,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "sizzly-slide",
+    "name": "Sizzly Slide",
+    "type": "fire",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "skitter-smack",
+    "name": "Skitter Smack",
+    "type": "bug",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "skull-bash",
+    "name": "Skull Bash",
+    "type": "normal",
+    "category": "physical",
+    "power": 130,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "sky-attack",
+    "name": "Sky Attack",
+    "type": "flying",
+    "category": "physical",
+    "power": 140,
+    "accuracy": 90,
+    "pp": 5,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "sky-drop",
+    "name": "Sky Drop",
+    "type": "flying",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "sky-uppercut",
+    "name": "Sky Uppercut",
+    "type": "fighting",
+    "category": "physical",
+    "power": 85,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "slam",
+    "name": "Slam",
+    "type": "normal",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 75,
+    "pp": 20
+  },
+  {
+    "id": "slash",
+    "name": "Slash",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "sludge",
+    "name": "Sludge",
+    "type": "poison",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "sludge-bomb",
+    "name": "Sludge Bomb",
+    "type": "poison",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "sludge-wave",
+    "name": "Sludge Wave",
+    "type": "poison",
+    "category": "special",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "smack-down",
+    "name": "Smack Down",
+    "type": "rock",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "smart-strike",
+    "name": "Smart Strike",
+    "type": "steel",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "smelling-salts",
+    "name": "Smelling Salts",
+    "type": "normal",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "smog",
+    "name": "Smog",
+    "type": "poison",
+    "category": "special",
+    "power": 30,
+    "accuracy": 70,
+    "pp": 20,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 40
+    }
+  },
+  {
+    "id": "snap-trap",
+    "name": "Snap Trap",
+    "type": "grass",
+    "category": "physical",
+    "power": 35,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "snarl",
+    "name": "Snarl",
+    "type": "dark",
+    "category": "special",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "snipe-shot",
+    "name": "Snipe Shot",
+    "type": "water",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "snore",
+    "name": "Snore",
+    "type": "normal",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "solar-beam",
+    "name": "Solar Beam",
+    "type": "grass",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "solar-blade",
+    "name": "Solar Blade",
+    "type": "grass",
+    "category": "physical",
+    "power": 125,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "soul-stealing-7-star-strike",
+    "name": "Soul-Stealing 7-Star Strike",
+    "type": "ghost",
+    "category": "physical",
+    "power": 195,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "spacial-rend",
+    "name": "Spacial Rend",
+    "type": "dragon",
+    "category": "special",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "spark",
+    "name": "Spark",
+    "type": "electric",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "sparkling-aria",
+    "name": "Sparkling Aria",
+    "type": "water",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "sparkly-swirl",
+    "name": "Sparkly Swirl",
+    "type": "fairy",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "spectral-thief",
+    "name": "Spectral Thief",
+    "type": "ghost",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "spike-cannon",
+    "name": "Spike Cannon",
+    "type": "normal",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "spin-out",
+    "name": "Spin Out",
+    "type": "steel",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "spirit-break",
+    "name": "Spirit Break",
+    "type": "fairy",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "spirit-shackle",
+    "name": "Spirit Shackle",
+    "type": "ghost",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "splintered-stormshards",
+    "name": "Splintered Stormshards",
+    "type": "rock",
+    "category": "physical",
+    "power": 190,
+    "accuracy": 100,
+    "pp": 1
+  },
+  {
+    "id": "splishy-splash",
+    "name": "Splishy Splash",
+    "type": "water",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "springtide-storm",
+    "name": "Springtide Storm",
+    "type": "fairy",
+    "category": "special",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 5
+  },
+  {
+    "id": "steam-eruption",
+    "name": "Steam Eruption",
+    "type": "water",
+    "category": "special",
+    "power": 110,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "ailment": "burn",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "steamroller",
+    "name": "Steamroller",
+    "type": "bug",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "steel-beam",
+    "name": "Steel Beam",
+    "type": "steel",
+    "category": "special",
+    "power": 140,
+    "accuracy": 95,
+    "pp": 5
+  },
+  {
+    "id": "steel-roller",
+    "name": "Steel Roller",
+    "type": "steel",
+    "category": "physical",
+    "power": 130,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "steel-wing",
+    "name": "Steel Wing",
+    "type": "steel",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 90,
+    "pp": 25,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": 1
+        }
+      ],
+      "stat_chance": 10
+    }
+  },
+  {
+    "id": "stoked-sparksurfer",
+    "name": "Stoked Sparksurfer",
+    "type": "electric",
+    "category": "special",
+    "power": 175,
+    "accuracy": 100,
+    "pp": 1,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "stomp",
+    "name": "Stomp",
+    "type": "normal",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "stomping-tantrum",
+    "name": "Stomping Tantrum",
+    "type": "ground",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "stone-axe",
+    "name": "Stone Axe",
+    "type": "rock",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "stone-edge",
+    "name": "Stone Edge",
+    "type": "rock",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 5,
+    "effect": {
+      "crit_rate": 1
+    }
+  },
+  {
+    "id": "stored-power",
+    "name": "Stored Power",
+    "type": "psychic",
+    "category": "special",
+    "power": 20,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "storm-throw",
+    "name": "Storm Throw",
+    "type": "fighting",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 10,
+    "effect": {
+      "crit_rate": 6
+    }
+  },
+  {
+    "id": "strange-steam",
+    "name": "Strange Steam",
+    "type": "fairy",
+    "category": "special",
+    "power": 90,
+    "accuracy": 95,
+    "pp": 10
+  },
+  {
+    "id": "strength",
+    "name": "Strength",
+    "type": "normal",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "struggle",
+    "name": "Struggle",
+    "type": "normal",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 0,
+    "effect": {
+      "healing": -25
+    }
+  },
+  {
+    "id": "struggle-bug",
+    "name": "Struggle Bug",
+    "type": "bug",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "special-attack",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "submission",
+    "name": "Submission",
+    "type": "fighting",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 80,
+    "pp": 20,
+    "effect": {
+      "drain": -25
+    }
+  },
+  {
+    "id": "sucker-punch",
+    "name": "Sucker Punch",
+    "type": "dark",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "sunsteel-strike",
+    "name": "Sunsteel Strike",
+    "type": "steel",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "supercell-slam",
+    "name": "Supercell Slam",
+    "type": "electric",
+    "category": "physical",
+    "power": 100,
+    "accuracy": 95,
+    "pp": 15
+  },
+  {
+    "id": "superpower",
+    "name": "Superpower",
+    "type": "fighting",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "attack",
+          "change": -1
+        },
+        {
+          "stat": "defense",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "surf",
+    "name": "Surf",
+    "type": "water",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "surging-strikes",
+    "name": "Surging Strikes",
+    "type": "water",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "swift",
+    "name": "Swift",
+    "type": "normal",
+    "category": "special",
+    "power": 60,
+    "accuracy": 101,
+    "pp": 20
+  },
+  {
+    "id": "synchronoise",
+    "name": "Synchronoise",
+    "type": "psychic",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "syrup-bomb",
+    "name": "Syrup Bomb",
+    "type": "grass",
+    "category": "special",
+    "power": 60,
+    "accuracy": 85,
+    "pp": 10
+  },
+  {
+    "id": "tachyon-cutter",
+    "name": "Tachyon Cutter",
+    "type": "steel",
+    "category": "special",
+    "power": 50,
+    "accuracy": 101,
+    "pp": 10
+  },
+  {
+    "id": "tackle",
+    "name": "Tackle",
+    "type": "normal",
+    "category": "physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "tail-slap",
+    "name": "Tail Slap",
+    "type": "normal",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 85,
+    "pp": 10,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "take-down",
+    "name": "Take Down",
+    "type": "normal",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 85,
+    "pp": 20,
+    "effect": {
+      "drain": -25
+    }
+  },
+  {
+    "id": "techno-blast",
+    "name": "Techno Blast",
+    "type": "normal",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "temper-flare",
+    "name": "Temper Flare",
+    "type": "fire",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "tera-blast",
+    "name": "Tera Blast",
+    "type": "normal",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "tera-starstorm",
+    "name": "Tera Starstorm",
+    "type": "normal",
+    "category": "special",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "terrain-pulse",
+    "name": "Terrain Pulse",
+    "type": "normal",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "thief",
+    "name": "Thief",
+    "type": "dark",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "thousand-arrows",
+    "name": "Thousand Arrows",
+    "type": "ground",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "thousand-waves",
+    "name": "Thousand Waves",
+    "type": "ground",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "thrash",
+    "name": "Thrash",
+    "type": "normal",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "throat-chop",
+    "name": "Throat Chop",
+    "type": "dark",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "silence",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "thunder",
+    "name": "Thunder",
+    "type": "electric",
+    "category": "special",
+    "power": 110,
+    "accuracy": 70,
+    "pp": 10,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 30
+    }
+  },
+  {
+    "id": "thunder-cage",
+    "name": "Thunder Cage",
+    "type": "electric",
+    "category": "special",
+    "power": 80,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "thunder-fang",
+    "name": "Thunder Fang",
+    "type": "electric",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 95,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "thunder-punch",
+    "name": "Thunder Punch",
+    "type": "electric",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "thunder-shock",
+    "name": "Thunder Shock",
+    "type": "electric",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "thunderbolt",
+    "name": "Thunderbolt",
+    "type": "electric",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 10
+    }
+  },
+  {
+    "id": "thunderclap",
+    "name": "Thunderclap",
+    "type": "electric",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "thunderous-kick",
+    "name": "Thunderous Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "torch-song",
+    "name": "Torch Song",
+    "type": "fire",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "trailblaze",
+    "name": "Trailblaze",
+    "type": "grass",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "tri-attack",
+    "name": "Tri Attack",
+    "type": "normal",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "triple-arrows",
+    "name": "Triple Arrows",
+    "type": "fighting",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "triple-axel",
+    "name": "Triple Axel",
+    "type": "ice",
+    "category": "physical",
+    "power": 20,
+    "accuracy": 90,
+    "pp": 10
+  },
+  {
+    "id": "triple-dive",
+    "name": "Triple Dive",
+    "type": "water",
+    "category": "physical",
+    "power": 30,
+    "accuracy": 95,
+    "pp": 10
+  },
+  {
+    "id": "triple-kick",
+    "name": "Triple Kick",
+    "type": "fighting",
+    "category": "physical",
+    "power": 10,
+    "accuracy": 90,
+    "pp": 10,
+    "effect": {
+      "min_hits": "3",
+      "max_hits": "3"
+    }
+  },
+  {
+    "id": "trop-kick",
+    "name": "Trop Kick",
+    "type": "grass",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "twin-beam",
+    "name": "Twin Beam",
+    "type": "psychic",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "twineedle",
+    "name": "Twineedle",
+    "type": "bug",
+    "category": "physical",
+    "power": 25,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "poison",
+      "ailment_chance": 20,
+      "min_hits": "2",
+      "max_hits": "2"
+    }
+  },
+  {
+    "id": "twister",
+    "name": "Twister",
+    "type": "dragon",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "u-turn",
+    "name": "U-turn",
+    "type": "bug",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "upper-hand",
+    "name": "Upper Hand",
+    "type": "fighting",
+    "category": "physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "uproar",
+    "name": "Uproar",
+    "type": "normal",
+    "category": "special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "v-create",
+    "name": "V-create",
+    "type": "fire",
+    "category": "physical",
+    "power": 180,
+    "accuracy": 95,
+    "pp": 5,
+    "effect": {
+      "stat_changes": [
+        {
+          "stat": "defense",
+          "change": -1
+        },
+        {
+          "stat": "special-defense",
+          "change": -1
+        },
+        {
+          "stat": "speed",
+          "change": -1
+        }
+      ],
+      "stat_chance": 100
+    }
+  },
+  {
+    "id": "vacuum-wave",
+    "name": "Vacuum Wave",
+    "type": "fighting",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "venoshock",
+    "name": "Venoshock",
+    "type": "poison",
+    "category": "special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "vine-whip",
+    "name": "Vine Whip",
+    "type": "grass",
+    "category": "physical",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "vise-grip",
+    "name": "Vise Grip",
+    "type": "normal",
+    "category": "physical",
+    "power": 55,
+    "accuracy": 100,
+    "pp": 30
+  },
+  {
+    "id": "vital-throw",
+    "name": "Vital Throw",
+    "type": "fighting",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 101,
+    "pp": 10
+  },
+  {
+    "id": "volt-switch",
+    "name": "Volt Switch",
+    "type": "electric",
+    "category": "special",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 20
+  },
+  {
+    "id": "volt-tackle",
+    "name": "Volt Tackle",
+    "type": "electric",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 10,
+      "drain": -33
+    }
+  },
+  {
+    "id": "wake-up-slap",
+    "name": "Wake-Up Slap",
+    "type": "fighting",
+    "category": "physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "water-gun",
+    "name": "Water Gun",
+    "type": "water",
+    "category": "special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25
+  },
+  {
+    "id": "water-pledge",
+    "name": "Water Pledge",
+    "type": "water",
+    "category": "special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "water-pulse",
+    "name": "Water Pulse",
+    "type": "water",
+    "category": "special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "ailment": "confusion",
+      "ailment_chance": 20
+    }
+  },
+  {
+    "id": "water-shuriken",
+    "name": "Water Shuriken",
+    "type": "water",
+    "category": "special",
+    "power": 15,
+    "accuracy": 100,
+    "pp": 20,
+    "effect": {
+      "min_hits": "2",
+      "max_hits": "5"
+    }
+  },
+  {
+    "id": "water-spout",
+    "name": "Water Spout",
+    "type": "water",
+    "category": "special",
+    "power": 150,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "waterfall",
+    "name": "Waterfall",
+    "type": "water",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "wave-crash",
+    "name": "Wave Crash",
+    "type": "water",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "weather-ball",
+    "name": "Weather Ball",
+    "type": "normal",
+    "category": "special",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "whirlpool",
+    "name": "Whirlpool",
+    "type": "water",
+    "category": "special",
+    "power": 35,
+    "accuracy": 85,
+    "pp": 15,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "wicked-blow",
+    "name": "Wicked Blow",
+    "type": "dark",
+    "category": "physical",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 5
+  },
+  {
+    "id": "wicked-torque",
+    "name": "Wicked Torque",
+    "type": "dark",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "wild-charge",
+    "name": "Wild Charge",
+    "type": "electric",
+    "category": "physical",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": -25
+    }
+  },
+  {
+    "id": "wildbolt-storm",
+    "name": "Wildbolt Storm",
+    "type": "electric",
+    "category": "special",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 10
+  },
+  {
+    "id": "wing-attack",
+    "name": "Wing Attack",
+    "type": "flying",
+    "category": "physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 35
+  },
+  {
+    "id": "wood-hammer",
+    "name": "Wood Hammer",
+    "type": "grass",
+    "category": "physical",
+    "power": 120,
+    "accuracy": 100,
+    "pp": 15,
+    "effect": {
+      "drain": -33
+    }
+  },
+  {
+    "id": "wrap",
+    "name": "Wrap",
+    "type": "normal",
+    "category": "physical",
+    "power": 15,
+    "accuracy": 90,
+    "pp": 20,
+    "effect": {
+      "ailment": "trap",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "x-scissor",
+    "name": "X-Scissor",
+    "type": "bug",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15
+  },
+  {
+    "id": "zap-cannon",
+    "name": "Zap Cannon",
+    "type": "electric",
+    "category": "special",
+    "power": 120,
+    "accuracy": 50,
+    "pp": 5,
+    "effect": {
+      "ailment": "paralysis",
+      "ailment_chance": 100
+    }
+  },
+  {
+    "id": "zen-headbutt",
+    "name": "Zen Headbutt",
+    "type": "psychic",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 90,
+    "pp": 15
+  },
+  {
+    "id": "zing-zap",
+    "name": "Zing Zap",
+    "type": "electric",
+    "category": "physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 10
+  },
+  {
+    "id": "zippy-zap",
+    "name": "Zippy Zap",
+    "type": "electric",
+    "category": "physical",
+    "power": 50,
+    "accuracy": 100,
+    "pp": 15
+  }
+]

@@ -9,7 +9,7 @@ import { pickQuestion, shuffleOptions } from '../utils/questionPicker'
 import pokemonJson from '../data/pokemon.json'
 import movesJson from '../data/moves.json'
 import itemsJson from '../data/items.json'
-import { PokemonData, MoveData, PartyPokemon, Question, ItemData } from '../types/game'
+import { PokemonData, MoveData, PartyPokemon, Question, ItemData, StatusCondition } from '../types/game'
 
 const itemMap = Object.fromEntries(
   (itemsJson as ItemData[]).map(i => [i.id, i])
@@ -67,11 +67,42 @@ export function useBattleEngine() {
     }
   }
 
+  async function switchToPartyMember(index: number) {
+    store.switchPokemon(index)
+    const switched = useBattleStore.getState().playerPokemon!
+    store.addLog(`Go, ${getName(switched)}!`)
+    store.setPhase('animating')
+    await delay(500)
+    await opponentTurn()
+  }
+
+  function tryApplyAilment(
+    moveInfo: MoveData | undefined,
+    targetStatus: StatusCondition | null | undefined,
+    setStatus: (s: StatusCondition, turns?: number) => void,
+    targetName: string,
+  ) {
+    const eff = moveInfo?.effect
+    if (!eff?.ailment || targetStatus) return
+    const chance = eff.ailment_chance ?? 100
+    if (Math.random() * 100 >= chance) return
+    const ailment = eff.ailment as StatusCondition
+    if (!ailment) return
+    const turns = ailment === 'sleep' ? 1 + Math.floor(Math.random() * 3) : 0
+    setStatus(ailment, turns)
+    const label: Record<string, string> = {
+      burn: 'burned', paralysis: 'paralyzed', sleep: 'fell asleep', poison: 'was poisoned',
+      freeze: 'was frozen', confusion: 'became confused',
+    }
+    store.addLog(`${targetName} ${label[ailment] ?? ailment}!`)
+  }
+
   async function handleAnswer(correct: boolean) {
     const state = useBattleStore.getState()
-    const { playerPokemon, opponentPokemon, selectedMoveIndex } = state
+    const { playerPokemon, opponentPokemon, selectedMoveIndex, question } = state
     if (!playerPokemon || !opponentPokemon || selectedMoveIndex === null) return
 
+    const correctAnswer = question?.answer ?? ''
     store.clearQuestion()
     store.setPhase('animating')
 
@@ -84,40 +115,103 @@ export function useBattleEngine() {
     store.decrementPP(selectedMoveIndex)
 
     if (!correct) {
+      store.setAnswerResult({ wasCorrect: false, correctAnswer })
       store.addLog(`${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}... but it missed!`)
-      await delay(600)
+      await delay(1800)
+      store.setAnswerResult(null)
       await opponentTurn()
     } else {
+      // Check player paralysis/sleep before attacking
+      const playerStatus = playerPokemon.status
+      if (playerStatus === 'sleep') {
+        const turns = playerPokemon.sleepTurns
+        if (turns > 1) {
+          store.setPlayerStatus('sleep', turns - 1)
+          store.addLog(`${getName(playerPokemon)} is fast asleep!`)
+          await delay(1000)
+          await opponentTurn()
+          return
+        } else {
+          store.setPlayerStatus(null)
+          store.addLog(`${getName(playerPokemon)} woke up!`)
+        }
+      }
+      if (playerStatus === 'paralysis' && Math.random() < 0.25) {
+        store.addLog(`${getName(playerPokemon)} is paralyzed and can't move!`)
+        await delay(1000)
+        await opponentTurn()
+        return
+      }
+
       // Player attack lurch
       store.setPlayerAttacking(true)
       await delay(220)
       store.setPlayerAttacking(false)
-      // Hit flash
-      store.setOpponentFlash(true)
-      await delay(120)
-      store.setOpponentFlash(false)
 
       const defenderData = pokemonMap[opponentPokemon.pokemonId]
+      const attackerData = pokemonMap[playerPokemon.pokemonId]
       const eff = getTypeEffectiveness(
         moveInfo?.type ?? 'normal',
         defenderData?.types ?? ['normal']
       )
-      const attackerData = pokemonMap[playerPokemon.pokemonId]
       const atkStat = calculateStat(attackerData?.baseStats.atk ?? 50, playerPokemon.level)
       const defStat = calculateStat(defenderData?.baseStats.def ?? 50, opponentPokemon.level)
-      const dmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
-      store.dealDamageToOpponent(dmg)
 
-      let msg = `${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}! (${dmg} dmg)`
+      // Multi-hit
+      const fx = moveInfo?.effect
+      const hits = fx?.min_hits != null && fx?.max_hits != null
+        ? fx.min_hits + Math.floor(Math.random() * (fx.max_hits - fx.min_hits + 1))
+        : 1
+      let totalDmg = 0
+      for (let h = 0; h < hits; h++) {
+        const singleDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
+        store.dealDamageToOpponent(singleDmg)
+        totalDmg += singleDmg
+        // Hit flash per hit
+        store.setOpponentFlash(true)
+        await delay(120)
+        store.setOpponentFlash(false)
+        if (hits > 1) await delay(80)
+      }
+
+      let msg = `${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}! (${totalDmg} dmg)`
+      if (hits > 1) msg += ` ${hits}× hit!`
       if (eff >= 2) msg += " It's super effective!"
       else if (eff > 0 && eff < 1) msg += " It's not very effective..."
       else if (eff === 0) msg += ' It had no effect.'
       store.addLog(msg)
 
+      // Drain (positive = user heals, negative = recoil)
+      if (fx?.drain && fx.drain !== 0) {
+        const drainAmt = Math.max(1, Math.floor(totalDmg * Math.abs(fx.drain) / 100))
+        if (fx.drain > 0) {
+          store.healPlayer(drainAmt)
+          store.addLog(`${getName(playerPokemon)} drained ${drainAmt} HP!`)
+        } else {
+          store.dealDamageToPlayer(drainAmt)
+          store.addLog(`${getName(playerPokemon)} is damaged by recoil! (${drainAmt})`)
+        }
+      }
+
+      // Healing move (power=0, healing>0, like Recover)
+      if (!fx?.drain && fx?.healing && fx.healing > 0 && (moveInfo?.power ?? 0) === 0) {
+        const healAmt = Math.max(1, Math.floor(playerPokemon.maxHp * fx.healing / 100))
+        store.healPlayer(healAmt)
+        store.addLog(`${getName(playerPokemon)} restored ${healAmt} HP!`)
+      }
+
       if (useBattleStore.getState().opponentPokemon!.currentHp <= 0) {
         await handleWin()
         return
       }
+
+      // Try to apply ailment to opponent
+      tryApplyAilment(
+        moveInfo,
+        useBattleStore.getState().opponentPokemon!.status,
+        (s, t) => store.setOpponentStatus(s, t),
+        getName(useBattleStore.getState().opponentPokemon!),
+      )
 
       // Shake animation (3 oscillations)
       for (let i = 0; i < 6; i++) {
@@ -126,16 +220,53 @@ export function useBattleEngine() {
       }
       store.setShakeX(0)
 
+      // Burn/poison end-of-turn damage on opponent
+      const oppAfterHit = useBattleStore.getState().opponentPokemon!
+      if (oppAfterHit.status === 'burn' || oppAfterHit.status === 'poison') {
+        const dotDmg = Math.max(1, Math.floor(oppAfterHit.maxHp / 8))
+        store.dealDamageToOpponent(dotDmg)
+        store.addLog(`${getName(oppAfterHit)} is hurt by ${oppAfterHit.status}! (${dotDmg})`)
+        if (useBattleStore.getState().opponentPokemon!.currentHp <= 0) {
+          await handleWin()
+          return
+        }
+      }
+
       await delay(300)
       await opponentTurn()
     }
   }
 
   async function opponentTurn() {
-    const { playerPokemon, opponentPokemon } = useBattleStore.getState()
+    let { playerPokemon, opponentPokemon } = useBattleStore.getState()
     if (!playerPokemon || !opponentPokemon) return
     store.setPhase('opponent_turn')
     await delay(800)
+
+    // Opponent status checks
+    if (opponentPokemon.status === 'sleep') {
+      const turns = opponentPokemon.sleepTurns
+      if (turns > 1) {
+        store.setOpponentStatus('sleep', turns - 1)
+        store.addLog(`${getName(opponentPokemon)} is fast asleep!`)
+        await delay(800)
+        store.setPhase('player_turn')
+        return
+      } else {
+        store.setOpponentStatus(null)
+        store.addLog(`${getName(opponentPokemon)} woke up!`)
+      }
+    }
+    if (opponentPokemon.status === 'paralysis' && Math.random() < 0.25) {
+      store.addLog(`${getName(opponentPokemon)} is paralyzed and can't move!`)
+      await delay(800)
+      store.setPhase('player_turn')
+      return
+    }
+
+    // Re-read after possible status update
+    opponentPokemon = useBattleStore.getState().opponentPokemon!
+    playerPokemon = useBattleStore.getState().playerPokemon!
 
     const idx = Math.floor(Math.random() * opponentPokemon.moves.length)
     const move = opponentPokemon.moves[idx]
@@ -146,7 +277,6 @@ export function useBattleEngine() {
     const eff = getTypeEffectiveness(moveInfo?.type ?? 'normal', defenderData?.types ?? ['normal'])
     const atkStat = calculateStat(attackerData?.baseStats.atk ?? 50, opponentPokemon.level)
     const defStat = calculateStat(defenderData?.baseStats.def ?? 50, playerPokemon.level)
-    const dmg = calculateDamage(opponentPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
 
     store.addLog(`${getName(opponentPokemon)} used ${moveInfo?.name ?? 'Move'}!`)
 
@@ -155,13 +285,30 @@ export function useBattleEngine() {
     await delay(220)
     store.setOpponentAttacking(false)
 
-    // Player hit flash
-    store.setPlayerFlash(true)
-    await delay(120)
-    store.setPlayerFlash(false)
+    // Multi-hit for opponent too
+    const fx = moveInfo?.effect
+    const hits = fx?.min_hits != null && fx?.max_hits != null
+      ? fx.min_hits + Math.floor(Math.random() * (fx.max_hits - fx.min_hits + 1))
+      : 1
+    let totalDmg = 0
+    for (let h = 0; h < hits; h++) {
+      const singleDmg = calculateDamage(opponentPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
+      store.dealDamageToPlayer(singleDmg)
+      totalDmg += singleDmg
+      store.setPlayerFlash(true)
+      await delay(120)
+      store.setPlayerFlash(false)
+      if (hits > 1) await delay(80)
+    }
 
-    store.dealDamageToPlayer(dmg)
-    store.addLog(`${getName(playerPokemon)} took ${dmg} damage!`)
+    store.addLog(`${getName(playerPokemon)} took ${totalDmg} damage!${hits > 1 ? ` (${hits}× hit)` : ''}`)
+
+    // Drain for opponent
+    if (fx?.drain && fx.drain > 0) {
+      const drainAmt = Math.max(1, Math.floor(totalDmg * fx.drain / 100))
+      store.healOpponent(drainAmt)
+      store.addLog(`${getName(opponentPokemon)} drained ${drainAmt} HP!`)
+    }
 
     // Player shake (3 oscillations)
     for (let i = 0; i < 6; i++) {
@@ -170,12 +317,35 @@ export function useBattleEngine() {
     }
     store.setPlayerShakeX(0)
 
+    // Try ailment on player
+    tryApplyAilment(
+      moveInfo,
+      useBattleStore.getState().playerPokemon!.status,
+      (s, t) => store.setPlayerStatus(s, t),
+      getName(useBattleStore.getState().playerPokemon!),
+    )
+
     await delay(300)
 
     if (useBattleStore.getState().playerPokemon!.currentHp <= 0) {
       store.addLog(`${getName(playerPokemon)} fainted!`)
-      store.setPhase('lose')
+      const hasHealthy = useBattleStore.getState().party.some(p => p.currentHp > 0)
+      store.setPhase(hasHealthy ? 'switch_pokemon' : 'lose')
       return
+    }
+
+    // Burn/poison end-of-turn on player
+    const plrAfter = useBattleStore.getState().playerPokemon!
+    if (plrAfter.status === 'burn' || plrAfter.status === 'poison') {
+      const dotDmg = Math.max(1, Math.floor(plrAfter.maxHp / 8))
+      store.dealDamageToPlayer(dotDmg)
+      store.addLog(`${getName(plrAfter)} is hurt by ${plrAfter.status}! (${dotDmg})`)
+      if (useBattleStore.getState().playerPokemon!.currentHp <= 0) {
+        store.addLog(`${getName(plrAfter)} fainted!`)
+        const hasHealthy = useBattleStore.getState().party.some(p => p.currentHp > 0)
+        store.setPhase(hasHealthy ? 'switch_pokemon' : 'lose')
+        return
+      }
     }
 
     store.setPhase('player_turn')
@@ -250,7 +420,6 @@ export function useBattleEngine() {
         questionsAnswered: (profile.stats?.questionsAnswered ?? 0) + 1,
         questionsCorrect: (profile.stats?.questionsCorrect ?? 0) + 1,
       }
-      // Always update index 0 (the lead pokemon sent to battle)
       const updatedParty = profile.party.map((p, idx) =>
         idx === 0
           ? {
@@ -264,13 +433,25 @@ export function useBattleEngine() {
             }
           : p
       )
+
+      // Trainer battles reward 2 Pokéballs
+      const { isWildBattle, trainerName } = useBattleStore.getState()
+      let updatedBag = profile.bag ?? []
+      if (!isWildBattle) {
+        const hasBalls = updatedBag.some(b => b.itemId === 'pokeball')
+        updatedBag = hasBalls
+          ? updatedBag.map(b => b.itemId === 'pokeball' ? { ...b, qty: b.qty + 2 } : b)
+          : [...updatedBag, { itemId: 'pokeball', qty: 2 }]
+        store.addLog(`${trainerName ?? 'Trainer'} gave you 2 Pokéballs!`)
+      }
+
       try {
-        await updateProfile(profile.id, { party: updatedParty, stats })
-        // Sync in-memory profile so next battle starts with correct XP/moves
+        await updateProfile(profile.id, { party: updatedParty, stats, bag: updatedBag })
         useProfileStore.getState().setProfile({
           ...(useProfileStore.getState().profile ?? profile),
           party: updatedParty,
           stats,
+          bag: updatedBag,
         })
       } catch (e) {
         console.error('Failed to save battle result:', e)
@@ -321,6 +502,22 @@ export function useBattleEngine() {
     const state = useBattleStore.getState()
     const { opponentPokemon, isWildBattle } = state
     if (!opponentPokemon || !isWildBattle || !profile?.id) return
+
+    const ballCount = (profile.bag ?? []).find(b => b.itemId === 'pokeball')?.qty ?? 0
+    if (ballCount <= 0) {
+      store.addLog("You don't have any Pokéballs!")
+      store.setPhase('player_turn')
+      return
+    }
+
+    // Deduct one Pokéball immediately
+    const newBag = (profile.bag ?? [])
+      .map(b => b.itemId === 'pokeball' ? { ...b, qty: b.qty - 1 } : b)
+      .filter(b => b.qty > 0)
+    try {
+      await updateProfile(profile.id, { bag: newBag })
+      useProfileStore.getState().setProfile({ ...profile, bag: newBag })
+    } catch { /* silent */ }
 
     store.setPhase('animating')
 
@@ -377,5 +574,5 @@ export function useBattleEngine() {
     }
   }
 
-  return { selectMove, handleAnswer, continueBattle, useItemInBattle, attemptCatch }
+  return { selectMove, handleAnswer, continueBattle, useItemInBattle, attemptCatch, switchToPartyMember }
 }

@@ -22,6 +22,18 @@ export interface PokemonData {
   gen: number
 }
 
+export interface MoveEffect {
+  ailment?: string
+  ailment_chance?: number
+  drain?: number           // >0 = user heals X% of damage, <0 = recoil
+  healing?: number         // self-heal X% of max HP (e.g. Recover = 50)
+  crit_rate?: number
+  stat_changes?: Array<{ stat: string; change: number }>
+  stat_chance?: number
+  min_hits?: number
+  max_hits?: number
+}
+
 export interface MoveData {
   id: string
   name: string
@@ -30,6 +42,7 @@ export interface MoveData {
   power: number
   accuracy: number
   pp: number
+  effect?: MoveEffect
 }
 
 export type TypeChart = Record<PokemonType, {
@@ -174,6 +187,7 @@ export interface GameMap {
 export type BattlePhase =
   | 'idle' | 'player_turn' | 'question' | 'animating'
   | 'opponent_turn' | 'catch' | 'win' | 'lose' | 'escaped' | 'evolving'
+  | 'switch_pokemon'
 
 export interface ActivePokemon extends PartyPokemon {
   name: string
