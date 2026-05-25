@@ -1,12 +1,27 @@
 import { palletTown } from './palletTown'
-import { route1 } from './route1'
-import { pokeCenter } from './pokeCenter'
+import { pokeCenter } from './pokecenter'
+import { sunlitMeadow } from './sunlitMeadow'
+import { viridianForest } from './viridianForest'
+import { flowerMeadow } from './flowerMeadow'
+import { mistyLake } from './mistyLake'
+import { rockyCave } from './rockyCave'
+import { trainerRoad } from './trainerRoad'
+import { cinnabarTown } from './cinnabarTown'
+import { volcanoTrail } from './volcanoTrail'
 import { MapData } from './types'
 
 export const MAPS: Record<string, MapData> = {
   pallet: palletTown,
-  route1,
   pokecenter: pokeCenter,
+  sunlitMeadow,
+  viridianForest,
+  flowerMeadow,
+  mistyLake,
+  rockyCave,
+  trainerRoad,
+  cinnabarTown,
+  volcanoTrail,
+  route1: sunlitMeadow,  // legacy alias
 }
 
 export function getMap(id: string): MapData {
