@@ -19,9 +19,32 @@ const COLS = 11
 const ROWS = 9
 const ENCOUNTER_RATE = 0.1
 
-const TILE_FILL: Record<TileType, string> = {
-  path: '#c8a878', grass: '#48b048', tree: '#185018',
-  water: '#2878c8', building: '#888888', door: '#a05030', gym: '#c8b850',
+// ── Tile image preloading ─────────────────────────────────────────────────
+const TILE_FILES: Record<string, string> = {
+  grass:    'tiles/Background.png',
+  land:     'tiles/tile_land1.png',
+  tree:     'tiles/tile_tree.png',
+  flower:   'tiles/tile_flower.png',
+  flower2:  'tiles/tile_flower2.png',
+  bldBig:   'tiles/tile_building_big.png',
+  bldSmall: 'tiles/tile_building1.png',
+  bldPC:    'tiles/tile_pokemon_center.png',
+}
+const TILE_IMGS: Record<string, HTMLImageElement> = {}
+const TILE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
+
+const BLOCKED_TILES = new Set<TileType>(['tree', 'building', 'fence', 'brush', 'gym'])
+
+function drawProp(
+  ctx: CanvasRenderingContext2D,
+  src: HTMLCanvasElement | HTMLImageElement,
+  destX: number, destY: number, destH: number
+) {
+  const w = src instanceof HTMLCanvasElement
+    ? destH * (src.width / src.height)
+    : destH * ((src as HTMLImageElement).naturalWidth / (src as HTMLImageElement).naturalHeight)
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(src, destX, destY, w, destH)
 }
 
 const pokemonMap = Object.fromEntries(
@@ -33,14 +56,22 @@ const pokemonMap = Object.fromEntries(
 // Key format: "<gender>_<pose>_<dir>"  e.g. "male_run_left"
 type DirKey = 'down' | 'up' | 'left' | 'right'
 const SPRITE_FILES: Record<string, string> = {
-  male_stand_down: 'hero_front.png',    male_stand_up: 'hero_back.png',
-  male_stand_left: 'hero_left.png',     male_stand_right: 'hero_right.png',
-  male_run_down:   'hero_run_front.png', male_run_up:  'hero_run_back.png',
-  male_run_left:   'hero_run_left.png',  male_run_right: 'hero_run_right.png',
-  female_stand_down: 'heroine_front.png',    female_stand_up: 'heroine_back.png',
-  female_stand_left: 'heroine_left.png',     female_stand_right: 'heroine_right.png',
-  female_run_down:   'heroine_run_front.png', female_run_up:  'heroine_run_back.png',
-  female_run_left:   'heroine_run_left.png',  female_run_right: 'heroine_run_right.png',
+  male_stand_down:  'characters/Male Character - Look at the front.png',
+  male_stand_up:    'characters/Male Character - Look at the back.png',
+  male_stand_left:  'characters/Male Character - Look at the left.png',
+  male_stand_right: 'characters/Male Character - Look at the right.png',
+  male_run_down:    'characters/Male Character - Running to the front.png',
+  male_run_up:      'characters/Male Character - Running to the back.png',
+  male_run_left:    'characters/Male Character - Running to the left.png',
+  male_run_right:   'characters/Male Character - Running to the right.png',
+  female_stand_down:  'characters/Female Character - Look at the front.png',
+  female_stand_up:    'characters/Female Character - Look at the back.png',
+  female_stand_left:  'characters/Female Character - Look at the left.png',
+  female_stand_right: 'characters/Female Character - Look at the right.png',
+  female_run_down:    'characters/Female Character - Run to the front.png',
+  female_run_up:      'characters/Female Character - Run to the back.png',
+  female_run_left:    'characters/Female Character - Run to the left.png',
+  female_run_right:   'characters/Female Character - Run to the right.png',
 }
 const SPRITE_IMGS: Record<string, HTMLImageElement> = {}
 const SPRITE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
@@ -68,28 +99,12 @@ Object.entries(SPRITE_FILES).forEach(([key, file]) => {
   SPRITE_IMGS[key] = img
 })
 
-// ── GBA tileset backgrounds ───────────────────────────────────────────────
-const BG_IMGS: Record<string, HTMLImageElement> = {}
-// [srcX, srcY] for viewport top-left when player is at tile (hw, hh)
-// pallet: exterior map is left ~330px of 764px wide image; keep srcX+176 ≤ 330
-const BG_ORIGINS: Record<string, [number, number]> = {
-  pallet: [32, 65],
-  route1: [72, 40],
-}
-// max srcX/srcY to prevent viewport from bleeding into interior room images on the right
-const BG_MAX_SRC: Record<string, [number, number]> = {
-  pallet: [154, 320],
-  route1: [500, 500],
-}
-const BG_MIN_SRC_Y: Record<string, number> = {
-  route1: 30,
-}
-;['pallet', 'route1'].forEach(id => {
+Object.entries(TILE_FILES).forEach(([key, file]) => {
   const img = new Image()
-  const base = import.meta.env.BASE_URL
-  img.src = id === 'pallet' ? `${base}littleroot.gif` : `${base}route101.gif`
-  BG_IMGS[id] = img
+  img.src = `${import.meta.env.BASE_URL}${file}`
+  TILE_IMGS[key] = img
 })
+
 
 // ── Pokémon Center interior canvas drawing ────────────────────────────────
 function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number) {
@@ -247,52 +262,97 @@ export default function WorldMap() {
         ctx.fillRect(0, 0, cW, cH)
       }
     } else {
-      // ── Exterior: GBA tileset or fallback colored tiles ─────────────────
-      const bgId = map.id
-      const bgImg = BG_IMGS[bgId]
-      const bgOrigin = BG_ORIGINS[bgId]
-      const bgMaxSrc = BG_MAX_SRC[bgId]
-      const SRC_TW = 16
-      const SRC_W = COLS * SRC_TW
-      const SRC_H = ROWS * SRC_TW
-      let bgDrawn = false
+      // ── Pass 1: Base tiles ────────────────────────────────────────────────
+      const grassImg = TILE_IMGS.grass
+      const grassReady = grassImg?.complete && grassImg.naturalWidth > 0
 
-      if (bgImg && bgOrigin) {
-        if (bgImg.complete && bgImg.naturalWidth > 0) {
-          const rawSrcX = bgOrigin[0] + (playerX - hw) * SRC_TW
-          const rawSrcY = bgOrigin[1] + (playerY - hh) * SRC_TW
-          const maxX = bgMaxSrc ? bgMaxSrc[0] : bgImg.naturalWidth - SRC_W
-          const maxY = bgMaxSrc ? bgMaxSrc[1] : Math.max(0, bgImg.naturalHeight - SRC_H)
-          const srcX = Math.max(0, Math.min(rawSrcX, maxX))
-          const minSrcY = BG_MIN_SRC_Y[bgId] ?? 0
-          const srcY = Math.max(minSrcY, Math.min(rawSrcY, maxY))
-          ctx.drawImage(bgImg, srcX, srcY, SRC_W, SRC_H, 0, 0, cW, cH)
-          bgDrawn = true
-        } else {
-          bgImg.onload = () => drawMap(playerX, playerY, dir)
-        }
-      }
+      for (let vy = 0; vy < ROWS; vy++) {
+        for (let vx = 0; vx < COLS; vx++) {
+          const mx = playerX - hw + vx
+          const my = playerY - hh + vy
+          const tile: TileType = (my >= 0 && my < map.height && mx >= 0 && mx < map.width)
+            ? map.tiles[my][mx] : 'tree'
+          const x = vx * TILE, y = vy * TILE
 
-      if (!bgDrawn) {
-        for (let vy = 0; vy < ROWS; vy++) {
-          for (let vx = 0; vx < COLS; vx++) {
-            const mx = playerX - hw + vx
-            const my = playerY - hh + vy
-            const tile = (my >= 0 && my < map.height && mx >= 0 && mx < map.width)
-              ? map.tiles[my][mx] : 'tree'
-            ctx.fillStyle = TILE_FILL[tile]
-            ctx.fillRect(vx * TILE, vy * TILE, TILE, TILE)
-            if (tile === 'grass') {
-              ctx.fillStyle = '#389038'
-              ctx.font = `${TILE * 0.55}px monospace`
-              ctx.textAlign = 'center'
-              ctx.fillText('ʷ', vx * TILE + TILE / 2, vy * TILE + TILE * 0.72)
-            }
+          if (tile === 'land' || tile === 'path') {
+            const img = TILE_IMGS.land
+            if (img?.complete && img.naturalWidth > 0) ctx.drawImage(img, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#c8a870'; ctx.fillRect(x, y, TILE, TILE) }
+          } else if (tile === 'flower') {
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
+            const fi = TILE_IMGS.flower
+            if (fi?.complete && fi.naturalWidth > 0) ctx.drawImage(fi, x, y, TILE, TILE)
+          } else if (tile === 'flower2') {
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
+            const fi = TILE_IMGS.flower2
+            if (fi?.complete && fi.naturalWidth > 0) ctx.drawImage(fi, x, y, TILE, TILE)
+          } else if (tile === 'water') {
+            ctx.fillStyle = '#48a8e0'; ctx.fillRect(x, y, TILE, TILE)
+            ctx.fillStyle = 'rgba(255,255,255,0.45)'
+            ctx.beginPath(); ctx.ellipse(x+TILE*0.28, y+TILE*0.38, TILE*0.18, TILE*0.09, 0, 0, Math.PI*2); ctx.fill()
+            ctx.beginPath(); ctx.ellipse(x+TILE*0.70, y+TILE*0.65, TILE*0.16, TILE*0.08, 0, 0, Math.PI*2); ctx.fill()
+          } else {
+            // grass, tree, building, door, fence, brush, gym — all use grass base
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
           }
         }
       }
 
-      // NPC trainers
+      // ── Pass 1b: Tree images (proportional, drawn over grass base) ────────
+      const treeImg = TILE_IMGS.tree
+      if (treeImg?.complete && treeImg.naturalWidth > 0) {
+        const th = TILE * (treeImg.naturalHeight / treeImg.naturalWidth)
+        for (let vy = 0; vy < ROWS; vy++) {
+          for (let vx = 0; vx < COLS; vx++) {
+            const mx = playerX - hw + vx
+            const my = playerY - hh + vy
+            const tile: TileType = (my >= 0 && my < map.height && mx >= 0 && mx < map.width)
+              ? map.tiles[my][mx] : 'tree'
+            if (tile !== 'tree') continue
+            ctx.imageSmoothingEnabled = false
+            ctx.drawImage(treeImg, vx * TILE, vy * TILE + (TILE - th) / 2, TILE, th)
+          }
+        }
+      }
+
+      // ── Pass 2: Building overlays (proportional, chroma-keyed) ───────────
+      const IMG_KEY: Record<string, string> = {
+        'tile_building_big.png':   'bldBig',
+        'tile_building1.png':      'bldSmall',
+        'tile_pokemon_center.png': 'bldPC',
+      }
+      for (const ov of (map.buildingOverlays ?? [])) {
+        const key = IMG_KEY[ov.image]
+        if (!key) continue
+        const rawImg = TILE_IMGS[key]
+        if (!rawImg?.complete || !rawImg.naturalWidth) continue
+        if (!TILE_CANVASES[key]) TILE_CANVASES[key] = applyChromaKey(rawImg)
+        const src = TILE_CANVASES[key]!
+        const vx = ov.x - (playerX - hw)
+        const vy = ov.y - (playerY - hh)
+        drawProp(ctx, src, vx * TILE, vy * TILE, ov.heightTiles * TILE)
+      }
+
+      // ── Pass 3: Door visuals ──────────────────────────────────────────────
+      for (let vy = 0; vy < ROWS; vy++) {
+        for (let vx = 0; vx < COLS; vx++) {
+          const mx = playerX - hw + vx
+          const my = playerY - hh + vy
+          if (my < 0 || my >= map.height || mx < 0 || mx >= map.width) continue
+          if (map.tiles[my][mx] !== 'door') continue
+          const x = vx * TILE, y = vy * TILE
+          ctx.fillStyle = '#9c4f1e'; ctx.fillRect(x + 5, y + 3, TILE - 10, TILE - 5)
+          ctx.fillStyle = '#c97233'
+          ctx.fillRect(x + 6, y + 4, (TILE - 14) / 2, TILE - 9)
+          ctx.fillRect(x + TILE / 2 + 2, y + 4, (TILE - 14) / 2, TILE - 9)
+          ctx.fillStyle = '#f0c840'; ctx.fillRect(x + TILE / 2 - 2, y + TILE / 2, 4, 3)
+        }
+      }
+
+      // ── Pass 4: NPC trainers ──────────────────────────────────────────────
       for (const t of map.trainers) {
         const vx = t.x - playerX + hw
         const vy = t.y - playerY + hh
@@ -371,7 +431,7 @@ export default function WorldMap() {
 
     if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) return
     const tile = map.tiles[ny][nx]
-    if (tile === 'tree' || tile === 'building') return
+    if (BLOCKED_TILES.has(tile)) return
 
     const exit = map.exits.find(e => e.x === nx && e.y === ny)
     if (exit) {
