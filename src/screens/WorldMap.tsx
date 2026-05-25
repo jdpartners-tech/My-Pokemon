@@ -29,6 +29,7 @@ const TILE_FILES: Record<string, string> = {
   bldBig:   'tiles/tile_building_big.png',
   bldSmall: 'tiles/tile_building1.png',
   bldPC:    'tiles/tile_pokemon_center.png',
+  bldShop:  'tiles/tile_building_pokemonshop.png',
 }
 const TILE_IMGS: Record<string, HTMLImageElement> = {}
 const TILE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
@@ -76,19 +77,55 @@ const SPRITE_FILES: Record<string, string> = {
 const SPRITE_IMGS: Record<string, HTMLImageElement> = {}
 const SPRITE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
 
-function applyChromaKey(img: HTMLImageElement): HTMLCanvasElement {
+// whiteOnly=true  → only flood-fill from corners that are near-white (building images)
+// whiteOnly=false → flood-fill from all corners regardless of color (sprites / tile overlays)
+function applyChromaKey(img: HTMLImageElement, whiteOnly = false): HTMLCanvasElement {
   const oc = document.createElement('canvas')
   oc.width = img.naturalWidth; oc.height = img.naturalHeight
   const octx = oc.getContext('2d')!
   octx.drawImage(img, 0, 0)
   const id = octx.getImageData(0, 0, oc.width, oc.height)
   const d = id.data
-  if (d[3] === 0) return oc  // already transparent background
-  const bgR = d[0], bgG = d[1], bgB = d[2]
-  for (let i = 0; i < d.length; i += 4) {
-    if (Math.abs(d[i] - bgR) < 20 && Math.abs(d[i+1] - bgG) < 20 && Math.abs(d[i+2] - bgB) < 20)
-      d[i+3] = 0
+  const W = oc.width, H = oc.height
+  if (d[3] === 0) return oc  // already transparent
+
+  const THRESHOLD = whiteOnly ? 20 : 35
+  const visited = new Uint8Array(W * H)
+  const stack: number[] = []
+
+  const cornerIdxs = [0, W - 1, (H - 1) * W, (H - 1) * W + W - 1]
+  for (const ci of cornerIdxs) {
+    if (visited[ci] || d[ci * 4 + 3] === 0) continue
+    const bgR = d[ci * 4], bgG = d[ci * 4 + 1], bgB = d[ci * 4 + 2]
+    // In white-only mode skip corners that are not near-white
+    if (whiteOnly && (bgR < 200 || bgG < 200 || bgB < 200)) continue
+    visited[ci] = 1
+    stack.push(ci)
+    while (stack.length > 0) {
+      const idx = stack.pop()!
+      d[idx * 4 + 3] = 0
+      const x = idx % W, y = (idx / W) | 0
+      const neighbors = [
+        x > 0     ? idx - 1 : -1,
+        x < W - 1 ? idx + 1 : -1,
+        y > 0     ? idx - W : -1,
+        y < H - 1 ? idx + W : -1,
+      ]
+      for (const ni of neighbors) {
+        if (ni < 0 || visited[ni]) continue
+        if (d[ni * 4 + 3] === 0) { visited[ni] = 1; continue }
+        if (
+          Math.abs(d[ni*4]   - bgR) < THRESHOLD &&
+          Math.abs(d[ni*4+1] - bgG) < THRESHOLD &&
+          Math.abs(d[ni*4+2] - bgB) < THRESHOLD
+        ) {
+          visited[ni] = 1
+          stack.push(ni)
+        }
+      }
+    }
   }
+
   octx.putImageData(id, 0, 0)
   return oc
 }
@@ -220,6 +257,10 @@ export default function WorldMap() {
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [dialogue, setDialogue] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
+  const shopDismissedRef = useRef(false)
+  const [battleFlash, setBattleFlash] = useState(false)
+  const updateProfileRef = useRef(updateProfile)
+  useEffect(() => { updateProfileRef.current = updateProfile }, [updateProfile])
   const mapRef = useRef<MapData>(getMap('pallet'))
   const prevMapIdRef = useRef<string>('pallet')
   const pxRef = useRef(profile?.playerX ?? 7)
@@ -282,12 +323,18 @@ export default function WorldMap() {
             if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
             else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
             const fi = TILE_IMGS.flower
-            if (fi?.complete && fi.naturalWidth > 0) ctx.drawImage(fi, x, y, TILE, TILE)
+            if (fi?.complete && fi.naturalWidth > 0) {
+              if (!TILE_CANVASES['flower']) TILE_CANVASES['flower'] = applyChromaKey(fi)
+              ctx.drawImage(TILE_CANVASES['flower']!, x, y, TILE, TILE)
+            }
           } else if (tile === 'flower2') {
             if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
             else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
             const fi = TILE_IMGS.flower2
-            if (fi?.complete && fi.naturalWidth > 0) ctx.drawImage(fi, x, y, TILE, TILE)
+            if (fi?.complete && fi.naturalWidth > 0) {
+              if (!TILE_CANVASES['flower2']) TILE_CANVASES['flower2'] = applyChromaKey(fi)
+              ctx.drawImage(TILE_CANVASES['flower2']!, x, y, TILE, TILE)
+            }
           } else if (tile === 'water') {
             ctx.fillStyle = '#48a8e0'; ctx.fillRect(x, y, TILE, TILE)
             ctx.fillStyle = 'rgba(255,255,255,0.45)'
@@ -301,9 +348,14 @@ export default function WorldMap() {
         }
       }
 
-      // ── Pass 1b: Tree images (proportional, drawn over grass base) ────────
+      // ── Pass 1b: Tree images (proportional, chroma-keyed, drawn over grass base) ─
       const treeImg = TILE_IMGS.tree
       if (treeImg?.complete && treeImg.naturalWidth > 0) {
+        if (!TILE_CANVASES['tree']) {
+          if (treeImg.complete) TILE_CANVASES['tree'] = applyChromaKey(treeImg)
+          else treeImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
+        }
+        const treeSrc = TILE_CANVASES['tree'] ?? treeImg
         const th = TILE * (treeImg.naturalHeight / treeImg.naturalWidth)
         for (let vy = 0; vy < ROWS; vy++) {
           for (let vx = 0; vx < COLS; vx++) {
@@ -313,7 +365,7 @@ export default function WorldMap() {
               ? map.tiles[my][mx] : 'tree'
             if (tile !== 'tree') continue
             ctx.imageSmoothingEnabled = false
-            ctx.drawImage(treeImg, vx * TILE, vy * TILE + (TILE - th) / 2, TILE, th)
+            ctx.drawImage(treeSrc, vx * TILE, vy * TILE + (TILE - th) / 2, TILE, th)
           }
         }
       }
@@ -323,13 +375,17 @@ export default function WorldMap() {
         'tile_building_big.png':   'bldBig',
         'tile_building1.png':      'bldSmall',
         'tile_pokemon_center.png': 'bldPC',
+        'tile_building_pokemonshop.png': 'bldShop',
       }
       for (const ov of (map.buildingOverlays ?? [])) {
         const key = IMG_KEY[ov.image]
         if (!key) continue
         const rawImg = TILE_IMGS[key]
-        if (!rawImg?.complete || !rawImg.naturalWidth) continue
-        if (!TILE_CANVASES[key]) TILE_CANVASES[key] = applyChromaKey(rawImg)
+        if (!rawImg?.complete || !rawImg.naturalWidth) {
+          if (rawImg) rawImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
+          continue
+        }
+        if (!TILE_CANVASES[key]) TILE_CANVASES[key] = applyChromaKey(rawImg, true)
         const src = TILE_CANVASES[key]!
         const vx = ov.x - (playerX - hw)
         const vy = ov.y - (playerY - hh)
@@ -399,15 +455,6 @@ export default function WorldMap() {
       rawImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
     }
 
-    // ── Map name label ────────────────────────────────────────────────────
-    ctx.fillStyle = '#181808'
-    ctx.beginPath()
-    ctx.roundRect(6, 6, 130, 20, 2)
-    ctx.fill()
-    ctx.fillStyle = '#f0ece8'
-    ctx.font = "bold 10px 'Courier New', monospace"
-    ctx.textAlign = 'left'
-    ctx.fillText(map.name.toUpperCase(), 12, 20)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.gender])
 
@@ -431,7 +478,6 @@ export default function WorldMap() {
 
     if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) return
     const tile = map.tiles[ny][nx]
-    if (BLOCKED_TILES.has(tile)) return
 
     const exit = map.exits.find(e => e.x === nx && e.y === ny)
     if (exit) {
@@ -442,11 +488,21 @@ export default function WorldMap() {
       pyRef.current = exit.targetY
       setPx(exit.targetX)
       setPy(exit.targetY)
+      // Persist player position so it survives logout/login
+      const cp = useProfileStore.getState().profile
+      if (cp?.id) {
+        const posUpdate = { currentRoute: exit.targetMap, playerX: exit.targetX, playerY: exit.targetY }
+        useProfileStore.getState().setProfile({ ...cp, ...posUpdate })
+        updateProfileRef.current(cp.id, posUpdate).catch(() => {})
+      }
       return
     }
 
+    if (BLOCKED_TILES.has(tile)) return
+
     const door = map.doors.find(d => d.x === nx && d.y === ny)
     if (door?.type === 'pokemart') {
+      if (shopDismissedRef.current) return  // player dismissed — don't reopen until they move away
       setShopOpen(true)
       return
     }
@@ -464,6 +520,7 @@ export default function WorldMap() {
       }
     }
 
+    shopDismissedRef.current = false  // player moved away — allow shop to reopen next approach
     pxRef.current = nx
     pyRef.current = ny
     setPx(nx)
@@ -477,6 +534,10 @@ export default function WorldMap() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true }
+        return
+      }
       const DIRS: Record<string, [number, number]> = {
         ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
         w:[0,-1], s:[0,1], a:[-1,0], d:[1,0],
@@ -490,7 +551,20 @@ export default function WorldMap() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [dialogue, move])
+  }, [dialogue, move, shopOpen])
+
+  function flashAndNavigate(delayMs = 0) {
+    setTimeout(() => {
+      let count = 0
+      const tick = () => {
+        count++
+        setBattleFlash(f => !f)
+        if (count < 6) setTimeout(tick, 80)
+        else { setBattleFlash(false); navigate('/battle') }
+      }
+      tick()
+    }, delayMs)
+  }
 
   function startWildBattle(playerX: number, playerY: number) {
     const map = mapRef.current
@@ -514,14 +588,24 @@ export default function WorldMap() {
     player.xp = currentProfile.party[0].xp ?? player.xp
     player.moves = currentProfile.party[0].moves?.length > 0 ? [...currentProfile.party[0].moves] : player.moves
     player.nickname = currentProfile.party[0].nickname
+    const fullParty = currentProfile.party.slice(1).map(p => {
+      const info = pokemonMap[p.pokemonId]
+      if (!info) return null
+      const bp = buildPartyPokemon(info, p.level)
+      bp.currentHp = p.currentHp ?? bp.maxHp
+      bp.xp = p.xp ?? bp.xp
+      bp.moves = p.moves?.length > 0 ? [...p.moves] : bp.moves
+      bp.nickname = p.nickname
+      return bp
+    }).filter(Boolean) as typeof player[]
     useProfileStore.getState().setProfile({
       ...currentProfile,
       playerX,
       playerY,
       currentRoute: currentMapIdRef.current,
     })
-    useBattleStore.getState().startWildBattle(player, opponent)
-    navigate('/battle')
+    useBattleStore.getState().startWildBattle(player, opponent, fullParty)
+    flashAndNavigate()
   }
   startWildBattleRef.current = startWildBattle
 
@@ -539,14 +623,24 @@ export default function WorldMap() {
     player.xp = currentProfile.party[0].xp ?? player.xp
     player.moves = currentProfile.party[0].moves?.length > 0 ? [...currentProfile.party[0].moves] : player.moves
     player.nickname = currentProfile.party[0].nickname
+    const fullParty = currentProfile.party.slice(1).map(p => {
+      const info = pokemonMap[p.pokemonId]
+      if (!info) return null
+      const bp = buildPartyPokemon(info, p.level)
+      bp.currentHp = p.currentHp ?? bp.maxHp
+      bp.xp = p.xp ?? bp.xp
+      bp.moves = p.moves?.length > 0 ? [...p.moves] : bp.moves
+      bp.nickname = p.nickname
+      return bp
+    }).filter(Boolean) as typeof player[]
     useProfileStore.getState().setProfile({
       ...currentProfile,
       playerX: pxRef.current,
       playerY: pyRef.current,
       currentRoute: currentMapIdRef.current,
     })
-    useBattleStore.getState().startTrainerBattle(player, opponent, trainer.name)
-    setTimeout(() => navigate('/battle'), 500)
+    useBattleStore.getState().startTrainerBattle(player, opponent, trainer.name, fullParty)
+    flashAndNavigate(400)
   }
   startTrainerBattleRef.current = startTrainerBattle
 
@@ -580,8 +674,7 @@ export default function WorldMap() {
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center gap-2 p-2">
-      <div className="flex justify-between items-center w-full max-w-sm">
-        <span className="text-yellow-400 font-bold">{mapRef.current.name}</span>
+      <div className="flex justify-end items-center w-full max-w-sm">
         <div className="flex gap-2">
           <button onClick={() => navigate('/team')}
             className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
@@ -617,8 +710,15 @@ export default function WorldMap() {
         <ShopModal
           profile={profile}
           onBuy={handleBuy}
-          onClose={() => setShopOpen(false)}
+          onClose={() => { setShopOpen(false); shopDismissedRef.current = true }}
         />
+      )}
+
+      {battleFlash && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
+          background: 'white', opacity: 0.85,
+        }} />
       )}
     </div>
   )
