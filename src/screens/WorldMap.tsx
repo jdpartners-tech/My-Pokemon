@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
 import { useBattleStore } from '../store/battleStore'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
-import { getMap } from '../maps/index'
+import { getMap, MAPS } from '../maps/index'
 import { MapData, TileType, TrainerNpc } from '../maps/types'
 import { buildPartyPokemon } from '../utils/exp'
 import pokemonJson from '../data/pokemon.json'
@@ -17,7 +17,7 @@ const ITEMS = itemsJson as ItemData[]
 const TILE = 32
 const COLS = 11
 const ROWS = 9
-const ENCOUNTER_RATE = 0.1
+const ENCOUNTER_RATE = 0.04
 
 // ── Tile image preloading ─────────────────────────────────────────────────
 const TILE_FILES: Record<string, string> = {
@@ -392,7 +392,82 @@ export default function WorldMap() {
         drawProp(ctx, src, vx * TILE, vy * TILE, ov.heightTiles * TILE)
       }
 
-      // ── Pass 3: NPC trainers ──────────────────────────────────────────────
+      // ── Pass 3: Route signs & cave mouths (auto-detected from exits) ────
+      if (!map.isInterior) {
+        const SKIP_TARGETS = new Set(['pokecenter', 'pokemart'])
+        const groups: Record<string, typeof map.exits> = {}
+        for (const e of map.exits) {
+          if (SKIP_TARGETS.has(e.targetMap)) continue
+          ;(groups[e.targetMap] ??= []).push(e)
+        }
+        for (const [targetId, exits] of Object.entries(groups)) {
+          const xs = exits.map(e => e.x), ys = exits.map(e => e.y)
+          const midX = (Math.min(...xs) + Math.max(...xs)) / 2
+          const midY = (Math.min(...ys) + Math.max(...ys)) / 2
+          const atL = exits[0].x === 0
+          const atR = exits[0].x === map.width - 1
+          const atT = exits[0].y === 0
+          type Dir = 'up'|'down'|'left'|'right'
+          let dir: Dir = 'down', sx = midX, sy = midY
+          if (atL)      { dir = 'left';  sx = 1;            sy = midY }
+          else if (atR) { dir = 'right'; sx = map.width-2;  sy = midY }
+          else if (atT) { dir = 'up';    sx = midX;         sy = 1 }
+          else          { dir = 'down';  sx = midX;         sy = map.height-2 }
+
+          const isCave = map.id === 'rockyCave' || targetId === 'rockyCave'
+
+          if (isCave) {
+            // Dark cave arch on each exit tile
+            for (const e of exits) {
+              const evx = e.x - (playerX - hw)
+              const evy = e.y - (playerY - hh)
+              if (evx < 0 || evx >= COLS || evy < 0 || evy >= ROWS) continue
+              const cx = evx * TILE, cy = evy * TILE
+              const aw = TILE - 4, ah = Math.round(TILE * 0.82)
+              ctx.fillStyle = '#0a0806'
+              ctx.beginPath()
+              ctx.roundRect(cx + 2, cy + TILE - ah, aw, ah, [6, 6, 0, 0])
+              ctx.fill()
+              ctx.strokeStyle = '#4a3020'
+              ctx.lineWidth = 2
+              ctx.stroke()
+            }
+          } else {
+            // Wooden route sign
+            const svx = sx - (playerX - hw)
+            const svy = sy - (playerY - hh)
+            if (svx < -1 || svx > COLS || svy < -1 || svy > ROWS) continue
+            const px = Math.round(svx * TILE + TILE / 2)
+            const py = Math.round(svy * TILE)
+            const arrowGlyph: Record<Dir, string> = {up:'↑', down:'↓', left:'←', right:'→'}
+            const label = (MAPS[targetId]?.name ?? targetId).toUpperCase()
+            const text = `${label} ${arrowGlyph[dir]}`
+            ctx.font = 'bold 7px monospace'
+            const tw = ctx.measureText(text).width
+            const bw = Math.max(tw + 10, 52), bh = 14
+            const bx = px - bw / 2, by = py + 4
+            // Post
+            ctx.fillStyle = '#6b3f1a'
+            ctx.fillRect(px - 1, by + bh, 2, TILE - bh - 2)
+            // Board fill
+            ctx.fillStyle = '#d4a84b'
+            ctx.beginPath()
+            ctx.roundRect(bx, by, bw, bh, 2)
+            ctx.fill()
+            // Board border
+            ctx.strokeStyle = '#6b3f1a'
+            ctx.lineWidth = 1.5
+            ctx.stroke()
+            // Text
+            ctx.fillStyle = '#1a0f00'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(text, px, by + bh / 2)
+          }
+        }
+      }
+
+      // ── Pass 4: NPC trainers ──────────────────────────────────────────────
       for (const t of map.trainers) {
         const vx = t.x - playerX + hw
         const vy = t.y - playerY + hh

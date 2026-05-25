@@ -1,4 +1,9 @@
-import type { PokemonData, PartyPokemon } from '../types/game'
+import type { PokemonData, PartyPokemon, MoveData } from '../types/game'
+import movesJson from '../data/moves.json'
+
+const moveDataMap = Object.fromEntries(
+  (movesJson as MoveData[]).map(m => [m.id, m])
+) as Record<string, MoveData>
 
 export function expForLevel(level: number): number {
   return Math.pow(level, 3)
@@ -28,15 +33,16 @@ export function buildPartyPokemon(
 ): PartyPokemon {
   const maxHp = calculateMaxHp(pokemon.baseStats.hp, level)
 
-  // Pick up to 4 moves from learnset at or below this level
-  const learnableMoves = pokemon.learnset
-    .filter(entry => entry.level <= level)
-    .slice(-4)
+  // Pick up to 4 moves: level-appropriate ones, padded to at least 3 from learnset
+  const atLevel = pokemon.learnset.filter(entry => entry.level <= level).slice(-4)
+  const learnableMoves = atLevel.length >= 3
+    ? atLevel
+    : pokemon.learnset.slice(0, Math.max(3, atLevel.length))
 
   const moves = learnableMoves.length > 0
     ? learnableMoves.map(entry => {
-        const moveId = entry.moveId
-        return { moveId, pp: 10, maxPp: 10 }
+        const pp = moveDataMap[entry.moveId]?.pp ?? 10
+        return { moveId: entry.moveId, pp, maxPp: pp }
       })
     : [{ moveId: 'tackle', pp: 35, maxPp: 35 }]
 
