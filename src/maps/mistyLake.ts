@@ -17,16 +17,16 @@ export const mistyLake: MapData = {
     [T,G,G,G,G,G,W,W,W,W,W,W,W,W,G,G,T,T],  // row  3
     [T,G,G,G,G,W,W,W,W,W,W,W,W,W,W,G,T,T],  // row  4
     [T,G,G,G,W,W,W,W,W,W,W,W,W,W,W,W,G,T],  // row  5
-    [T,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,T],  // row  6: east wall
-    [T,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,G],  // row  7: east exits
-    [T,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,G],  // row  8: east exits
-    [T,G,G,G,W,W,W,W,W,W,W,W,W,W,W,G,G,T],  // row  9: east wall
-    [T,G,G,G,G,W,W,W,W,W,W,W,W,W,G,G,G,T],  // row 10: east wall
+    [G,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,G],  // row  6: west exit x=0; east exit x=17
+    [G,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,G],  // row  7: west exit x=0; east exit x=17
+    [T,G,G,W,W,W,W,W,W,W,W,W,W,W,W,W,G,T],  // row  8: east wall (old east exit closed)
+    [T,G,G,G,W,W,W,W,W,W,W,W,W,W,W,G,G,T],  // row  9
+    [T,G,G,G,G,W,W,W,W,W,W,W,W,W,G,G,G,T],  // row 10
     [T,G,G,G,G,G,G,G,W,W,W,W,G,G,G,G,T,T],  // row 11
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 12
     [T,G,G,L,L,L,L,L,L,L,L,L,L,G,G,G,G,T],  // row 13: land path
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 14: south entry from Flower Meadow
-    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T,T,T,T],  // row 15: south exit (→ Flower Meadow) x=7-8
+    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 14
+    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 15: south border (old flower exit closed)
   ],
   wildPokemon: [
     { pokemonId: 54,  minLevel: 8,  maxLevel: 13, rate: 35 },  // Psyduck
@@ -42,10 +42,10 @@ export const mistyLake: MapData = {
   ],
   trainers: [],
   exits: [
-    { x: 7,  y: 15, targetMap: 'flowerMeadow', targetX: 7, targetY: 1 },
-    { x: 8,  y: 15, targetMap: 'flowerMeadow', targetX: 8, targetY: 1 },
-    { x: 17, y: 7,  targetMap: 'rockyCave',    targetX: 1, targetY: 7 },
-    { x: 17, y: 8,  targetMap: 'rockyCave',    targetX: 1, targetY: 8 },
+    { x: 0,  y: 6, targetMap: 'rockyCave',    targetX: 14, targetY: 6 },
+    { x: 0,  y: 7, targetMap: 'rockyCave',    targetX: 14, targetY: 7 },
+    { x: 17, y: 6, targetMap: 'flowerMeadow', targetX: 0,  targetY: 6 },
+    { x: 17, y: 7, targetMap: 'flowerMeadow', targetX: 0,  targetY: 7 },
   ],
   doors: [],
 }

@@ -11,20 +11,20 @@ export const sunlitMeadow: MapData = {
   width: 15,
   height: 14,
   tiles: [
-    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T],  // row  0: north exit (→ Pallet Town) x=7-8
+    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row  0: north border (old pallet exit closed)
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  1
     [T,G,G,G,G,F,G,G,G,G,G,G,G,G,T],  // row  2
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  3
     [T,G,F,G,G,G,G,G,G,G,G,G,F,G,T],  // row  4
     [T,G,G,G,G,L,G,G,G,G,G,G,G,G,T],  // row  5
-    [T,G,G,G,G,L,G,G,G,G,G,G,G,G,T],  // row  6
-    [T,G,G,F,G,L,G,G,G,F,G,G,G,G,T],  // row  7
+    [G,G,G,G,G,L,G,G,G,G,G,G,G,G,G],  // row  6: west exit x=0; east exit x=14
+    [G,G,G,F,G,L,G,G,G,F,G,G,G,G,G],  // row  7: west exit x=0; east exit x=14
     [T,G,G,G,G,L,G,G,G,G,G,G,G,G,T],  // row  8
     [T,G,G,G,G,L,G,G,G,G,G,G,G,G,T],  // row  9
     [T,G,F,G,G,G,G,G,G,G,G,G,G,G,T],  // row 10
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 11
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 12
-    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T],  // row 13: south exit (→ Viridian Forest) x=7-8
+    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 13: south border (old viridian exit closed)
   ],
   wildPokemon: [
     { pokemonId: 16,  minLevel: 3,  maxLevel: 6,  rate: 40 },  // Pidgey
@@ -35,10 +35,10 @@ export const sunlitMeadow: MapData = {
   ],
   trainers: [],
   exits: [
-    { x: 7, y: 0,  targetMap: 'pallet',         targetX: 7, targetY: 10 },
-    { x: 8, y: 0,  targetMap: 'pallet',         targetX: 8, targetY: 10 },
-    { x: 7, y: 13, targetMap: 'viridianForest', targetX: 7, targetY: 1 },
-    { x: 8, y: 13, targetMap: 'viridianForest', targetX: 8, targetY: 1 },
+    { x: 0,  y: 6, targetMap: 'pallet',         targetX: 13, targetY: 6 },
+    { x: 0,  y: 7, targetMap: 'pallet',         targetX: 13, targetY: 7 },
+    { x: 14, y: 6, targetMap: 'viridianForest', targetX: 0,  targetY: 6 },
+    { x: 14, y: 7, targetMap: 'viridianForest', targetX: 0,  targetY: 7 },
   ],
   doors: [],
 }

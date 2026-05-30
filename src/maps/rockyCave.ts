@@ -14,15 +14,15 @@ export const rockyCave: MapData = {
     [K,R,R,R,R,R,R,R,R,R,R,R,R,R,R,K],  // row  2
     [K,K,R,R,R,K,K,R,R,R,K,K,R,R,R,K],  // row  3
     [K,K,K,R,R,R,R,R,R,R,R,R,R,R,R,K],  // row  4
-    [K,K,R,R,R,R,K,K,R,R,R,R,K,R,R,R],  // row  5: east exits
-    [K,R,R,R,K,K,R,R,R,K,K,R,R,R,R,R],  // row  6: west wall
-    [R,R,R,R,R,R,K,K,R,R,R,K,R,R,R,K],  // row  7: west+east exit
-    [R,R,R,K,K,R,R,R,R,K,K,R,R,R,R,K],  // row  8: west+east exit
-    [K,R,R,R,R,R,K,R,R,R,R,K,R,R,R,K],  // row  9: west+east wall
-    [K,R,R,K,K,R,R,R,K,K,R,R,R,K,R,K],  // row 10: west wall
+    [K,K,R,R,R,R,K,K,R,R,R,R,K,R,R,K],  // row  5: east wall (old east exit closed)
+    [K,R,R,R,K,K,R,R,R,K,K,R,R,R,R,R],  // row  6: east exit x=15
+    [K,R,R,R,R,R,K,K,R,R,R,K,R,R,R,R],  // row  7: east exit x=15 (old west exit closed)
+    [K,R,R,K,K,R,R,R,R,K,K,R,R,R,R,K],  // row  8: (old west exit closed)
+    [K,R,R,R,R,R,K,R,R,R,R,K,R,R,R,K],  // row  9
+    [K,R,R,K,K,R,R,R,K,K,R,R,R,K,R,K],  // row 10
     [K,K,R,R,R,R,R,R,R,R,R,R,R,R,K,K],  // row 11
     [K,K,K,R,R,R,K,K,K,R,R,K,K,K,K,K],  // row 12
-    [K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K],  // row 13
+    [K,K,K,K,K,K,K,R,R,K,K,K,K,K,K,K],  // row 13: south exit x=7-8
   ],
   wildPokemon: [
     { pokemonId: 74,  minLevel: 15, maxLevel: 20, rate: 35 },  // Geodude
@@ -34,10 +34,10 @@ export const rockyCave: MapData = {
   waterPokemon: [],
   trainers: [],
   exits: [
-    { x: 0,  y: 7, targetMap: 'mistyLake',   targetX: 16, targetY: 7 },
-    { x: 0,  y: 8, targetMap: 'mistyLake',   targetX: 16, targetY: 8 },
-    { x: 15, y: 5, targetMap: 'trainerRoad', targetX: 1,  targetY: 5 },
-    { x: 15, y: 6, targetMap: 'trainerRoad', targetX: 1,  targetY: 6 },
+    { x: 15, y: 6, targetMap: 'mistyLake',   targetX: 0, targetY: 6 },
+    { x: 15, y: 7, targetMap: 'mistyLake',   targetX: 0, targetY: 7 },
+    { x: 7,  y: 13, targetMap: 'trainerRoad', targetX: 7,  targetY: 0 },
+    { x: 8,  y: 13, targetMap: 'trainerRoad', targetX: 8,  targetY: 0 },
   ],
   doors: [],
 }

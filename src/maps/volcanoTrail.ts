@@ -14,8 +14,8 @@ export const volcanoTrail: MapData = {
     [K,V,V,V,V,V,V,V,V,V,V,V,V,V,V,K],  // row  2
     [K,K,V,V,V,K,K,V,V,V,K,K,V,V,K,K],  // row  3
     [K,K,K,V,V,V,V,V,V,V,V,V,V,K,K,K],  // row  4
-    [K,K,V,V,K,K,V,V,V,K,K,V,V,V,K,K],  // row  5
-    [K,V,V,V,V,K,K,V,V,V,K,V,V,V,V,K],  // row  6
+    [V,K,V,V,K,K,V,V,V,K,K,V,V,V,K,K],  // row  5: west exit x=0
+    [V,V,V,V,V,K,K,V,V,V,K,V,V,V,V,K],  // row  6: west exit x=0
     [K,V,V,K,V,V,V,V,V,V,V,V,K,V,V,K],  // row  7
     [K,K,V,V,V,K,K,V,V,K,K,V,V,V,K,K],  // row  8
     [K,V,V,V,K,V,V,V,V,V,V,V,K,V,V,K],  // row  9
@@ -23,8 +23,8 @@ export const volcanoTrail: MapData = {
     [K,K,V,V,V,V,V,K,K,V,V,V,V,V,K,K],  // row 11
     [K,K,K,V,V,V,V,V,V,V,V,V,V,K,K,K],  // row 12
     [K,K,V,V,K,K,V,V,V,K,K,V,V,V,K,K],  // row 13
-    [K,V,V,V,V,V,V,V,V,V,V,V,V,V,V,K],  // row 14: south entry from Cinnabar Town
-    [K,K,K,K,K,K,V,V,K,K,K,K,K,K,K,K],  // row 15: south exit (→ Cinnabar Town) x=6-7
+    [K,V,V,V,V,V,V,V,V,V,V,V,V,V,V,K],  // row 14
+    [K,K,K,K,K,K,K,K,K,K,K,K,K,K,K,K],  // row 15: south border (old cinnabar exit closed)
   ],
   wildPokemon: [
     { pokemonId: 77,  minLevel: 25, maxLevel: 30, rate: 30 },  // Ponyta
@@ -37,8 +37,8 @@ export const volcanoTrail: MapData = {
   waterPokemon: [],
   trainers: [],
   exits: [
-    { x: 6, y: 15, targetMap: 'cinnabarTown', targetX: 6, targetY: 1 },
-    { x: 7, y: 15, targetMap: 'cinnabarTown', targetX: 7, targetY: 1 },
+    { x: 0, y: 5, targetMap: 'cinnabarTown', targetX: 15, targetY: 5 },
+    { x: 0, y: 6, targetMap: 'cinnabarTown', targetX: 15, targetY: 6 },
   ],
   doors: [],
 }

@@ -48,20 +48,7 @@ export default function Progress() {
         </div>
       </div>
 
-      {(profile.wrongAnswers?.length ?? 0) > 0 && (
-        <div className="w-full max-w-sm bg-[#16213e] border border-[#2a3a5a] rounded-xl p-4">
-          <div className="text-[#4ecdc4] font-bold text-sm mb-3">Keep Practicing</div>
-          <div className="flex flex-col gap-2">
-            {(profile.wrongAnswers ?? []).slice(-5).reverse().map((w, i) => (
-              <div key={i} className="bg-[#0f3460] rounded-lg p-2">
-                <div className="text-white text-xs">{w.question}</div>
-                <div className="text-yellow-400 text-xs mt-1">Answer: {w.correctAnswer}</div>
-                <div className="text-[#4a6a8a] text-xs">{w.subject}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* No wrong answers shown here — keep it encouraging, no pressure for kids */}
     </div>
   )
 }

@@ -17,12 +17,12 @@ export const palletTown: MapData = {
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  3
     [T,B,B,B,B,B,P,P,B,B,B,B,B,P,T],  // row  4
     [T,B,B,B,B,B,P,P,B,B,B,D,B,P,T],  // row  5: Shop ends; door x=11 (green door in image)
-    [T,B,B,D,D,B,P,P,P,P,P,P,P,P,T],  // row  6: PC doors x=3-4 (2-tile glass entrance)
-    [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  7
+    [T,B,B,D,D,B,P,P,P,P,P,P,P,P,P],  // row  6: PC doors x=3-4; east exit x=14
+    [T,P,P,P,P,P,P,P,P,P,P,P,P,P,P],  // row  7: east exit x=14
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  8
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row  9
     [T,P,P,P,P,P,P,P,P,P,P,P,P,P,T],  // row 10
-    [T,T,T,T,T,T,T,P,P,T,T,T,T,T,T],  // row 11: road gap at x=7-8 (→ Route 1)
+    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 11: south border (old exit closed)
   ],
   buildingOverlays: [
     { x: 1, y: 2, image: 'tile_pokemon_center.png', heightTiles: 5 },
@@ -31,10 +31,10 @@ export const palletTown: MapData = {
   wildPokemon: [],
   trainers: [],
   exits: [
-    { x: 3, y: 6,  targetMap: 'pokecenter', targetX: 5, targetY: 6 },
-    { x: 4, y: 6,  targetMap: 'pokecenter', targetX: 5, targetY: 6 },
-    { x: 7, y: 11, targetMap: 'sunlitMeadow', targetX: 7, targetY: 0 },
-    { x: 8, y: 11, targetMap: 'sunlitMeadow', targetX: 8, targetY: 0 },
+    { x: 3,  y: 6, targetMap: 'pokecenter',   targetX: 5,  targetY: 6 },
+    { x: 4,  y: 6, targetMap: 'pokecenter',   targetX: 5,  targetY: 6 },
+    { x: 14, y: 6, targetMap: 'sunlitMeadow', targetX: 0,  targetY: 6 },
+    { x: 14, y: 7, targetMap: 'sunlitMeadow', targetX: 0,  targetY: 7 },
   ],
   doors: [
     { x: 11, y: 5, type: 'pokemart' },

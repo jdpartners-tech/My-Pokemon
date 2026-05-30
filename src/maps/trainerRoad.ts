@@ -10,13 +10,13 @@ export const trainerRoad: MapData = {
   width: 18,
   height: 12,
   tiles: [
-    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row  0
+    [T,T,T,T,T,T,T,L,L,T,T,T,T,T,T,T,T,T],  // row  0: north exit (→ Rocky Cave) x=7-8
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  1
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  2
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  3
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  4
-    [L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  5: main road (west→east)
-    [L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  6: main road (west→east)
+    [T,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  5: main road (east exit x=17)
+    [T,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  6: main road (east exit x=17)
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  7
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  8
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  9
@@ -37,10 +37,10 @@ export const trainerRoad: MapData = {
       party: [{ pokemonId: 35, level: 18 }, { pokemonId: 39, level: 19 }, { pokemonId: 52, level: 18 }] },
   ],
   exits: [
-    { x: 0, y: 5, targetMap: 'rockyCave', targetX: 14, targetY: 5 },
-    { x: 0, y: 6, targetMap: 'rockyCave', targetX: 14, targetY: 6 },
-    { x: 17, y: 5, targetMap: 'cinnabarTown', targetX: 1, targetY: 5 },
-    { x: 17, y: 6, targetMap: 'cinnabarTown', targetX: 1, targetY: 6 },
+    { x: 7,  y: 0, targetMap: 'rockyCave',    targetX: 7,  targetY: 13 },
+    { x: 8,  y: 0, targetMap: 'rockyCave',    targetX: 8,  targetY: 13 },
+    { x: 17, y: 5, targetMap: 'cinnabarTown', targetX: 1,  targetY: 5  },
+    { x: 17, y: 6, targetMap: 'cinnabarTown', targetX: 1,  targetY: 6  },
   ],
   doors: [],
 }

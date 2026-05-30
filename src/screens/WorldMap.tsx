@@ -315,6 +315,23 @@ export default function WorldMap() {
   const areaBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [worldBagOpen, setWorldBagOpen] = useState(false)
 
+  // Canvas size — ResizeObserver fills the container while maintaining 11:9 ratio
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const [canvasCssSize, setCanvasCssSize] = useState<{ w: number; h: number } | null>(null)
+  useEffect(() => {
+    const container = canvasContainerRef.current
+    if (!container) return
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      const ratio = COLS / ROWS
+      let w = width, h = height
+      if (w / h > ratio) { w = Math.floor(h * ratio) } else { h = Math.floor(w / ratio) }
+      setCanvasCssSize({ w, h })
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
   // Feature D: items on map — generate once on mount (respawn on game restart only)
   type MapItem = { mapId: string; x: number; y: number; itemId: 'pokeball' | 'potion' }
   const [mapItems, setMapItems] = useState<MapItem[]>([])
@@ -976,59 +993,60 @@ export default function WorldMap() {
         alignItems: 'stretch',
       }}>
 
-        {/* Left column: canvas + dialogue overlay + dpad */}
-        <div style={{
-          flex: 1, minWidth: 0, overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', gap: 8,
-        }}>
+        {/* Left column: canvas fills everything, DPad overlaid at bottom */}
+        <div
+          ref={canvasContainerRef}
+          style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}
+        >
+          {/* Canvas — sized by ResizeObserver, centered */}
+          <canvas
+            ref={canvasRef}
+            width={COLS * TILE}
+            height={ROWS * TILE}
+            className="border-2 border-yellow-400/30 rounded-xl"
+            style={{
+              imageRendering: 'pixelated', display: 'block',
+              position: 'absolute',
+              top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: canvasCssSize ? canvasCssSize.w : '100%',
+              height: canvasCssSize ? canvasCssSize.h : 'auto',
+            }}
+          />
 
-          {/* Canvas wrapper — expands to fill available height */}
-          <div style={{
-            flex: 1, minHeight: 0, overflow: 'hidden',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '100%', position: 'relative',
-          }}>
-            <canvas
-              ref={canvasRef}
-              width={COLS * TILE}
-              height={ROWS * TILE}
-              className="border-2 border-yellow-400/30 rounded-xl"
+          {/* Area name banner */}
+          {areaBanner && (
+            <div
+              key={areaBanner}
+              className="absolute left-1/2 font-bold text-sm pointer-events-none"
               style={{
-                imageRendering: 'pixelated', display: 'block',
-                maxHeight: '100%', maxWidth: '100%',
-                aspectRatio: `${COLS} / ${ROWS}`,
+                top: 8, transform: 'translateX(-50%)',
+                background: 'rgba(10,16,32,0.85)', border: '1.5px solid #ffd700',
+                borderRadius: 8, color: '#ffd700', padding: '4px 14px',
+                whiteSpace: 'nowrap', animation: 'fadeBanner 3s ease-out forwards',
+                zIndex: 5,
               }}
-            />
-            {/* Area name banner — overlaid at top of canvas */}
-            {areaBanner && (
-              <div
-                key={areaBanner}
-                className="absolute left-1/2 font-bold text-sm pointer-events-none"
-                style={{
-                  top: 8, transform: 'translateX(-50%)',
-                  background: 'rgba(10,16,32,0.85)', border: '1.5px solid #ffd700',
-                  borderRadius: 8, color: '#ffd700', padding: '4px 14px',
-                  whiteSpace: 'nowrap', animation: 'fadeBanner 3s ease-out forwards',
-                }}
-              >
-                {areaBanner}
-              </div>
-            )}
-            {/* Dialogue — overlaid at bottom of canvas */}
-            {dialogue && (
-              <div
-                onClick={() => setDialogue(null)}
-                className="absolute left-2 right-2 bottom-2 bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 text-white text-sm cursor-pointer"
-                style={{ zIndex: 10 }}
-              >
-                {dialogue}
-              </div>
-            )}
-          </div>
+            >
+              {areaBanner}
+            </div>
+          )}
 
-          {/* DPad — fixed size, always at bottom of left column */}
-          <div style={{ flexShrink: 0 }}>
+          {/* Dialogue — overlaid above DPad area */}
+          {dialogue && (
+            <div
+              onClick={() => setDialogue(null)}
+              className="absolute left-2 right-2 bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 text-white text-sm cursor-pointer"
+              style={{ bottom: 180, zIndex: 15 }}
+            >
+              {dialogue}
+            </div>
+          )}
+
+          {/* DPad — overlaid at bottom-center, sits on top of the canvas */}
+          <div style={{
+            position: 'absolute', bottom: 16, left: '50%',
+            transform: 'translateX(-50%)', zIndex: 10,
+          }}>
             <DPad onMove={(dx, dy) => {
               if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
               if (dialogue) { setDialogue(null); return }
@@ -1036,8 +1054,8 @@ export default function WorldMap() {
             }} />
           </div>
 
-          {/* Mini-map: below DPad on mobile only (hidden on desktop) */}
-          <div className="w-full flex justify-center lg:hidden" style={{ flexShrink: 0 }}>
+          {/* Mini-map: overlay bottom-right on mobile (hidden on desktop) */}
+          <div className="absolute bottom-2 right-2 lg:hidden" style={{ zIndex: 10 }}>
             <MiniMap currentMapId={currentMapId} />
           </div>
 

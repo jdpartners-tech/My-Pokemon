@@ -107,7 +107,7 @@ export default function Battle() {
   const profile = useProfileStore(s => s.profile)
   const { updateProfile } = useFirestoreProfile()
   const [bagOpen, setBagOpen] = useState(false)
-  const [flashOn, setFlashOn] = useState(false)
+  const [, setFlashOn] = useState(false)
   const [hoveredMove, setHoveredMove] = useState(0)
   const ballCanvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
@@ -141,23 +141,29 @@ export default function Battle() {
 
   useEffect(() => { if (phase === 'idle') navigate('/map') }, [phase, navigate])
 
-  // Evolution flash
+  // Evolution animation state: 'silhouette' → 'flash' → 'reveal' → done
+  const [evoStage, setEvoStage] = useState<'none' | 'silhouette' | 'flash' | 'reveal'>('none')
   useEffect(() => {
-    if (phase !== 'evolving') { setFlashOn(false); return }
-    setFlashOn(true)
+    if (phase !== 'evolving') { setEvoStage('none'); setFlashOn(false); return }
     const timers: ReturnType<typeof setTimeout>[] = []
-    ;[400, 800, 1200, 1600, 2000].forEach((ms, i) => {
-      timers.push(setTimeout(() => setFlashOn(i % 2 === 0 ? false : true), ms))
-    })
-    timers.push(setTimeout(() => setFlashOn(false), 2400))
+    // Stage 1: sprite turns white silhouette and pulses (0–1600ms)
+    setEvoStage('silhouette')
+    // Stage 2: white flash bursts at peak (1600ms)
+    timers.push(setTimeout(() => { setFlashOn(true); setEvoStage('flash') }, 1600))
+    // Stage 3: flash off, reveal new evolved sprite with glow (1900ms)
+    timers.push(setTimeout(() => { setFlashOn(false); setEvoStage('reveal') }, 1900))
+    // Stage 4: glow fades out (2800ms)
+    timers.push(setTimeout(() => setEvoStage('none'), 2800))
     return () => timers.forEach(clearTimeout)
   }, [phase])
 
-  // Trainer intro: show trainer sprite for 1.8s then transition to player_turn
+  // Trainer intro: show trainer (1.2s) → throw ball (0.8s) → Pokémon appears
+  const [trainerThrowBall, setTrainerThrowBall] = useState(false)
   useEffect(() => {
-    if (phase !== 'trainer_intro') return
-    const t = setTimeout(() => useBattleStore.getState().setPhase('player_turn'), 2200)
-    return () => clearTimeout(t)
+    if (phase !== 'trainer_intro') { setTrainerThrowBall(false); return }
+    const t1 = setTimeout(() => setTrainerThrowBall(true), 1200)
+    const t2 = setTimeout(() => useBattleStore.getState().setPhase('player_turn'), 2400)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [phase])
 
   // Ball throw canvas animation
@@ -352,18 +358,35 @@ export default function Battle() {
           />
         </div>
 
-        {/* Trainer intro — full-body trainer sprite slides in, then Pokémon appears */}
+        {/* Trainer intro — trainer slides in, then throws a Pokéball */}
         {phase === 'trainer_intro' && (
-          <div style={{
-            position: 'absolute', right: 8, top: 8,
-            width: 100, height: 128,
-            backgroundImage: 'url(sprites/trainer-sheet.png)',
-            backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
-            backgroundSize: `${398 * 2}px ${513 * 2}px`,
-            backgroundRepeat: 'no-repeat',
-            imageRendering: 'pixelated' as const,
-            animation: 'trainerSlideIn 0.5s ease-out',
-          }} />
+          <>
+            <div style={{
+              position: 'absolute', right: 8, top: 8,
+              width: 100, height: 128,
+              backgroundImage: 'url(sprites/trainer-sheet.png)',
+              backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
+              backgroundSize: `${398 * 2}px ${513 * 2}px`,
+              backgroundRepeat: 'no-repeat',
+              imageRendering: 'pixelated' as const,
+              animation: 'trainerSlideIn 0.5s ease-out',
+            }} />
+            {trainerThrowBall && (
+              <div style={{
+                position: 'absolute', width: 18, height: 18,
+                animation: 'trainerBallThrow 0.8s ease-in forwards',
+                pointerEvents: 'none', zIndex: 20,
+              }}>
+                {/* Mini Pokéball drawn inline */}
+                <svg viewBox="0 0 18 18" width={18} height={18}>
+                  <circle cx="9" cy="9" r="8" fill="#e03020" />
+                  <path d="M1 9 A8 8 0 0 1 17 9" fill="#f8f8f8" />
+                  <line x1="1" y1="9" x2="17" y2="9" stroke="#181808" strokeWidth="1.5" />
+                  <circle cx="9" cy="9" r="2.5" fill="#f8f8f8" stroke="#181808" strokeWidth="1" />
+                </svg>
+              </div>
+            )}
+          </>
         )}
 
         {/* Opponent sprite — top RIGHT, animated */}
@@ -397,7 +420,10 @@ export default function Battle() {
             ? 'left 0.15s ease-out, opacity 0.05s'
             : 'left 0.12s ease-in, opacity 0.05s',
           imageRendering: 'pixelated' as const,
-          boxShadow: leveledUp ? '0 0 20px #ffd700' : 'none',
+          boxShadow: evoStage === 'reveal'
+            ? '0 0 30px 10px rgba(255,255,255,0.9)'
+            : leveledUp ? '0 0 20px #ffd700' : 'none',
+          animation: evoStage === 'reveal' ? 'evoReveal 0.9s ease-out' : 'none',
         }}>
           <img
             src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${playerPokemon.pokemonId}.png`}
@@ -405,8 +431,13 @@ export default function Battle() {
             style={{
               width: '100%', height: '100%', objectFit: 'contain',
               imageRendering: 'pixelated' as const,
-              filter: phase === 'evolving' ? 'brightness(10) saturate(0)' : 'none',
-              transition: phase === 'evolving' ? 'filter 0.3s' : 'none',
+              filter: evoStage === 'silhouette' || evoStage === 'flash'
+                ? 'brightness(100) saturate(0)'
+                : evoStage === 'reveal'
+                  ? 'brightness(2) saturate(0.3)'
+                  : 'none',
+              transition: evoStage === 'silhouette' ? 'filter 0.4s ease-in' : 'filter 0.5s ease-out',
+              animation: evoStage === 'silhouette' ? 'evoPulse 0.5s ease-in-out infinite alternate' : 'none',
             }}
           />
         </div>
@@ -873,12 +904,12 @@ export default function Battle() {
         />
       )}
 
-      {/* ── Evolution flash ── */}
-      {phase === 'evolving' && (
+      {/* ── Evolution flash burst ── */}
+      {evoStage === 'flash' && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
-          background: 'white', opacity: flashOn ? 1 : 0,
-          transition: 'opacity 0.3s',
+          background: 'white',
+          animation: 'evoFlash 0.35s ease-out forwards',
         }} />
       )}
     </div>

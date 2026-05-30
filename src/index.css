@@ -19,6 +19,29 @@
   100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
 }
 
+/* Evolution animations */
+@keyframes evoPulse {
+  from { filter: brightness(100) saturate(0); transform: scale(1);    opacity: 0.85; }
+  to   { filter: brightness(100) saturate(0); transform: scale(1.06); opacity: 1; }
+}
+/* Trainer throws Pokéball during battle intro */
+@keyframes trainerBallThrow {
+  0%   { left: 72%; top: 30%; opacity: 1; transform: scale(1) rotate(0deg); }
+  40%  { left: 55%; top: 15%; opacity: 1; transform: scale(0.9) rotate(180deg); }
+  80%  { left: 62%; top: 28%; opacity: 1; transform: scale(0.8) rotate(360deg); }
+  100% { left: 62%; top: 28%; opacity: 0; transform: scale(0.7) rotate(400deg); }
+}
+
+@keyframes evoFlash {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes evoReveal {
+  0%   { transform: scale(1.15); filter: brightness(2) saturate(0.3); }
+  60%  { transform: scale(1.05); filter: brightness(1.4) saturate(0.6); }
+  100% { transform: scale(1);    filter: none; }
+}
+
 @keyframes hpShake {
   0%, 100% { transform: translateX(0); }
   20%       { transform: translateX(-4px); }

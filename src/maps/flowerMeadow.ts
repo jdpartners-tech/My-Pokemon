@@ -11,20 +11,20 @@ export const flowerMeadow: MapData = {
   width: 15,
   height: 15,
   tiles: [
-    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T],  // row  0: north exit (→ Misty Lake) x=7-8
+    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T],  // row  0: north exit (→ Viridian Forest) x=7-8
     [T,G,G,F,G,G,G,G,G,F,G,G,G,T,T],  // row  1
     [T,G,F,G,G,F,G,G,G,F,G,F,G,T,T],  // row  2
     [T,F,G,G,F,G,G,F,G,G,F,G,G,F,T],  // row  3
     [T,G,G,F,G,G,G,G,G,G,F,G,G,T,T],  // row  4
     [T,G,F,G,G,G,F,G,F,G,G,G,G,T,T],  // row  5: west wall
-    [T,G,G,G,F,G,G,G,G,G,F,G,G,T,T],  // row  6: west wall
-    [G,F,G,G,G,G,G,G,G,G,G,F,G,T,T],  // row  7: west exit
-    [G,G,G,F,G,G,F,G,G,F,G,G,G,T,T],  // row  8: west exit
+    [G,G,G,G,F,G,G,G,G,G,F,G,G,T,T],  // row  6: west exit x=0
+    [G,F,G,G,G,G,G,G,G,G,G,F,G,T,T],  // row  7: west exit x=0
+    [T,G,G,F,G,G,F,G,G,F,G,G,G,T,T],  // row  8: west wall (old exit closed)
     [T,G,F,G,G,F,G,G,G,G,G,F,F,T,T],  // row  9: west wall
-    [T,G,G,G,F,G,G,F,G,G,F,G,G,T,T],  // row 10: west wall
+    [T,G,G,G,F,G,G,F,G,G,F,G,G,T,T],  // row 10
     [T,T,G,G,G,F,G,G,N,F,G,G,T,T,T],  // row 11
     [T,T,T,T,G,G,G,G,G,G,G,T,T,T,T],  // row 12
-    [T,T,T,T,T,T,G,G,G,T,T,T,T,T,T],  // row 13: north exits visible opening
+    [T,T,T,T,T,T,G,G,G,T,T,T,T,T,T],  // row 13
     [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 14
   ],
   wildPokemon: [
@@ -37,10 +37,10 @@ export const flowerMeadow: MapData = {
   ],
   trainers: [],
   exits: [
-    { x: 0, y: 7, targetMap: 'viridianForest', targetX: 14, targetY: 7 },
-    { x: 0, y: 8, targetMap: 'viridianForest', targetX: 14, targetY: 8 },
-    { x: 7, y: 0, targetMap: 'mistyLake',      targetX: 7,  targetY: 14 },
-    { x: 8, y: 0, targetMap: 'mistyLake',      targetX: 8,  targetY: 14 },
+    { x: 0, y: 6, targetMap: 'mistyLake',      targetX: 17, targetY: 6 },
+    { x: 0, y: 7, targetMap: 'mistyLake',      targetX: 17, targetY: 7 },
+    { x: 7, y: 0, targetMap: 'viridianForest', targetX: 7,  targetY: 14 },
+    { x: 8, y: 0, targetMap: 'viridianForest', targetX: 8,  targetY: 14 },
   ],
   doors: [],
 }

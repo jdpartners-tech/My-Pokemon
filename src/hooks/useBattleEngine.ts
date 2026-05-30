@@ -178,12 +178,15 @@ export function useBattleEngine() {
         ? fx.min_hits + Math.floor(Math.random() * (fx.max_hits - fx.min_hits + 1))
         : 1
       let totalDmg = 0
+      let didCrit = false
       for (let h = 0; h < hits; h++) {
-        const singleDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
+        const isCrit = Math.random() < (1 / 16)
+        if (isCrit) didCrit = true
+        const baseDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
+        const singleDmg = isCrit ? Math.floor(baseDmg * 1.5) : baseDmg
         store.dealDamageToOpponent(singleDmg)
         totalDmg += singleDmg
         store.showDamagePopup(singleDmg, true)
-        // Hit flash per hit
         store.setOpponentFlash(true)
         await delay(120)
         store.setOpponentFlash(false)
@@ -192,7 +195,11 @@ export function useBattleEngine() {
 
       let msg = `${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}! (${totalDmg} dmg)`
       if (hits > 1) msg += ` ${hits}× hit!`
-      if (eff >= 2) {
+      if (didCrit) {
+        store.setBattleBanner('Critical hit! ⚡')
+        await delay(1200)
+        store.setBattleBanner(null)
+      } else if (eff >= 2) {
         msg += " It's super effective!"
         store.setBattleBanner("Super effective! ★")
         await delay(1500)

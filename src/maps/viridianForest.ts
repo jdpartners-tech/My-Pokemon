@@ -10,22 +10,22 @@ export const viridianForest: MapData = {
   width: 16,
   height: 16,
   tiles: [
-    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T,T],  // row  0: north exit (→ Sunlit Meadow) x=7-8
-    [T,G,G,G,G,G,G,G,G,G,G,T,T,G,T,T],  // row  1: path cleared for north exits
+    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row  0: north border (old sunlit exit closed)
+    [T,G,G,G,G,G,G,G,G,G,G,T,T,G,T,T],  // row  1
     [T,G,G,T,G,G,T,G,G,G,T,T,G,G,T,T],  // row  2
     [T,G,T,T,G,G,T,T,T,T,G,T,T,G,T,T],  // row  3
     [T,G,G,G,G,G,G,G,G,T,T,G,G,G,T,T],  // row  4
     [T,T,G,G,F,G,G,G,G,G,G,F,G,G,G,T],  // row  5: east wall
-    [T,T,T,G,G,G,T,T,T,G,G,G,G,G,G,T],  // row  6: east wall
-    [T,G,G,G,G,T,T,T,G,G,T,G,G,G,G,G],  // row  7: east exit
-    [T,G,G,T,T,G,G,G,G,T,T,G,G,G,G,G],  // row  8: east exit
+    [G,T,T,G,G,G,T,T,T,G,G,G,G,G,G,T],  // row  6: west exit x=0; east wall
+    [G,G,G,G,G,T,T,T,G,G,T,G,G,G,G,T],  // row  7: west exit x=0; east wall (old east exit closed)
+    [T,G,G,T,T,G,G,G,G,T,T,G,G,G,G,T],  // row  8: east wall (old east exit closed)
     [T,G,T,T,T,G,G,F,G,G,G,T,T,G,G,T],  // row  9: east wall
-    [T,G,G,G,T,T,T,G,G,G,T,G,G,G,G,T],  // row 10: east wall
+    [T,G,G,G,T,T,T,G,G,G,T,G,G,G,G,T],  // row 10
     [T,T,T,G,G,T,T,G,G,G,T,T,G,T,T,T],  // row 11
     [T,T,T,G,G,G,G,G,G,F,G,G,G,T,T,T],  // row 12
     [T,G,G,T,T,G,G,G,G,G,G,G,G,G,T,T],  // row 13
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T,T],  // row 14: south entry from Sunlit Meadow
-    [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 15: south border
+    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,T,T],  // row 14
+    [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T,T],  // row 15: south exit (→ Flower Meadow) x=7-8
   ],
   wildPokemon: [
     { pokemonId: 10,  minLevel: 3,  maxLevel: 7,  rate: 25 },  // Caterpie
@@ -37,10 +37,10 @@ export const viridianForest: MapData = {
   ],
   trainers: [],
   exits: [
-    { x: 7,  y: 0, targetMap: 'sunlitMeadow', targetX: 7, targetY: 12 },
-    { x: 8,  y: 0, targetMap: 'sunlitMeadow', targetX: 8, targetY: 12 },
-    { x: 15, y: 7, targetMap: 'flowerMeadow', targetX: 1, targetY: 7  },
-    { x: 15, y: 8, targetMap: 'flowerMeadow', targetX: 1, targetY: 8  },
+    { x: 0, y: 6, targetMap: 'sunlitMeadow', targetX: 13, targetY: 6 },
+    { x: 0, y: 7, targetMap: 'sunlitMeadow', targetX: 13, targetY: 7 },
+    { x: 7, y: 15, targetMap: 'flowerMeadow', targetX: 7,  targetY: 0 },
+    { x: 8, y: 15, targetMap: 'flowerMeadow', targetX: 8,  targetY: 0 },
   ],
   doors: [],
 }

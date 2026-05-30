@@ -15,6 +15,7 @@ export default function ProfileSelect() {
   const [selected, setSelected] = useState<Profile | null>(null)
   const [pinError, setPinError] = useState('')
   const [fetchError, setFetchError] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     getAllProfiles()
@@ -73,22 +74,58 @@ export default function ProfileSelect() {
           {profiles.length === 0 ? (
             <p className="text-gray-400 text-center">No trainers yet. Add one below!</p>
           ) : (
-            <div className="flex flex-wrap gap-4 justify-center">
+            <div className="flex flex-wrap gap-6 justify-center">
               {profiles.map(p => {
                 const battlesWon = p.stats?.battlesWon ?? 0
                 const answered = p.stats?.questionsAnswered ?? 0
                 const correct = p.stats?.questionsCorrect ?? 0
                 const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : null
+                const wrongAnswers = p.wrongAnswers ?? []
+                const isExpanded = expandedId === p.id
                 return (
-                  <div key={p.id} className="flex flex-col items-center gap-2">
+                  <div key={p.id} className="flex flex-col items-center gap-2 w-64">
                     <ProfileCard
                       profile={p}
                       onClick={() => { setSelected(p); setPinError('') }}
                     />
-                    <div className="flex gap-3 text-xs text-gray-400">
-                      <span>⚔️ {battlesWon} wins</span>
-                      {accuracy !== null && <span>🎯 {accuracy}%</span>}
+
+                    {/* Parent stats bar */}
+                    <div className="w-full flex justify-between items-center px-1">
+                      <div className="flex gap-3 text-xs text-gray-400">
+                        <span>⚔️ {battlesWon} wins</span>
+                        {accuracy !== null && (
+                          <span className={accuracy >= 80 ? 'text-green-400' : accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}>
+                            🎯 {accuracy}%
+                          </span>
+                        )}
+                      </div>
+                      {wrongAnswers.length > 0 && (
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : p.id!)}
+                          className="text-xs text-[#4ecdc4] underline"
+                        >
+                          {isExpanded ? 'Hide' : `${wrongAnswers.length} wrong ▾`}
+                        </button>
+                      )}
                     </div>
+
+                    {/* Wrong answers panel — parent only */}
+                    {isExpanded && (
+                      <div className="w-full bg-[#0f1626] border border-[#2a3a5a] rounded-xl p-3 flex flex-col gap-2">
+                        <div className="text-xs font-bold text-[#4ecdc4] mb-1">
+                          Questions to review ({wrongAnswers.length})
+                        </div>
+                        {[...wrongAnswers].reverse().map((w, i) => (
+                          <div key={i} className="bg-[#16213e] rounded-lg px-3 py-2">
+                            <div className="text-white text-xs">{w.question}</div>
+                            <div className="text-yellow-400 text-xs mt-0.5">
+                              ✓ {w.correctAnswer}
+                            </div>
+                            <div className="text-[#4a6a8a] text-xs capitalize">{w.subject}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })}
