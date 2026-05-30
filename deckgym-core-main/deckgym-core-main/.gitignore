@@ -1,0 +1,9 @@
+/target
+.venv
+.DS_Store
+
+TODO.md
+
+__pycache__/
+*.so
+*.pyd

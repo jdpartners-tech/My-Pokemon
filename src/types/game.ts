@@ -144,6 +144,11 @@ export interface Profile {
     questionsAnswered: number
     questionsCorrect: number
   }
+  wrongAnswers: Array<{
+    question: string
+    correctAnswer: string
+    subject: string
+  }>
 }
 
 // ─── Map ─────────────────────────────────────────────────────────
@@ -187,7 +192,7 @@ export interface GameMap {
 export type BattlePhase =
   | 'idle' | 'player_turn' | 'question' | 'animating'
   | 'opponent_turn' | 'catch' | 'win' | 'lose' | 'escaped' | 'evolving'
-  | 'switch_pokemon'
+  | 'switch_pokemon' | 'trainer_intro'
 
 export interface ActivePokemon extends PartyPokemon {
   name: string

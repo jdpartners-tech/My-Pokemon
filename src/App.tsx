@@ -6,6 +6,7 @@ import Pokedex from './screens/Pokedex'
 import Team from './screens/Team'
 import Admin from './screens/Admin'
 import AddProfile from './screens/AddProfile'
+import Progress from './screens/Progress'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/pokedex" element={<Pokedex />} />
         <Route path="/team" element={<Team />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/progress" element={<Progress />} />
       </Routes>
     </div>
   )

@@ -1,5 +1,16 @@
 import { create } from 'zustand'
-import type { BattlePhase, PartyPokemon, Question, StatusCondition } from '../types/game'
+import type { BattlePhase, PartyPokemon, Question, StatusCondition, PokemonData } from '../types/game'
+import pokemonJson from '../data/pokemon.json'
+
+const _pokemonNameMap = Object.fromEntries(
+  (pokemonJson as PokemonData[]).map(p => [p.id, p.name])
+) as Record<number, string>
+
+function _pokeName(p: PartyPokemon): string {
+  return p.nickname || _pokemonNameMap[p.pokemonId] || `#${p.pokemonId}`
+}
+
+interface DamagePopup { id: number; amount: number; forOpponent: boolean }
 
 interface BattleState {
   phase: BattlePhase
@@ -8,6 +19,8 @@ interface BattleState {
   party: PartyPokemon[]
   isWildBattle: boolean
   trainerName: string | null
+  trainerSpriteCol: number  // column index in trainer-sheet.png (0-7)
+  trainerSpriteRow: number  // row index in trainer-sheet.png (0-7)
   question: Question | null
   selectedMoveIndex: number | null
   log: string[]
@@ -60,10 +73,20 @@ interface BattleState {
 
   answerResult: { wasCorrect: boolean; correctAnswer: string } | null
   setAnswerResult: (r: { wasCorrect: boolean; correctAnswer: string } | null) => void
+  resolveWrongAnswer: (() => void) | null
+  setResolveWrongAnswer: (fn: () => void) => void
+  acknowledgeWrongAnswer: () => void
 
   setPlayerStatus: (status: StatusCondition, sleepTurns?: number) => void
   setOpponentStatus: (status: StatusCondition, sleepTurns?: number) => void
   healOpponent: (amount: number) => void
+
+  damagePopup: DamagePopup | null
+  showDamagePopup: (amount: number, forOpponent: boolean) => void
+  clearDamagePopup: () => void
+
+  battleBanner: string | null
+  setBattleBanner: (s: string | null) => void
 
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
@@ -93,6 +116,11 @@ const initialState = {
   playerFlash: false,
   playerShakeX: 0,
   answerResult: null,
+  resolveWrongAnswer: null,
+  trainerSpriteCol: 0,
+  trainerSpriteRow: 0,
+  damagePopup: null,
+  battleBanner: null,
 }
 
 export const useBattleStore = create<BattleState>((set) => ({
@@ -106,21 +134,35 @@ export const useBattleStore = create<BattleState>((set) => ({
     party,
     isWildBattle: true,
     trainerName: null,
-    log: [`A wild ${opponent.pokemonId} appeared!`],
+    log: [`A wild ${_pokeName(opponent)} appeared!`],
     usedQuestionIds: new Set(),
   }),
 
-  startTrainerBattle: (player, opponent, trainerName, party) => set({
-    ...initialState,
-    phase: 'player_turn',
-    playerPokemon: player,
-    opponentPokemon: opponent,
-    party,
-    isWildBattle: false,
-    trainerName,
-    log: [`${trainerName} sent out ${opponent.pokemonId}!`],
-    usedQuestionIds: new Set(),
-  }),
+  startTrainerBattle: (player, opponent, trainerName, party) => {
+    const TRAINER_SPRITES: Record<string, {row: number, col: number}> = {
+      'Biker':   { row: 2, col: 2 },
+      'Lass':    { row: 0, col: 4 },
+      'Swimmer': { row: 1, col: 0 },
+      'Hiker':   { row: 1, col: 2 },
+      'Bug':     { row: 1, col: 3 },
+      'default': { row: 0, col: 3 },
+    }
+    const cls = trainerName.split(' ')[0]
+    const sprite = TRAINER_SPRITES[cls] ?? TRAINER_SPRITES['default']
+    set({
+      ...initialState,
+      phase: 'trainer_intro',
+      playerPokemon: player,
+      opponentPokemon: opponent,
+      party,
+      isWildBattle: false,
+      trainerName,
+      trainerSpriteCol: sprite.col,
+      trainerSpriteRow: sprite.row,
+      log: [`${trainerName} wants to battle!`],
+      usedQuestionIds: new Set(),
+    })
+  },
 
   switchPokemon: (index) => set((state) => {
     const incoming = state.party[index]
@@ -233,7 +275,17 @@ export const useBattleStore = create<BattleState>((set) => ({
   setBallAnimPhase: (n) => set({ ballAnimPhase: n }),
   setBallCaught: (v) => set({ ballCaught: v }),
 
+  showDamagePopup: (amount, forOpponent) => set({ damagePopup: { id: Date.now(), amount, forOpponent } }),
+  clearDamagePopup: () => set({ damagePopup: null }),
+
+  setBattleBanner: (s) => set({ battleBanner: s }),
+
   setAnswerResult: (r) => set({ answerResult: r }),
+  setResolveWrongAnswer: (fn) => set({ resolveWrongAnswer: fn }),
+  acknowledgeWrongAnswer: () => set(state => {
+    state.resolveWrongAnswer?.()
+    return { resolveWrongAnswer: null, answerResult: null }
+  }),
 
   // Stubs — replaced by useBattleEngine in Task 13
   selectMove: (index) => set({ selectedMoveIndex: index, phase: 'question' }),

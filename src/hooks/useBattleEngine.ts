@@ -117,8 +117,23 @@ export function useBattleEngine() {
     if (!correct) {
       store.setAnswerResult({ wasCorrect: false, correctAnswer })
       store.addLog(`${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}... but it missed!`)
-      await delay(1800)
-      store.setAnswerResult(null)
+
+      // Track wrong answer in profile
+      if (profile?.id && question) {
+        const wrongEntry = {
+          question: question.question,
+          correctAnswer: correctAnswer,
+          subject: question.subject,
+        }
+        const existing = profile.wrongAnswers ?? []
+        const updated = [...existing.filter(w => w.question !== wrongEntry.question), wrongEntry].slice(-20)
+        try {
+          await updateProfile(profile.id, { wrongAnswers: updated })
+          useProfileStore.getState().setProfile({ ...profile, wrongAnswers: updated })
+        } catch { /* silent */ }
+      }
+
+      await new Promise<void>(resolve => store.setResolveWrongAnswer(resolve))
       await opponentTurn()
     } else {
       // Check player paralysis/sleep before attacking
@@ -167,6 +182,7 @@ export function useBattleEngine() {
         const singleDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
         store.dealDamageToOpponent(singleDmg)
         totalDmg += singleDmg
+        store.showDamagePopup(singleDmg, true)
         // Hit flash per hit
         store.setOpponentFlash(true)
         await delay(120)
@@ -176,9 +192,19 @@ export function useBattleEngine() {
 
       let msg = `${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}! (${totalDmg} dmg)`
       if (hits > 1) msg += ` ${hits}× hit!`
-      if (eff >= 2) msg += " It's super effective!"
-      else if (eff > 0 && eff < 1) msg += " It's not very effective..."
-      else if (eff === 0) msg += ' It had no effect.'
+      if (eff >= 2) {
+        msg += " It's super effective!"
+        store.setBattleBanner("Super effective! ★")
+        await delay(1500)
+        store.setBattleBanner(null)
+      } else if (eff > 0 && eff < 1) {
+        msg += " It's not very effective..."
+        store.setBattleBanner("Not very effective...")
+        await delay(1500)
+        store.setBattleBanner(null)
+      } else if (eff === 0) {
+        msg += ' It had no effect.'
+      }
       store.addLog(msg)
 
       // Drain (positive = user heals, negative = recoil)
@@ -295,6 +321,7 @@ export function useBattleEngine() {
       const singleDmg = calculateDamage(opponentPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
       store.dealDamageToPlayer(singleDmg)
       totalDmg += singleDmg
+      store.showDamagePopup(singleDmg, false)
       store.setPlayerFlash(true)
       await delay(120)
       store.setPlayerFlash(false)
@@ -359,11 +386,11 @@ export function useBattleEngine() {
     await delay(500)
 
     const exp = expGained(opponentPokemon.level)
-    store.addExpToPlayer(exp)
     store.addLog(`${getName(playerPokemon)} gained ${exp} EXP!`)
-
-    store.setExpAnimating(true)
-    await delay(1000)
+    store.setExpAnimating(true)   // enable CSS transition first
+    await delay(50)               // let React render with transition active but old XP value
+    store.addExpToPlayer(exp)     // now change XP → bar animates from old to new
+    await delay(2700)
     store.setExpAnimating(false)
 
     const newXp = playerPokemon.xp + exp
@@ -500,8 +527,8 @@ export function useBattleEngine() {
 
   async function attemptCatch() {
     const state = useBattleStore.getState()
-    const { opponentPokemon, isWildBattle } = state
-    if (!opponentPokemon || !isWildBattle || !profile?.id) return
+    const { opponentPokemon, playerPokemon, isWildBattle } = state
+    if (!opponentPokemon || !playerPokemon || !isWildBattle || !profile?.id) return
 
     const ballCount = (profile.bag ?? []).find(b => b.itemId === 'pokeball')?.qty ?? 0
     if (ballCount <= 0) {
@@ -551,16 +578,42 @@ export function useBattleEngine() {
       store.addLog(`Gotcha! ${getName(opponentPokemon)} was caught!`)
       await delay(900)
 
-      // Add caught pokemon to party (max 6)
-      const currentParty = profile.party ?? []
-      if (currentParty.length < 6) {
-        const newParty = [...currentParty, { ...opponentPokemon, nickname: null }]
-        try {
-          await updateProfile(profile.id, { party: newParty })
-          useProfileStore.getState().setProfile({ ...profile, party: newParty })
-        } catch (e) {
-          console.error('Failed to save caught pokemon:', e)
-        }
+      // Grant XP for catching
+      const catchExp = expGained(opponentPokemon.level)
+      store.addLog(`${getName(playerPokemon)} gained ${catchExp} EXP!`)
+      store.setExpAnimating(true)
+      await delay(50)
+      store.addExpToPlayer(catchExp)
+      await delay(2700)
+      store.setExpAnimating(false)
+
+      const catchNewXp = playerPokemon.xp + catchExp
+      const catchNewLevel = getLevel(catchNewXp)
+      if (catchNewLevel > playerPokemon.level) {
+        store.setLeveledUp(true)
+        store.addLog(`${getName(playerPokemon)} grew to Lv.${catchNewLevel}!`)
+        await delay(800)
+        store.setLeveledUp(false)
+      }
+
+      const finalCatchPokemon = useBattleStore.getState().playerPokemon!
+      const currentParty = (useProfileStore.getState().profile ?? profile).party ?? []
+      const partyWithCaught = currentParty.length < 6
+        ? [...currentParty, { ...opponentPokemon, nickname: null }]
+        : currentParty
+      const updatedCatchParty = partyWithCaught.map((p, idx) =>
+        idx === 0
+          ? { ...p, xp: catchNewXp, level: catchNewLevel, currentHp: finalCatchPokemon.currentHp, moves: finalCatchPokemon.moves }
+          : p
+      )
+      try {
+        await updateProfile(profile.id, { party: updatedCatchParty })
+        useProfileStore.getState().setProfile({
+          ...(useProfileStore.getState().profile ?? profile),
+          party: updatedCatchParty,
+        })
+      } catch (e) {
+        console.error('Failed to save caught pokemon:', e)
       }
       store.setBallAnimPhase(0)
       store.setPhase('win')

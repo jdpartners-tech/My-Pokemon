@@ -5,19 +5,22 @@ import { useBattleStore } from '../store/battleStore'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import { getMap, MAPS } from '../maps/index'
 import { MapData, TileType, TrainerNpc } from '../maps/types'
-import { buildPartyPokemon } from '../utils/exp'
+import { buildPartyPokemon, filterValidMoves } from '../utils/exp'
 import pokemonJson from '../data/pokemon.json'
 import itemsJson from '../data/items.json'
 import DPad from '../components/DPad'
 import ShopModal from '../components/ShopModal'
+import MiniMap from '../components/MiniMap'
+import BagMenu from '../components/BagMenu'
 import { PokemonData, ItemData } from '../types/game'
 
 const ITEMS = itemsJson as ItemData[]
 
+
 const TILE = 32
 const COLS = 11
 const ROWS = 9
-const ENCOUNTER_RATE = 0.04
+const ENCOUNTER_RATE = 0.02
 
 // ── Tile image preloading ─────────────────────────────────────────────────
 const TILE_FILES: Record<string, string> = {
@@ -144,103 +147,152 @@ Object.entries(TILE_FILES).forEach(([key, file]) => {
 
 
 // ── Pokémon Center interior canvas drawing ────────────────────────────────
-function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number) {
-  // Floor — warm cream with wood planks
+function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number, injuredCount = 0) {
+  // ── Floor ─────────────────────────────────────────────────────────────────
   ctx.fillStyle = '#e8d870'
   ctx.fillRect(0, 0, cW, cH)
-  ctx.strokeStyle = '#c8b850'
-  ctx.lineWidth = 1
+  ctx.strokeStyle = '#c8b050'; ctx.lineWidth = 1
   for (let y = 0; y < cH; y += 16) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cW, y); ctx.stroke()
   }
 
-  // Back wall (top 2 tile rows)
+  // ── Back wall ─────────────────────────────────────────────────────────────
   const wallH = TILE * 2
-  ctx.fillStyle = '#f0e8e0'
+  ctx.fillStyle = '#eee8ff'
   ctx.fillRect(0, 0, cW, wallH)
-
-  // Wall tile grid
-  ctx.strokeStyle = '#d8d0c0'
+  ctx.strokeStyle = '#d0c8e8'
   for (let x = 0; x <= COLS; x++) {
     ctx.beginPath(); ctx.moveTo(x * TILE, 0); ctx.lineTo(x * TILE, wallH); ctx.stroke()
   }
 
-  // Pokéball emblem on back wall
-  const ex = cW / 2, ey = TILE * 1.1, er = TILE * 0.85
-  ctx.fillStyle = '#c82820'
-  ctx.beginPath(); ctx.arc(ex, ey, er, Math.PI, 0); ctx.fill()
-  ctx.fillStyle = '#f0f0f0'
-  ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI); ctx.fill()
-  ctx.strokeStyle = '#282818'; ctx.lineWidth = 2.5
+  // ── Pokéball emblem ───────────────────────────────────────────────────────
+  const ex = cW / 2, ey = TILE * 1.1, er = TILE * 0.82
+  ctx.fillStyle = '#e03020'; ctx.beginPath(); ctx.arc(ex, ey, er, Math.PI, 0); ctx.fill()
+  ctx.fillStyle = '#f8f8f8'; ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI); ctx.fill()
+  ctx.strokeStyle = '#201808'; ctx.lineWidth = 2.5
   ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(ex - er, ey); ctx.lineTo(ex + er, ey); ctx.stroke()
-  ctx.fillStyle = '#f8f8f8'
-  ctx.beginPath(); ctx.arc(ex, ey, er * 0.26, 0, Math.PI * 2); ctx.fill()
-  ctx.strokeStyle = '#282818'; ctx.lineWidth = 2
+  ctx.fillStyle = '#f8f8f8'; ctx.beginPath(); ctx.arc(ex, ey, er * 0.26, 0, Math.PI * 2); ctx.fill()
+  ctx.strokeStyle = '#201808'; ctx.lineWidth = 2
   ctx.beginPath(); ctx.arc(ex, ey, er * 0.26, 0, Math.PI * 2); ctx.stroke()
-
-  // "P.C" label left of emblem
   ctx.fillStyle = '#c82820'
-  ctx.font = "bold 13px 'Courier New', monospace"
-  ctx.textAlign = 'left'
-  ctx.fillText('P.C', TILE * 0.5, TILE * 0.8)
+  ctx.font = "bold 12px 'Courier New', monospace"
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'
+  ctx.fillText('P·C', TILE * 0.4, TILE * 0.85)
 
-  // Counter (row 2)
-  const ctrY = wallH, ctrH = TILE
-  ctx.fillStyle = '#a07840'
-  ctx.fillRect(TILE * 2.5, ctrY, cW - TILE * 5, ctrH)
-  ctx.fillStyle = '#e8d8a0'
-  ctx.fillRect(TILE * 2.5, ctrY, cW - TILE * 5, 5)
+  // ── Counter ───────────────────────────────────────────────────────────────
+  const ctrY = wallH
+  ctx.fillStyle = '#8a5c28'; ctx.fillRect(TILE * 2.5, ctrY, cW - TILE * 5, TILE)
+  ctx.fillStyle = '#c89050'; ctx.fillRect(TILE * 2.5, ctrY, cW - TILE * 5, 6)
+  ctx.fillStyle = '#7a4c18'; ctx.fillRect(TILE * 2.5, ctrY + TILE - 3, cW - TILE * 5, 3)
 
-  // Healing machine (right of counter)
-  const hmX = cW - TILE * 3.2, hmY = ctrY - TILE * 0.3
-  ctx.fillStyle = '#c8d8f0'
-  ctx.fillRect(hmX, hmY, TILE * 1.8, TILE * 1.6)
-  ctx.fillStyle = '#a0b8e0'
-  ctx.fillRect(hmX + 4, hmY + 4, TILE * 1.8 - 8, 18)
+  // ── Healing machine ───────────────────────────────────────────────────────
+  const hmX = cW - TILE * 3.1, hmY = ctrY - TILE * 0.25
+  const hmW = TILE * 1.9, hmH = TILE * 1.6
+  ctx.fillStyle = '#b8d0f0'; ctx.fillRect(hmX, hmY, hmW, hmH)
+  ctx.fillStyle = '#88a8d8'; ctx.fillRect(hmX + 2, hmY + 2, hmW - 4, hmH - 4)
+  ctx.fillStyle = '#203858'; ctx.fillRect(hmX + 4, hmY + 5, hmW - 8, 20)
+  ctx.fillStyle = '#60d8f0'
+  ctx.font = "bold 7px 'Courier New'"
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText('HEAL', hmX + hmW / 2, hmY + 15)
+  // Lights: red = injured, green = healthy
   for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = i === 0 ? '#ff2010' : '#404030'
-    ctx.beginPath(); ctx.arc(hmX + 8 + i * 8, hmY + 13, 3.5, 0, Math.PI * 2); ctx.fill()
+    const isInjured = i < injuredCount
+    ctx.shadowColor = isInjured ? '#ff6040' : '#50e860'
+    ctx.shadowBlur = isInjured ? 5 : 3
+    ctx.fillStyle = isInjured ? '#ff3010' : (i < 6 ? '#20c030' : '#303020')
+    ctx.beginPath(); ctx.arc(hmX + 8 + i * 9, hmY + hmH - 10, 3.5, 0, Math.PI * 2); ctx.fill()
+    ctx.shadowBlur = 0
   }
+  ctx.fillStyle = '#304868'; ctx.fillRect(hmX + 3, hmY + hmH - 18, hmW - 6, 6)
 
-  // Nurse Joy
-  const njX = Math.floor(cW / 2), njY = ctrY + 2
-  // body
-  ctx.fillStyle = '#f0f0f0'; ctx.fillRect(njX - 8, njY - 10, 16, 14)
-  // head
-  ctx.fillStyle = '#f0c0a0'; ctx.fillRect(njX - 7, njY - 22, 14, 12)
-  // hair
-  ctx.fillStyle = '#e89898'; ctx.fillRect(njX - 8, njY - 24, 16, 6)
-  // cap
-  ctx.fillStyle = '#f8f8f8'; ctx.fillRect(njX - 6, njY - 30, 12, 6)
-  ctx.fillStyle = '#c82010'; ctx.fillRect(njX - 4, njY - 32, 8, 4)
-  // eyes
-  ctx.fillStyle = '#282818'
-  ctx.fillRect(njX - 4, njY - 15, 2, 2)
-  ctx.fillRect(njX + 2, njY - 15, 2, 2)
+  // ── Nurse Joy ─────────────────────────────────────────────────────────────
+  const njX = Math.floor(cW / 2), njY = ctrY + 3
 
-  // Side benches
-  ctx.fillStyle = '#a06830'
-  ctx.fillRect(0, TILE * 4, TILE, TILE * 2)
-  ctx.fillRect(cW - TILE, TILE * 4, TILE, TILE * 2)
-  ctx.fillStyle = '#c88840'
-  ctx.fillRect(0, TILE * 4, TILE, 5)
-  ctx.fillRect(cW - TILE, TILE * 4, TILE, 5)
+  // Shadow under feet
+  ctx.fillStyle = 'rgba(0,0,0,0.12)'
+  ctx.beginPath(); ctx.ellipse(njX, njY + 4, 9, 3, 0, 0, Math.PI * 2); ctx.fill()
 
-  // Entry mat at bottom
-  ctx.fillStyle = '#5888a0'
-  ctx.fillRect(cW / 2 - TILE, cH - TILE, TILE * 2, TILE)
-  ctx.strokeStyle = '#3868808'
-  ctx.lineWidth = 2
+  // Body — white uniform with pink trim
+  ctx.fillStyle = '#f0f0f8'; ctx.fillRect(njX - 9, njY - 12, 18, 16)
+  ctx.fillStyle = '#f0a0b8'
+  ctx.fillRect(njX - 9, njY - 12, 18, 4)
+  ctx.fillRect(njX - 9, njY - 12, 3, 16)
+  ctx.fillRect(njX + 6, njY - 12, 3, 16)
+  // Red cross on uniform
+  ctx.fillStyle = '#e02020'
+  ctx.fillRect(njX - 1, njY - 10, 2, 6)
+  ctx.fillRect(njX - 3, njY - 8, 6, 2)
+
+  // Neck
+  ctx.fillStyle = '#f5c8a8'; ctx.fillRect(njX - 3, njY - 15, 6, 4)
+
+  // Head — oval face
+  ctx.fillStyle = '#f5c8a8'
+  ctx.beginPath(); ctx.ellipse(njX, njY - 22, 8, 10, 0, 0, Math.PI * 2); ctx.fill()
+
+  // Pink hair buns (Nurse Joy signature)
+  ctx.fillStyle = '#e888a8'
+  ctx.beginPath(); ctx.arc(njX - 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(njX + 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
+  ctx.fillRect(njX - 8, njY - 31, 16, 8)
+  ctx.beginPath(); ctx.arc(njX, njY - 31, 8, Math.PI, 0); ctx.fill()
+
+  // Cap — white with red cross
+  ctx.fillStyle = '#f8f8f8'
+  ctx.fillRect(njX - 7, njY - 35, 14, 7)
+  ctx.beginPath(); ctx.arc(njX, njY - 35, 7, Math.PI, 0); ctx.fill()
+  ctx.strokeStyle = '#d0c8c0'; ctx.lineWidth = 1
+  ctx.strokeRect(njX - 7, njY - 35, 14, 7)
+  ctx.fillStyle = '#e02020'
+  ctx.fillRect(njX - 1, njY - 33, 2, 5); ctx.fillRect(njX - 3, njY - 31, 6, 2)
+
+  // Eyes with highlight
+  ctx.fillStyle = '#302820'
+  ctx.beginPath(); ctx.arc(njX - 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(njX + 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath(); ctx.arc(njX - 2.2, njY - 22.5, 0.6, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(njX + 3.8, njY - 22.5, 0.6, 0, Math.PI * 2); ctx.fill()
+
+  // Smile
+  ctx.strokeStyle = '#c07060'; ctx.lineWidth = 1.5
+  ctx.beginPath(); ctx.arc(njX, njY - 18, 3, 0.2, Math.PI - 0.2); ctx.stroke()
+
+  // Rosy cheeks
+  ctx.fillStyle = 'rgba(240,100,120,0.3)'
+  ctx.beginPath(); ctx.ellipse(njX - 5, njY - 19, 2.5, 1.5, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(njX + 5, njY - 19, 2.5, 1.5, 0, 0, Math.PI * 2); ctx.fill()
+
+  // Arms & hands
+  ctx.fillStyle = '#f0f0f8'
+  ctx.fillRect(njX - 14, njY - 11, 5, 12); ctx.fillRect(njX + 9, njY - 11, 5, 12)
+  ctx.fillStyle = '#f5c8a8'
+  ctx.beginPath(); ctx.arc(njX - 11, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(njX + 12, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
+
+  // ── Side benches ──────────────────────────────────────────────────────────
+  ctx.fillStyle = '#905020'
+  ctx.fillRect(0, TILE * 4, TILE, TILE * 2); ctx.fillRect(cW - TILE, TILE * 4, TILE, TILE * 2)
+  ctx.fillStyle = '#c07838'
+  ctx.fillRect(0, TILE * 4, TILE, 5); ctx.fillRect(cW - TILE, TILE * 4, TILE, 5)
+  ctx.fillStyle = '#704010'
+  ctx.fillRect(0, TILE * 6 - 3, TILE, 3); ctx.fillRect(cW - TILE, TILE * 6 - 3, TILE, 3)
+
+  // ── Entry mat ─────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#4878a0'; ctx.fillRect(cW / 2 - TILE, cH - TILE, TILE * 2, TILE)
+  ctx.fillStyle = '#a0c8e8'; ctx.fillRect(cW / 2 - TILE, cH - TILE, TILE * 2, 4)
+  ctx.strokeStyle = '#286880'; ctx.lineWidth = 2
   ctx.strokeRect(cW / 2 - TILE, cH - TILE, TILE * 2, TILE)
-
   // Pokéball on mat
-  ctx.fillStyle = '#c82820'
-  ctx.beginPath(); ctx.arc(cW / 2, cH - TILE / 2, 10, Math.PI, 0); ctx.fill()
-  ctx.fillStyle = '#f0f0f0'
-  ctx.beginPath(); ctx.arc(cW / 2, cH - TILE / 2, 10, 0, Math.PI); ctx.fill()
+  const mx = cW / 2, my = cH - TILE / 2
+  ctx.fillStyle = '#c82820'; ctx.beginPath(); ctx.arc(mx, my, 10, Math.PI, 0); ctx.fill()
+  ctx.fillStyle = '#f0f0f0'; ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI); ctx.fill()
   ctx.strokeStyle = '#282818'; ctx.lineWidth = 1.5
-  ctx.beginPath(); ctx.arc(cW / 2, cH - TILE / 2, 10, 0, Math.PI * 2); ctx.stroke()
+  ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI * 2); ctx.stroke()
+  ctx.beginPath(); ctx.moveTo(mx - 10, my); ctx.lineTo(mx + 10, my); ctx.stroke()
+  ctx.fillStyle = '#f8f8f8'; ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, Math.PI * 2); ctx.fill()
 }
 
 
@@ -259,6 +311,20 @@ export default function WorldMap() {
   const [shopOpen, setShopOpen] = useState(false)
   const shopDismissedRef = useRef(false)
   const [battleFlash, setBattleFlash] = useState(false)
+  const [areaBanner, setAreaBanner] = useState<string | null>(null)
+  const areaBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [worldBagOpen, setWorldBagOpen] = useState(false)
+
+  // Feature D: items on map — generate once on mount (respawn on game restart only)
+  type MapItem = { mapId: string; x: number; y: number; itemId: 'pokeball' | 'potion' }
+  const [mapItems, setMapItems] = useState<MapItem[]>([])
+
+  // NPC sprite sheet (npc-sheet.png is 164×925, ~16×16 sprites, 10 cols)
+  const npcSheetRef = useRef<HTMLImageElement | null>(null)
+  useEffect(() => {
+    const img = new Image(); img.src = 'sprites/npc-sheet.png'
+    img.onload = () => { npcSheetRef.current = img }
+  }, [])
   const updateProfileRef = useRef(updateProfile)
   useEffect(() => { updateProfileRef.current = updateProfile }, [updateProfile])
   const mapRef = useRef<MapData>(getMap('pallet'))
@@ -268,13 +334,59 @@ export default function WorldMap() {
   const currentMapIdRef = useRef(profile?.currentRoute ?? 'pallet')
   const startWildBattleRef = useRef<(x: number, y: number) => void>(() => {})
   const startTrainerBattleRef = useRef<(t: TrainerNpc) => void>(() => {})
+  const partyRef = useRef(profile?.party ?? [])
+  useEffect(() => { partyRef.current = profile?.party ?? [] }, [profile?.party])
 
   useEffect(() => { if (!profile) navigate('/') }, [profile, navigate])
 
-  // Auto-heal when entering pokecenter
+  // Generate map items once on mount — Pokéballs (60%) and Potions (40%)
+  useEffect(() => {
+    const items: MapItem[] = []
+    const ITEM_MAPS: Record<string, number> = {
+      sunlitMeadow: 3, viridianForest: 3, flowerMeadow: 3,
+      mistyLake: 2, rockyCave: 2, trainerRoad: 2,
+      pallet: 1, cinnabarTown: 1, volcanoTrail: 3,
+    }
+    for (const [mapId, count] of Object.entries(ITEM_MAPS)) {
+      const map = MAPS[mapId]
+      if (!map) continue
+      const WALKABLE = new Set(['grass', 'land', 'path', 'flower', 'flower2'])
+      const exitSet = new Set(map.exits.map(e => `${e.x},${e.y}`))
+      const trainerSet = new Set(map.trainers.map(t => `${t.x},${t.y}`))
+      const validTiles: Array<[number, number]> = []
+      for (let y = 1; y < map.height - 1; y++) {
+        for (let x = 1; x < map.width - 1; x++) {
+          if (WALKABLE.has(map.tiles[y]?.[x] ?? '') && !exitSet.has(`${x},${y}`) && !trainerSet.has(`${x},${y}`)) {
+            validTiles.push([x, y])
+          }
+        }
+      }
+      // Fisher-Yates shuffle then take `count`
+      for (let i = validTiles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [validTiles[i], validTiles[j]] = [validTiles[j], validTiles[i]]
+      }
+      for (let i = 0; i < Math.min(count, validTiles.length); i++) {
+        const [x, y] = validTiles[i]
+        items.push({ mapId, x, y, itemId: Math.random() < 0.6 ? 'pokeball' : 'potion' })
+      }
+    }
+    setMapItems(items)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Auto-heal when entering pokecenter; show area banner on map change
   useEffect(() => {
     if (currentMapId === 'pokecenter' && prevMapIdRef.current !== 'pokecenter') {
       healParty()
+    }
+    if (currentMapId !== prevMapIdRef.current) {
+      const mapData = MAPS[currentMapId]
+      if (mapData && !mapData.isInterior) {
+        if (areaBannerTimerRef.current) clearTimeout(areaBannerTimerRef.current)
+        setAreaBanner(mapData.name)
+        areaBannerTimerRef.current = setTimeout(() => setAreaBanner(null), 3000)
+      }
     }
     prevMapIdRef.current = currentMapId
     currentMapIdRef.current = currentMapId
@@ -297,7 +409,8 @@ export default function WorldMap() {
     // ── Interior maps: canvas-drawn background ────────────────────────────
     if (map.isInterior) {
       if (map.id === 'pokecenter') {
-        drawPokeCenter(ctx, cW, cH)
+        const injuredCount = partyRef.current.filter(p => (p.currentHp ?? 0) < (p.maxHp ?? 1)).length
+        drawPokeCenter(ctx, cW, cH, injuredCount)
       } else {
         ctx.fillStyle = '#c8a870'
         ctx.fillRect(0, 0, cW, cH)
@@ -467,15 +580,76 @@ export default function WorldMap() {
         }
       }
 
-      // ── Pass 4: NPC trainers ──────────────────────────────────────────────
+      // ── Pass 4: Map items (Pokéballs and Potions) ────────────────────────
+      const visibleItems = mapItems.filter(it => it.mapId === map.id)
+      for (const item of visibleItems) {
+        const vx = item.x - playerX + hw
+        const vy = item.y - playerY + hh
+        if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
+        const ix = vx * TILE + TILE / 2, iy = vy * TILE + TILE / 2
+        if (item.itemId === 'pokeball') {
+          // Pokéball: red top, white bottom
+          ctx.fillStyle = '#e82020'
+          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, Math.PI, 0); ctx.fill()
+          ctx.fillStyle = '#f8f8f8'
+          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, 0, Math.PI); ctx.fill()
+          ctx.strokeStyle = '#181808'; ctx.lineWidth = 1.2
+          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, 0, Math.PI * 2); ctx.stroke()
+          ctx.beginPath(); ctx.moveTo(ix - 6, iy - 1); ctx.lineTo(ix + 6, iy - 1); ctx.stroke()
+          ctx.fillStyle = '#f8f8f8'; ctx.beginPath(); ctx.arc(ix, iy - 1, 1.5, 0, Math.PI * 2); ctx.fill()
+        } else {
+          // Potion: blue bottle
+          ctx.fillStyle = '#3060e0'
+          ctx.beginPath(); ctx.roundRect(ix - 3, iy - 7, 6, 9, 2); ctx.fill()
+          ctx.fillStyle = '#80c0ff'
+          ctx.fillRect(ix - 2, iy - 6, 2, 4)
+          ctx.fillStyle = '#a0d0ff'
+          ctx.beginPath(); ctx.roundRect(ix - 2, iy - 9, 4, 3, 1); ctx.fill()
+          ctx.strokeStyle = '#1840a0'; ctx.lineWidth = 1
+          ctx.beginPath(); ctx.roundRect(ix - 3, iy - 7, 6, 9, 2); ctx.stroke()
+        }
+      }
+
+      // ── Pass 5: NPC trainers — drawn from sprite sheet ───────────────────
       for (const t of map.trainers) {
         const vx = t.x - playerX + hw
         const vy = t.y - playerY + hh
-        if (vx >= 0 && vx < COLS && vy >= 0 && vy < ROWS) {
+        if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
+        const dx = vx * TILE, dy = vy * TILE
+        const sheet = npcSheetRef.current
+        // NPC sprite: pick row/col based on trainer class
+        const NPC_CLASS_SPRITES: Record<string, {row: number, col: number}> = {
+          'Biker':   { row: 4, col: 5 },
+          'Lass':    { row: 2, col: 3 },
+          'Swimmer': { row: 3, col: 2 },
+          'Hiker':   { row: 5, col: 1 },
+          'default': { row: 1, col: 5 },
+        }
+        const npcCls = t.name.split(' ')[0]
+        const npcSprite = NPC_CLASS_SPRITES[npcCls] ?? NPC_CLASS_SPRITES['default']
+        const sx = npcSprite.col * 16, sy = npcSprite.row * 16
+        if (sheet && sheet.complete) {
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(sheet, sx, sy, 16, 16, dx + 2, dy + 4, TILE - 4, TILE - 4)
+        } else {
           ctx.font = `${TILE * 0.7}px serif`
           ctx.textAlign = 'center'
-          ctx.fillText('🧑', vx * TILE + TILE / 2, vy * TILE + TILE * 0.8)
+          ctx.fillText('🧑', dx + TILE / 2, dy + TILE * 0.8)
         }
+        // Exclamation mark for vision cone
+        const dirOffset = { down: [0,1], up: [0,-1], left: [-1,0], right: [1,0] }[t.direction] ?? [0,1]
+        const pvx = playerX - t.x, pvy = playerY - t.y
+        const inCone = (t.direction === 'down'  && pvx === 0 && pvy > 0 && pvy <= 3) ||
+                       (t.direction === 'up'    && pvx === 0 && pvy < 0 && pvy >= -3) ||
+                       (t.direction === 'left'  && pvy === 0 && pvx < 0 && pvx >= -3) ||
+                       (t.direction === 'right' && pvy === 0 && pvx > 0 && pvx <= 3)
+        if (inCone) {
+          ctx.font = 'bold 10px monospace'
+          ctx.fillStyle = '#e82020'
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
+          ctx.fillText('!', dx + TILE / 2, dy)
+        }
+        void dirOffset
       }
     }
 
@@ -567,12 +741,12 @@ export default function WorldMap() {
     }
 
     for (const trainer of map.trainers) {
-      if (
-        trainer.direction === 'down' &&
-        trainer.x === nx &&
-        ny > trainer.y &&
-        ny <= trainer.y + 3
-      ) {
+      const triggered =
+        (trainer.direction === 'down'  && trainer.x === nx && ny > trainer.y  && ny <= trainer.y + 3) ||
+        (trainer.direction === 'up'    && trainer.x === nx && ny < trainer.y  && ny >= trainer.y - 3) ||
+        (trainer.direction === 'left'  && trainer.y === ny && nx < trainer.x  && nx >= trainer.x - 3) ||
+        (trainer.direction === 'right' && trainer.y === ny && nx > trainer.x  && nx <= trainer.x + 3)
+      if (triggered) {
         setDialogue(`${trainer.name} wants to battle!`)
         setTimeout(() => startTrainerBattleRef.current(trainer), 1500)
         return
@@ -584,6 +758,28 @@ export default function WorldMap() {
     pyRef.current = ny
     setPx(nx)
     setPy(ny)
+
+    // Item pickup
+    const currentMapId_ = currentMapIdRef.current
+    setMapItems(prev => {
+      const idx = prev.findIndex(it => it.mapId === currentMapId_ && it.x === nx && it.y === ny)
+      if (idx === -1) return prev
+      const item = prev[idx]
+      const itemName = item.itemId === 'pokeball' ? 'Pokéball' : 'Potion'
+      setDialogue(`You found a ${itemName}!`)
+      // Add to bag
+      const currentProfile = useProfileStore.getState().profile
+      if (currentProfile?.id) {
+        const bag = currentProfile.bag ?? []
+        const existingIdx = bag.findIndex(b => b.itemId === item.itemId)
+        const newBag = existingIdx >= 0
+          ? bag.map((b, i) => i === existingIdx ? { ...b, qty: b.qty + 1 } : b)
+          : [...bag, { itemId: item.itemId, qty: 1 }]
+        updateProfileRef.current(currentProfile.id, { bag: newBag })
+        useProfileStore.getState().setProfile({ ...currentProfile, bag: newBag })
+      }
+      return prev.filter((_, i) => i !== idx)
+    })
 
     if ((tile === 'grass' || tile === 'water') && Math.random() < ENCOUNTER_RATE) {
       setTimeout(() => startWildBattleRef.current(nx, ny), 0)
@@ -646,7 +842,10 @@ export default function WorldMap() {
     const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
     player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
     player.xp = currentProfile.party[0].xp ?? player.xp
-    player.moves = currentProfile.party[0].moves?.length > 0 ? [...currentProfile.party[0].moves] : player.moves
+    const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
+    const _usedIds = new Set(_validMoves.map(m => m.moveId))
+    const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
+    player.moves = [..._validMoves, ..._fresh].slice(0, 4)
     player.nickname = currentProfile.party[0].nickname
     const fullParty = currentProfile.party.slice(1).map(p => {
       const info = pokemonMap[p.pokemonId]
@@ -654,7 +853,10 @@ export default function WorldMap() {
       const bp = buildPartyPokemon(info, p.level)
       bp.currentHp = p.currentHp ?? bp.maxHp
       bp.xp = p.xp ?? bp.xp
-      bp.moves = p.moves?.length > 0 ? [...p.moves] : bp.moves
+      const _bpValidMoves = filterValidMoves(p.moves ?? [])
+      const _bpUsedIds = new Set(_bpValidMoves.map(m => m.moveId))
+      const _bpFresh = bp.moves.filter(m => !_bpUsedIds.has(m.moveId))
+      bp.moves = [..._bpValidMoves, ..._bpFresh].slice(0, 4)
       bp.nickname = p.nickname
       return bp
     }).filter(Boolean) as typeof player[]
@@ -681,7 +883,10 @@ export default function WorldMap() {
     const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
     player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
     player.xp = currentProfile.party[0].xp ?? player.xp
-    player.moves = currentProfile.party[0].moves?.length > 0 ? [...currentProfile.party[0].moves] : player.moves
+    const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
+    const _usedIds = new Set(_validMoves.map(m => m.moveId))
+    const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
+    player.moves = [..._validMoves, ..._fresh].slice(0, 4)
     player.nickname = currentProfile.party[0].nickname
     const fullParty = currentProfile.party.slice(1).map(p => {
       const info = pokemonMap[p.pokemonId]
@@ -689,7 +894,10 @@ export default function WorldMap() {
       const bp = buildPartyPokemon(info, p.level)
       bp.currentHp = p.currentHp ?? bp.maxHp
       bp.xp = p.xp ?? bp.xp
-      bp.moves = p.moves?.length > 0 ? [...p.moves] : bp.moves
+      const _bpValidMoves = filterValidMoves(p.moves ?? [])
+      const _bpUsedIds = new Set(_bpValidMoves.map(m => m.moveId))
+      const _bpFresh = bp.moves.filter(m => !_bpUsedIds.has(m.moveId))
+      bp.moves = [..._bpValidMoves, ..._bpFresh].slice(0, 4)
       bp.nickname = p.nickname
       return bp
     }).filter(Boolean) as typeof player[]
@@ -733,48 +941,161 @@ export default function WorldMap() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center gap-2 p-2">
-      <div className="flex justify-end items-center w-full max-w-sm">
-        <div className="flex gap-2">
-          <button onClick={() => navigate('/team')}
-            className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
-            Team
-          </button>
-          <button onClick={() => navigate('/pokedex')}
-            className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
-            Pokédex
-          </button>
-        </div>
+    <div style={{
+      height: '100vh', overflow: 'hidden',
+      background: '#1a1a2e', display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Top bar — fixed height */}
+      <div style={{
+        flexShrink: 0, display: 'flex', justifyContent: 'flex-end',
+        alignItems: 'center', padding: '6px 12px', gap: 8,
+      }}>
+        <button onClick={() => navigate('/team')}
+          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          Team
+        </button>
+        <button onClick={() => navigate('/pokedex')}
+          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          Pokédex
+        </button>
+        <button onClick={() => setWorldBagOpen(true)}
+          className="bg-[#16213e] border border-yellow-400/40 text-yellow-400 text-xs px-3 py-1 rounded-lg">
+          Bag
+        </button>
+        <button onClick={() => navigate('/progress')}
+          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          Progress
+        </button>
       </div>
 
-      <canvas
-        ref={canvasRef}
-        width={COLS * TILE}
-        height={ROWS * TILE}
-        className="border-2 border-yellow-400/30 rounded-xl"
-        style={{ imageRendering: 'pixelated', width: '100%', maxWidth: `${COLS * TILE * 1.5}px` }}
-      />
+      {/* Main area — fills remaining height, no overflow */}
+      <div style={{
+        flex: 1, minHeight: 0, overflow: 'hidden',
+        display: 'flex', flexDirection: 'row', gap: 8,
+        padding: '0 8px 8px',
+        alignItems: 'stretch',
+      }}>
 
-      {dialogue && (
-        <div
-          onClick={() => setDialogue(null)}
-          className="bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 w-full max-w-sm text-white text-sm cursor-pointer"
-        >
-          {dialogue}
+        {/* Left column: canvas + dialogue overlay + dpad */}
+        <div style={{
+          flex: 1, minWidth: 0, overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', gap: 8,
+        }}>
+
+          {/* Canvas wrapper — expands to fill available height */}
+          <div style={{
+            flex: 1, minHeight: 0, overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', position: 'relative',
+          }}>
+            <canvas
+              ref={canvasRef}
+              width={COLS * TILE}
+              height={ROWS * TILE}
+              className="border-2 border-yellow-400/30 rounded-xl"
+              style={{
+                imageRendering: 'pixelated', display: 'block',
+                maxHeight: '100%', maxWidth: '100%',
+                aspectRatio: `${COLS} / ${ROWS}`,
+              }}
+            />
+            {/* Area name banner — overlaid at top of canvas */}
+            {areaBanner && (
+              <div
+                key={areaBanner}
+                className="absolute left-1/2 font-bold text-sm pointer-events-none"
+                style={{
+                  top: 8, transform: 'translateX(-50%)',
+                  background: 'rgba(10,16,32,0.85)', border: '1.5px solid #ffd700',
+                  borderRadius: 8, color: '#ffd700', padding: '4px 14px',
+                  whiteSpace: 'nowrap', animation: 'fadeBanner 3s ease-out forwards',
+                }}
+              >
+                {areaBanner}
+              </div>
+            )}
+            {/* Dialogue — overlaid at bottom of canvas */}
+            {dialogue && (
+              <div
+                onClick={() => setDialogue(null)}
+                className="absolute left-2 right-2 bottom-2 bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 text-white text-sm cursor-pointer"
+                style={{ zIndex: 10 }}
+              >
+                {dialogue}
+              </div>
+            )}
+          </div>
+
+          {/* DPad — fixed size, always at bottom of left column */}
+          <div style={{ flexShrink: 0 }}>
+            <DPad onMove={(dx, dy) => {
+              if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
+              if (dialogue) { setDialogue(null); return }
+              move(dx, dy)
+            }} />
+          </div>
+
+          {/* Mini-map: below DPad on mobile only (hidden on desktop) */}
+          <div className="w-full flex justify-center lg:hidden" style={{ flexShrink: 0 }}>
+            <MiniMap currentMapId={currentMapId} />
+          </div>
+
         </div>
-      )}
 
-      <DPad onMove={(dx, dy) => {
-        if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
-        if (dialogue) { setDialogue(null); return }
-        move(dx, dy)
-      }} />
+        {/* Right column: mini-map, vertically centred, no overflow */}
+        <div style={{
+          flexShrink: 0, width: 380, overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        }}
+          className="hidden lg:flex"
+        >
+          <MiniMap currentMapId={currentMapId} />
+        </div>
+
+      </div>
 
       {shopOpen && profile && (
         <ShopModal
           profile={profile}
           onBuy={handleBuy}
           onClose={() => { setShopOpen(false); shopDismissedRef.current = true }}
+        />
+      )}
+
+      {worldBagOpen && profile && (
+        <BagMenu
+          bag={profile.bag ?? []}
+          onUse={async (itemId) => {
+            const item = ITEMS.find(i => i.id === itemId)
+            if (!item || !profile.id) return
+            const party = profile.party ?? []
+            let newParty = party
+            if (item.effect === 'heal') {
+              const target = party.findIndex(p => p.currentHp < p.maxHp)
+              if (target === -1) { setDialogue('All Pokémon are healthy!'); return }
+              newParty = party.map((p, i) => i === target
+                ? { ...p, currentHp: Math.min(p.maxHp, (p.currentHp ?? 0) + item.power) }
+                : p)
+              setDialogue(`${party[target].nickname ?? 'Pokémon'} recovered ${item.power} HP!`)
+            } else if (item.effect === 'revive') {
+              const target = party.findIndex(p => (p.currentHp ?? 0) <= 0)
+              if (target === -1) { setDialogue('No fainted Pokémon!'); return }
+              newParty = party.map((p, i) => i === target
+                ? { ...p, currentHp: Math.floor(p.maxHp / 2) }
+                : p)
+              setDialogue(`${party[target].nickname ?? 'Pokémon'} was revived!`)
+            }
+            const newBag = (profile.bag ?? [])
+              .map(b => b.itemId === itemId ? { ...b, qty: b.qty - 1 } : b)
+              .filter(b => b.qty > 0)
+            try {
+              await updateProfile(profile.id, { party: newParty, bag: newBag })
+              useProfileStore.getState().setProfile({ ...profile, party: newParty, bag: newBag })
+            } catch { /* silent */ }
+            setWorldBagOpen(false)
+          }}
+          onClose={() => setWorldBagOpen(false)}
         />
       )}
 

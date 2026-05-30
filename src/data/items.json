@@ -1,5 +1,13 @@
 [
   {
+    "id": "pokeball",
+    "name": "Poké Ball",
+    "description": "Catches wild Pokémon in battle",
+    "price": 200,
+    "effect": "pokeball",
+    "power": 0
+  },
+  {
     "id": "potion",
     "name": "Potion",
     "description": "Restores 20 HP",

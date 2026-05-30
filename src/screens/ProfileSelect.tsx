@@ -74,13 +74,24 @@ export default function ProfileSelect() {
             <p className="text-gray-400 text-center">No trainers yet. Add one below!</p>
           ) : (
             <div className="flex flex-wrap gap-4 justify-center">
-              {profiles.map(p => (
-                <ProfileCard
-                  key={p.id}
-                  profile={p}
-                  onClick={() => { setSelected(p); setPinError('') }}
-                />
-              ))}
+              {profiles.map(p => {
+                const battlesWon = p.stats?.battlesWon ?? 0
+                const answered = p.stats?.questionsAnswered ?? 0
+                const correct = p.stats?.questionsCorrect ?? 0
+                const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : null
+                return (
+                  <div key={p.id} className="flex flex-col items-center gap-2">
+                    <ProfileCard
+                      profile={p}
+                      onClick={() => { setSelected(p); setPinError('') }}
+                    />
+                    <div className="flex gap-3 text-xs text-gray-400">
+                      <span>⚔️ {battlesWon} wins</span>
+                      {accuracy !== null && <span>🎯 {accuracy}%</span>}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
           <button

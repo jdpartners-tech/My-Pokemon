@@ -37,8 +37,8 @@ export const sunlitMeadow: MapData = {
   exits: [
     { x: 7, y: 0,  targetMap: 'pallet',         targetX: 7, targetY: 10 },
     { x: 8, y: 0,  targetMap: 'pallet',         targetX: 8, targetY: 10 },
-    { x: 7, y: 13, targetMap: 'viridianForest', targetX: 7, targetY: 14 },
-    { x: 8, y: 13, targetMap: 'viridianForest', targetX: 8, targetY: 14 },
+    { x: 7, y: 13, targetMap: 'viridianForest', targetX: 7, targetY: 1 },
+    { x: 8, y: 13, targetMap: 'viridianForest', targetX: 8, targetY: 1 },
   ],
   doors: [],
 }

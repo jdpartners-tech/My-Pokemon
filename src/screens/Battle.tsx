@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBattleStore } from '../store/battleStore'
 import { useBattleEngine } from '../hooks/useBattleEngine'
@@ -100,6 +100,8 @@ export default function Battle() {
     expAnimating, leveledUp, playerAttacking, opponentFlash, shakeX,
     opponentAttacking, playerFlash, playerShakeX,
     isWildBattle, ballAnimPhase, ballCaught, party, answerResult,
+    trainerSpriteCol, trainerSpriteRow,
+    damagePopup, battleBanner,
   } = useBattleStore()
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
@@ -109,6 +111,33 @@ export default function Battle() {
   const [hoveredMove, setHoveredMove] = useState(0)
   const ballCanvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
+
+  // HP shake on big hits
+  const prevOpponentHpRef = useRef(opponentPokemon?.currentHp ?? 0)
+  const [opponentHpShake, setOpponentHpShake] = useState(false)
+
+  // Clear damage popup after 1.2s
+  useEffect(() => {
+    if (!damagePopup) return
+    const t = setTimeout(() => useBattleStore.getState().clearDamagePopup(), 1200)
+    return () => clearTimeout(t)
+  }, [damagePopup?.id])
+
+  // HP shake effect
+  const handleOpponentHpShake = useCallback(() => {
+    setOpponentHpShake(true)
+    setTimeout(() => setOpponentHpShake(false), 400)
+  }, [])
+
+  useEffect(() => {
+    if (!opponentPokemon) return
+    const prev = prevOpponentHpRef.current
+    const curr = opponentPokemon.currentHp
+    if (curr < prev && opponentPokemon.maxHp > 0 && (prev - curr) / opponentPokemon.maxHp > 0.05) {
+      handleOpponentHpShake()
+    }
+    prevOpponentHpRef.current = curr
+  }, [opponentPokemon?.currentHp, handleOpponentHpShake])
 
   useEffect(() => { if (phase === 'idle') navigate('/map') }, [phase, navigate])
 
@@ -122,6 +151,13 @@ export default function Battle() {
     })
     timers.push(setTimeout(() => setFlashOn(false), 2400))
     return () => timers.forEach(clearTimeout)
+  }, [phase])
+
+  // Trainer intro: show trainer sprite for 1.8s then transition to player_turn
+  useEffect(() => {
+    if (phase !== 'trainer_intro') return
+    const t = setTimeout(() => useBattleStore.getState().setPhase('player_turn'), 2200)
+    return () => clearTimeout(t)
   }, [phase])
 
   // Ball throw canvas animation
@@ -189,9 +225,10 @@ export default function Battle() {
     return Math.min(100, Math.max(0, (playerPokemon.xp - fl) / (cl - fl) * 100))
   })()
 
-  // Opponent fades out when ball has hit (phases 2-5 except failed reset)
-  const opponentAlpha = opponentFlash
-    ? 0.3
+  // Opponent hidden during trainer intro (trainer shown instead); fades on ball catch
+  const opponentAlpha = phase === 'trainer_intro' ? 0
+    : opponentFlash ? 0.3
+    : (ballCaught && phase === 'win') ? 0
     : (ballAnimPhase >= 2 && ballAnimPhase <= 4) ? 0.15 : 1
 
   function HpBar({ current, max }: { current: number; max: number }) {
@@ -263,11 +300,14 @@ export default function Battle() {
           </div>
         )}
         {xp !== undefined && (
-          <div style={{ background: '#404030', height: 4, marginTop: 2 }}>
-            <div style={{
-              width: `${xp}%`, height: '100%', background: '#6890f0',
-              transition: expAnimating ? 'width 1s ease-out' : 'none',
-            }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
+            <span style={{ fontSize: 9, fontWeight: 'bold', color: '#181808', flexShrink: 0 }}>XP</span>
+            <div style={{ flex: 1, background: '#404030', height: 6, borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{
+                width: `${xp}%`, height: '100%', background: '#6890f0', borderRadius: 3,
+                transition: expAnimating ? 'width 2.5s ease-out' : 'none',
+              }} />
+            </div>
           </div>
         )}
       </div>
@@ -299,7 +339,10 @@ export default function Battle() {
         <div style={{ position: 'absolute', left: 32, top: 194, width: 136, height: 24, borderRadius: '50%', background: '#b09038' }} />
 
         {/* Opponent HP box — top LEFT (Ruby layout: enemy info top-left) */}
-        <div style={{ position: 'absolute', left: 6, top: 8 }}>
+        <div style={{
+          position: 'absolute', left: 6, top: 8,
+          animation: opponentHpShake ? 'hpShake 0.4s ease-out' : 'none',
+        }}>
           <HpBox
             name={pokeName(opponentPokemon)}
             level={opponentPokemon.level}
@@ -308,6 +351,20 @@ export default function Battle() {
             status={opponentPokemon.status}
           />
         </div>
+
+        {/* Trainer intro — full-body trainer sprite slides in, then Pokémon appears */}
+        {phase === 'trainer_intro' && (
+          <div style={{
+            position: 'absolute', right: 8, top: 8,
+            width: 100, height: 128,
+            backgroundImage: 'url(sprites/trainer-sheet.png)',
+            backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
+            backgroundSize: `${398 * 2}px ${513 * 2}px`,
+            backgroundRepeat: 'no-repeat',
+            imageRendering: 'pixelated' as const,
+            animation: 'trainerSlideIn 0.5s ease-out',
+          }} />
+        )}
 
         {/* Opponent sprite — top RIGHT, animated */}
         {/* Attack: lurches left toward player; shake: oscillates on hit */}
@@ -340,17 +397,22 @@ export default function Battle() {
             ? 'left 0.15s ease-out, opacity 0.05s'
             : 'left 0.12s ease-in, opacity 0.05s',
           imageRendering: 'pixelated' as const,
+          boxShadow: leveledUp ? '0 0 20px #ffd700' : 'none',
         }}>
           <img
             src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${playerPokemon.pokemonId}.png`}
             alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' as const }}
+            style={{
+              width: '100%', height: '100%', objectFit: 'contain',
+              imageRendering: 'pixelated' as const,
+              filter: phase === 'evolving' ? 'brightness(10) saturate(0)' : 'none',
+              transition: phase === 'evolving' ? 'filter 0.3s' : 'none',
+            }}
           />
         </div>
 
         {/* Player HP box — bottom RIGHT */}
-        {/* mockup: left = W-182 = 178, top = panY-58 = 240-58 = 182 */}
-        <div style={{ position: 'absolute', left: 178, top: 182 }}>
+        <div style={{ position: 'absolute', left: 178, top: 170 }}>
           <HpBox
             name={pokeName(playerPokemon)}
             level={playerPokemon.level}
@@ -362,6 +424,37 @@ export default function Battle() {
             status={playerPokemon.status}
           />
         </div>
+
+        {/* Floating damage number */}
+        {damagePopup && (
+          <div key={damagePopup.id} style={{
+            position: 'absolute',
+            left: damagePopup.forOpponent ? '58%' : '18%',
+            top: damagePopup.forOpponent ? '15%' : '45%',
+            color: damagePopup.forOpponent ? '#ff4040' : '#ff8040',
+            fontFamily: MONO, fontWeight: 'bold', fontSize: 20,
+            textShadow: '1px 1px 0 #000',
+            pointerEvents: 'none', zIndex: 20,
+            animation: 'damageFloat 1.2s ease-out forwards',
+          }}>
+            -{damagePopup.amount}
+          </div>
+        )}
+
+        {/* Battle banner (Super effective / Not very effective / Critical hit) */}
+        {battleBanner && (
+          <div key={battleBanner} style={{
+            position: 'absolute', bottom: '8%', left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(0,0,0,0.7)',
+            color: '#ffd700', fontFamily: MONO, fontWeight: 'bold',
+            fontSize: 11, padding: '4px 12px', borderRadius: 4,
+            whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 20,
+            animation: 'fadeBanner 1.5s ease-out forwards',
+          }}>
+            {battleBanner}
+          </div>
+        )}
 
         {/* Ball throw animation canvas — overlays entire sky zone */}
         <canvas
@@ -398,48 +491,53 @@ export default function Battle() {
         {phase === 'player_turn' && (
           <div style={{ display: 'flex', gap: 4, margin: '4px 4px 4px', flex: 1 }}>
 
-            {/* Move grid — exactly 201px wide, dividers as absolute lines with 4px insets */}
+            {/* Move grid — 1-4 slots, always 2 columns; only renders slots that exist */}
             <div style={{
               width: MOVE_W, flexShrink: 0,
               position: 'relative',
               border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
               background: MENU_BG, overflow: 'hidden',
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr',
+              display: 'grid',
+              gridTemplateColumns: playerPokemon.moves.length === 1 ? '1fr' : '1fr 1fr',
+              gridTemplateRows: playerPokemon.moves.length <= 2 ? '1fr' : '1fr 1fr',
             }}>
-              {/* Divider lines (inset 4px from edge — matching mockup canvas lines) */}
-              <div style={{
-                position: 'absolute', left: '50%', top: 4, bottom: 4,
-                width: 1, background: '#c8c0a8', pointerEvents: 'none',
-              }} />
-              <div style={{
-                position: 'absolute', left: 4, right: 4, top: '50%',
-                height: 1, background: '#c8c0a8', pointerEvents: 'none',
-              }} />
+              {/* Vertical divider — only when 2+ columns */}
+              {playerPokemon.moves.length > 1 && (
+                <div style={{
+                  position: 'absolute', left: '50%', top: 4, bottom: 4,
+                  width: 1, background: '#c8c0a8', pointerEvents: 'none',
+                }} />
+              )}
+              {/* Horizontal divider — only when 2 rows */}
+              {playerPokemon.moves.length > 2 && (
+                <div style={{
+                  position: 'absolute', left: 4, right: 4, top: '50%',
+                  height: 1, background: '#c8c0a8', pointerEvents: 'none',
+                }} />
+              )}
 
-              {Array.from({ length: 4 }).map((_, i) => {
-                const mv = playerPokemon.moves[i]
-                const md = mv ? moveDataMap[mv.moveId] : null
+              {playerPokemon.moves.map((mv, i) => {
+                const md = moveDataMap[mv.moveId] ?? null
                 const isHov = i === hoveredMove
                 return (
                   <button
                     key={i}
-                    onMouseEnter={() => mv && setHoveredMove(i)}
-                    onFocus={() => mv && setHoveredMove(i)}
-                    onClick={() => mv && selectMove(i)}
-                    disabled={!mv}
+                    onMouseEnter={() => setHoveredMove(i)}
+                    onFocus={() => setHoveredMove(i)}
+                    onClick={() => selectMove(i)}
                     style={{
-                      background: isHov && mv ? '#fff8d8' : 'transparent',
+                      background: isHov ? '#fff8d8' : 'transparent',
                       border: 'none',
-                      outline: isHov && mv ? `1px solid #e8a018` : 'none',
+                      outline: isHov ? `1px solid #e8a018` : 'none',
                       padding: '6px 8px',
-                      textAlign: 'left', cursor: mv ? 'pointer' : 'default',
+                      textAlign: 'left', cursor: 'pointer',
                       fontFamily: MONO, zIndex: 1,
                     }}
                   >
-                    <div style={{ fontSize: 10, fontWeight: 'bold', color: mv ? '#181808' : '#bbb' }}>
-                      {isHov && mv ? '▶ ' : ''}{md?.name.toUpperCase() ?? '—'}
+                    <div style={{ fontSize: 10, fontWeight: 'bold', color: '#181808' }}>
+                      {isHov ? '▶ ' : ''}{md?.name.toUpperCase() ?? mv.moveId.toUpperCase()}
                     </div>
-                    <div style={{ fontSize: 8, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#ccc', marginTop: 2 }}>
+                    <div style={{ fontSize: 8, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#999', marginTop: 2 }}>
                       {md?.type.toUpperCase() ?? ''}
                     </div>
                   </button>
@@ -447,21 +545,25 @@ export default function Battle() {
               })}
             </div>
 
-            {/* PP / TYPE panel (fills remaining width) */}
+            {/* Move info panel: POW / PP / TYPE */}
             <div style={{
               flex: 1, border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
-              background: MENU_BG, padding: '8px 10px',
-              display: 'flex', flexDirection: 'column', gap: 2,
+              background: MENU_BG, padding: '6px 8px',
+              display: 'flex', flexDirection: 'column', gap: 1,
             }}>
-              <div style={{ fontSize: 10, fontWeight: 'bold', color: '#484838' }}>PP</div>
-              <div style={{ fontSize: 10, color: '#181808' }}>
+              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>POW</div>
+              <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>
+                {hoverMd ? (hoverMd.power > 0 ? hoverMd.power : '—') : '—'}
+              </div>
+              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>PP</div>
+              <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>
                 {hoverMv ? `${hoverMv.pp}/${hoverMv.maxPp}` : '—'}
               </div>
-              <div style={{ fontSize: 10, fontWeight: 'bold', color: '#484838', marginTop: 6 }}>TYPE/</div>
+              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>TYPE/</div>
               {hoverMd ? (
                 <div style={{
                   background: TYPE_COLOR[hoverMd.type] ?? '#999',
-                  borderRadius: 3, padding: '3px 0',
+                  borderRadius: 3, padding: '2px 0',
                   textAlign: 'center', fontSize: 8, fontWeight: 'bold', color: '#f8f8f8',
                 }}>
                   {hoverMd.type.toUpperCase()}
@@ -503,20 +605,18 @@ export default function Battle() {
                   </button>
                 )
               })()}
-              {/* RUN — only in wild battles */}
-              {isWildBattle && (
-                <button
-                  onClick={() => navigate('/map')}
-                  style={{
-                    background: '#48a048', border: `1px solid ${MENU_BD}`,
-                    borderRadius: 3, padding: '4px 0',
-                    fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
-                    cursor: 'pointer', fontFamily: MONO, marginTop: 2,
-                  }}
-                >
-                  RUN
-                </button>
-              )}
+              {/* ESCAPE — available in all battles */}
+              <button
+                onClick={() => navigate('/map')}
+                style={{
+                  background: '#48a048', border: `1px solid ${MENU_BD}`,
+                  borderRadius: 3, padding: '4px 0',
+                  fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
+                  cursor: 'pointer', fontFamily: MONO, marginTop: 2,
+                }}
+              >
+                ESCAPE
+              </button>
             </div>
           </div>
         )}
@@ -726,11 +826,14 @@ export default function Battle() {
 
       {/* ── Wrong answer feedback overlay ── */}
       {answerResult && !answerResult.wasCorrect && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 45,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-        }}>
+        <div
+          onClick={() => useBattleStore.getState().acknowledgeWrongAnswer()}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 45,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
           <div style={{
             background: '#16213e', border: '2px solid #e02820',
             borderRadius: 10, padding: '24px 20px', textAlign: 'center',
@@ -750,6 +853,12 @@ export default function Battle() {
             </div>
             <div style={{ color: '#4ecdc4', fontSize: 10, marginTop: 12 }}>
               The attack missed...
+            </div>
+            <div style={{
+              color: '#666', fontSize: 9, marginTop: 10,
+              borderTop: '1px solid #2a3a5a', paddingTop: 8,
+            }}>
+              Tap anywhere to continue
             </div>
           </div>
         </div>

@@ -27,21 +27,26 @@ export function calculateStat(baseStat: number, level: number): number {
   return Math.floor(((2 * baseStat * level) / 100) + 5)
 }
 
+export function filterValidMoves(moves: PartyPokemon['moves']): PartyPokemon['moves'] {
+  return moves.filter(m => !!moveDataMap[m.moveId])
+}
+
 export function buildPartyPokemon(
   pokemon: PokemonData,
   level: number
 ): PartyPokemon {
   const maxHp = calculateMaxHp(pokemon.baseStats.hp, level)
 
-  // Pick up to 4 moves: level-appropriate ones, padded to at least 3 from learnset
-  const atLevel = pokemon.learnset.filter(entry => entry.level <= level).slice(-4)
+  // Only use moves that exist in our moves data
+  const validLearnset = pokemon.learnset.filter(entry => !!moveDataMap[entry.moveId])
+  const atLevel = validLearnset.filter(entry => entry.level <= level).slice(-4)
   const learnableMoves = atLevel.length >= 3
     ? atLevel
-    : pokemon.learnset.slice(0, Math.max(3, atLevel.length))
+    : validLearnset.slice(0, Math.max(3, atLevel.length))
 
   const moves = learnableMoves.length > 0
     ? learnableMoves.map(entry => {
-        const pp = moveDataMap[entry.moveId]?.pp ?? 10
+        const pp = moveDataMap[entry.moveId]!.pp
         return { moveId: entry.moveId, pp, maxPp: pp }
       })
     : [{ moveId: 'tackle', pp: 35, maxPp: 35 }]

@@ -33,8 +33,8 @@ export const palletTown: MapData = {
   exits: [
     { x: 3, y: 6,  targetMap: 'pokecenter', targetX: 5, targetY: 6 },
     { x: 4, y: 6,  targetMap: 'pokecenter', targetX: 5, targetY: 6 },
-    { x: 7, y: 11, targetMap: 'route1',     targetX: 7, targetY: 0 },
-    { x: 8, y: 11, targetMap: 'route1',     targetX: 8, targetY: 0 },
+    { x: 7, y: 11, targetMap: 'sunlitMeadow', targetX: 7, targetY: 0 },
+    { x: 8, y: 11, targetMap: 'sunlitMeadow', targetX: 8, targetY: 0 },
   ],
   doors: [
     { x: 11, y: 5, type: 'pokemart' },

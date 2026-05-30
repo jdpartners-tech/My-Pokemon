@@ -88,14 +88,15 @@ export function useFirestoreProfile() {
       subjects: defaultSubjects(),
       party: [],
       box: [],
-      bag: [],
+      bag: [{ itemId: 'pokeball', qty: 50 }],
       pokedex: { [starterId]: 'caught' },
       badges: [],
       money: 3000,
       currentRoute: 'pallet',
       playerX: 7,
-      playerY: 6,
+      playerY: 9,
       stats: { battlesWon: 0, questionsAnswered: 0, questionsCorrect: 0 },
+      wrongAnswers: [],
     }
   }
 

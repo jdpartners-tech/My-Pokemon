@@ -7,7 +7,7 @@ import HpBar from '../components/HpBar'
 import TypeBadge from '../components/TypeBadge'
 import pokemonJson from '../data/pokemon.json'
 import movesJson from '../data/moves.json'
-import { buildPartyPokemon } from '../utils/exp'
+import { buildPartyPokemon, expForLevel } from '../utils/exp'
 import { PokemonData, MoveData } from '../types/game'
 
 const pokeMap = Object.fromEntries((pokemonJson as PokemonData[]).map(p => [p.id, p])) as Record<number, PokemonData>
@@ -65,6 +65,28 @@ export default function Team() {
             <p className="text-white text-sm mt-1">
               {mon.currentHp ?? '?'} / {buildPartyPokemon(info, mon.level).maxHp}
             </p>
+          </div>
+          <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-sm">
+            <p className="text-yellow-400 font-bold mb-2 text-sm">Experience</p>
+            {(() => {
+              const fl = expForLevel(mon.level)
+              const cl = expForLevel(mon.level + 1)
+              const pct = Math.min(100, Math.max(0, (mon.xp - fl) / (cl - fl) * 100))
+              return (
+                <>
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Lv.{mon.level}</span>
+                    <span>Lv.{mon.level + 1}</span>
+                  </div>
+                  <div style={{ background: '#404030', height: 8, borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: '#6890f0', transition: 'width 0.3s' }} />
+                  </div>
+                  <p className="text-white text-xs mt-1">
+                    {mon.xp} XP · Need {cl - mon.xp} more for Lv.{mon.level + 1}
+                  </p>
+                </>
+              )
+            })()}
           </div>
           <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-sm">
             <p className="text-yellow-400 font-bold mb-2 text-sm">Moves</p>

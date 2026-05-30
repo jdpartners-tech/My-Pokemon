@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "build:data": "node src/scripts/buildGameData.mjs",
-    "seed:questions": "node src/scripts/seedQuestions.mjs"
+    "seed:questions": "node src/scripts/seedQuestions.mjs",
+    "seed:extra": "node src/scripts/seedQuestionsExtra.mjs"
   },
   "dependencies": {
     "firebase": "^12.13.0",
