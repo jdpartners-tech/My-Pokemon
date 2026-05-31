@@ -830,11 +830,10 @@ export default function WorldMap() {
         if (npcImg?.complete && npcImg.naturalWidth > 0) {
           if (!TILE_CANVASES[`npc_${t.name}`]) TILE_CANVASES[`npc_${t.name}`] = applyChromaKey(npcImg, true)
           const npcSrc = TILE_CANVASES[`npc_${t.name}`] ?? npcImg
-          const aspect = npcImg.naturalWidth / npcImg.naturalHeight
-          const h = TILE
-          const w = h * aspect
-          ctx.imageSmoothingEnabled = true
-          ctx.drawImage(npcSrc, vx * TILE + (TILE - w) / 2, vy * TILE, w, h)
+          const dw = TILE
+          const dh = Math.round(TILE * 1.3)
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(npcSrc, vx * TILE, vy * TILE + TILE - dh, dw, dh)
         } else {
           const sheet = npcSheetRef.current
           // NPC sprite: pick row/col based on trainer class
