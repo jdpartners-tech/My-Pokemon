@@ -1080,114 +1080,116 @@ export default function Battle() {
           </div>
         )}
       </div>
-
-      {/* ── Question popup ── */}
-      {phase === 'question' && question && selectedMoveIndex !== null && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            background: '#16213e', border: '2px solid #ffd700',
-            borderRadius: 10, width: 336, maxWidth: '95vw',
-            padding: '24px 16px 16px', position: 'relative',
-            fontFamily: MONO,
-          }}>
-            {/* Move name badge */}
-            <div style={{
-              position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-              background: '#c83028', border: '1.5px solid #ffd700',
-              borderRadius: 14, padding: '4px 20px',
-              color: '#ffd700', fontWeight: 'bold', fontSize: 11,
-              whiteSpace: 'nowrap',
-            }}>
-              {(moveDataMap[playerPokemon.moves[selectedMoveIndex]?.moveId]?.name ?? 'MOVE').toUpperCase()}
-            </div>
-            <div style={{ color: 'white', fontWeight: 'bold', fontSize: 13, textAlign: 'center', marginBottom: 6 }}>
-              {question.question}
-            </div>
-            <div style={{ color: '#ffd700', fontSize: 10, textAlign: 'center', marginBottom: 16 }}>
-              {question.subject === 'chinese' ? '答對可以給予滿額傷害！' : 'Answer correctly for full damage!'}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {question.options.map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswer(opt === question.answer)}
-                  style={{
-                    background: '#0f3460', border: '1.5px solid #4ecdc4',
-                    borderRadius: 8, padding: '12px 8px',
-                    cursor: 'pointer', textAlign: 'left', fontFamily: MONO,
-                    display: 'flex', alignItems: 'center', gap: 6,
-                  }}
-                >
-                  <span style={{ color: '#4ecdc4', fontWeight: 'bold', fontSize: 12 }}>{'ABCD'[i]}</span>
-                  <span style={{ color: 'white', fontSize: 10 }}>{opt}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Wrong answer feedback overlay ── */}
-      {answerResult && !answerResult.wasCorrect && (
-        <div
-          onClick={() => useBattleStore.getState().acknowledgeWrongAnswer()}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 45,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            background: '#16213e', border: '2px solid #e02820',
-            borderRadius: 10, padding: '24px 20px', textAlign: 'center',
-            fontFamily: MONO, maxWidth: 280,
-          }}>
-            <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>
-              ✗ Wrong Answer
-            </div>
-            <div style={{ color: '#aaaaaa', fontSize: 11, marginBottom: 6 }}>
-              The correct answer was:
-            </div>
-            <div style={{
-              color: '#ffd700', fontWeight: 'bold', fontSize: 13,
-              background: '#0f3460', borderRadius: 6, padding: '8px 12px',
-            }}>
-              {answerResult.correctAnswer}
-            </div>
-            <div style={{ color: '#4ecdc4', fontSize: 10, marginTop: 12 }}>
-              The attack missed...
-            </div>
-            <div style={{
-              color: '#666', fontSize: 9, marginTop: 10,
-              borderTop: '1px solid #2a3a5a', paddingTop: 8,
-            }}>
-              Tap anywhere to continue
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Bag menu overlay ── */}
-      {bagOpen && profile && (
-        <BagMenu
-          bag={profile.bag ?? []}
-          onUse={(itemId) => { setBagOpen(false); useItemInBattle(itemId) }}
-          onClose={() => setBagOpen(false)}
-        />
-      )}
-
-      {/* ── Evolution flash burst ── */}
-      {evoStage === 'flash' && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
-          background: 'white',
-          animation: 'evoFlash 0.35s ease-out forwards',
-        }} />
-      )}
     </div>
+    {/* ── Overlays are outside the zoom div so position:fixed works correctly on iOS Safari ── */}
+
+    {/* ── Question popup ── */}
+    {phase === 'question' && question && selectedMoveIndex !== null && (
+      <div style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{
+          background: '#16213e', border: '2px solid #ffd700',
+          borderRadius: 10, width: 336, maxWidth: '95vw',
+          padding: '24px 16px 16px', position: 'relative',
+          fontFamily: MONO,
+        }}>
+          {/* Move name badge */}
+          <div style={{
+            position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+            background: '#c83028', border: '1.5px solid #ffd700',
+            borderRadius: 14, padding: '4px 20px',
+            color: '#ffd700', fontWeight: 'bold', fontSize: 11,
+            whiteSpace: 'nowrap',
+          }}>
+            {(moveDataMap[playerPokemon.moves[selectedMoveIndex]?.moveId]?.name ?? 'MOVE').toUpperCase()}
+          </div>
+          <div style={{ color: 'white', fontWeight: 'bold', fontSize: 13, textAlign: 'center', marginBottom: 6 }}>
+            {question.question}
+          </div>
+          <div style={{ color: '#ffd700', fontSize: 10, textAlign: 'center', marginBottom: 16 }}>
+            {question.subject === 'chinese' ? '答對可以給予滿額傷害！' : 'Answer correctly for full damage!'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {question.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => handleAnswer(opt === question.answer)}
+                style={{
+                  background: '#0f3460', border: '1.5px solid #4ecdc4',
+                  borderRadius: 8, padding: '12px 8px',
+                  cursor: 'pointer', textAlign: 'left', fontFamily: MONO,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <span style={{ color: '#4ecdc4', fontWeight: 'bold', fontSize: 12 }}>{'ABCD'[i]}</span>
+                <span style={{ color: 'white', fontSize: 10 }}>{opt}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Wrong answer feedback overlay ── */}
+    {answerResult && !answerResult.wasCorrect && (
+      <div
+        onClick={() => useBattleStore.getState().acknowledgeWrongAnswer()}
+        onTouchEnd={(e) => { e.preventDefault(); useBattleStore.getState().acknowledgeWrongAnswer() }}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 45,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <div style={{
+          background: '#16213e', border: '2px solid #e02820',
+          borderRadius: 10, padding: '24px 20px', textAlign: 'center',
+          fontFamily: MONO, maxWidth: 280,
+        }}>
+          <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>
+            ✗ Wrong Answer
+          </div>
+          <div style={{ color: '#aaaaaa', fontSize: 11, marginBottom: 6 }}>
+            The correct answer was:
+          </div>
+          <div style={{
+            color: '#ffd700', fontWeight: 'bold', fontSize: 13,
+            background: '#0f3460', borderRadius: 6, padding: '8px 12px',
+          }}>
+            {answerResult.correctAnswer}
+          </div>
+          <div style={{ color: '#4ecdc4', fontSize: 10, marginTop: 12 }}>
+            The attack missed...
+          </div>
+          <div style={{
+            color: '#666', fontSize: 9, marginTop: 10,
+            borderTop: '1px solid #2a3a5a', paddingTop: 8,
+          }}>
+            Tap anywhere to continue
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Bag menu overlay ── */}
+    {bagOpen && profile && (
+      <BagMenu
+        bag={profile.bag ?? []}
+        onUse={(itemId) => { setBagOpen(false); useItemInBattle(itemId) }}
+        onClose={() => setBagOpen(false)}
+      />
+    )}
+
+    {/* ── Evolution flash burst ── */}
+    {evoStage === 'flash' && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
+        background: 'white',
+        animation: 'evoFlash 0.35s ease-out forwards',
+      }} />
+    )}
     </div>
   )
 }
