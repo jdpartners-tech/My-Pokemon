@@ -1070,9 +1070,7 @@ export default function WorldMap() {
     }
 
     for (const trainer of map.trainers) {
-      const triggered =
-        Math.abs(nx - trainer.x) <= 1 && Math.abs(ny - trainer.y) <= 1 &&
-        !(nx === trainer.x && ny === trainer.y)
+      const triggered = nx === trainer.x && ny === trainer.y
       if (triggered) {
         setDialogue(`${trainer.name} wants to battle!`)
         setTimeout(() => startTrainerBattleRef.current(trainer), 1500)
