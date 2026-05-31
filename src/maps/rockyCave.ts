@@ -21,15 +21,37 @@ export const rockyCave: MapData = {
     [K,R,R,R,R,R,K,R,R,R,R,K,R,R,R,K],  // row  9
     [K,R,R,K,K,R,R,R,K,K,R,R,R,K,R,K],  // row 10
     [K,K,R,R,R,R,R,R,R,R,R,R,R,R,K,K],  // row 11
-    [K,K,K,R,R,R,K,K,K,R,R,K,K,K,K,K],  // row 12
+    [K,K,K,R,R,R,K,R,R,K,R,R,K,K,K,K],  // row 12: opened x=7-8 to reach south exit
     [K,K,K,K,K,K,K,R,R,K,K,K,K,K,K,K],  // row 13: south exit x=7-8
   ],
   wildPokemon: [
-    { pokemonId: 74,  minLevel: 15, maxLevel: 20, rate: 35 },  // Geodude
-    { pokemonId: 41,  minLevel: 12, maxLevel: 18, rate: 30 },  // Zubat
-    { pokemonId: 95,  minLevel: 18, maxLevel: 25, rate: 20 },  // Onix
-    { pokemonId: 75,  minLevel: 22, maxLevel: 28, rate: 12 },  // Graveler
-    { pokemonId: 94,  minLevel: 25, maxLevel: 30, rate: 3  },  // Gengar
+    { pokemonId: 41,  minLevel: 10, maxLevel: 15, rate: 18 },  // Zubat
+    { pokemonId: 74,  minLevel: 10, maxLevel: 16, rate: 16 },  // Geodude
+    { pokemonId: 92,  minLevel: 10, maxLevel: 15, rate: 13 },  // Gastly
+    { pokemonId: 27,  minLevel: 10, maxLevel: 15, rate: 9  },  // Sandshrew
+    { pokemonId: 104, minLevel: 12, maxLevel: 17, rate: 7  },  // Cubone
+    { pokemonId: 88,  minLevel: 12, maxLevel: 17, rate: 6  },  // Grimer
+    { pokemonId: 42,  minLevel: 14, maxLevel: 18, rate: 5  },  // Golbat
+    { pokemonId: 75,  minLevel: 15, maxLevel: 20, rate: 4  },  // Graveler
+    { pokemonId: 93,  minLevel: 15, maxLevel: 20, rate: 4  },  // Haunter
+    { pokemonId: 109, minLevel: 12, maxLevel: 17, rate: 3  },  // Koffing
+    { pokemonId: 95,  minLevel: 12, maxLevel: 18, rate: 3  },  // Onix
+    { pokemonId: 50,  minLevel: 12, maxLevel: 16, rate: 2  },  // Diglett
+    { pokemonId: 111, minLevel: 15, maxLevel: 20, rate: 2  },  // Rhyhorn
+    { pokemonId: 28,  minLevel: 18, maxLevel: 22, rate: 2  },  // Sandslash
+    { pokemonId: 105, minLevel: 18, maxLevel: 22, rate: 2  },  // Marowak
+    { pokemonId: 110, minLevel: 15, maxLevel: 20, rate: 2  },  // Weezing
+    { pokemonId: 51,  minLevel: 16, maxLevel: 20, rate: 2  },  // Dugtrio
+    { pokemonId: 138, minLevel: 14, maxLevel: 18, rate: 2  },  // Omanyte ⭐
+    { pokemonId: 140, minLevel: 14, maxLevel: 18, rate: 2  },  // Kabuto ⭐
+    { pokemonId: 89,  minLevel: 18, maxLevel: 22, rate: 1  },  // Muk
+    { pokemonId: 112, minLevel: 20, maxLevel: 25, rate: 1  },  // Rhydon
+    { pokemonId: 76,  minLevel: 20, maxLevel: 25, rate: 1  },  // Golem
+    { pokemonId: 94,  minLevel: 20, maxLevel: 25, rate: 1  },  // Gengar ⭐
+    { pokemonId: 139, minLevel: 20, maxLevel: 25, rate: 1  },  // Omastar ⭐
+    { pokemonId: 141, minLevel: 20, maxLevel: 25, rate: 1  },  // Kabutops ⭐
+    { pokemonId: 137, minLevel: 18, maxLevel: 22, rate: 1  },  // Porygon ⭐
+    { pokemonId: 142, minLevel: 22, maxLevel: 28, rate: 1  },  // Aerodactyl ⭐
   ],
   waterPokemon: [],
   trainers: [],

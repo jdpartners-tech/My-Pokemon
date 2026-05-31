@@ -29,11 +29,16 @@ export const cinnabarTown: MapData = {
     { x: 4, y: 2, image: 'tile_pokemon_center.png', heightTiles: 5 },
   ],
   wildPokemon: [
-    { pokemonId: 58,  minLevel: 18, maxLevel: 25, rate: 35 },  // Growlithe
-    { pokemonId: 37,  minLevel: 18, maxLevel: 25, rate: 30 },  // Vulpix
-    { pokemonId: 77,  minLevel: 20, maxLevel: 27, rate: 20 },  // Ponyta
+    { pokemonId: 58,  minLevel: 18, maxLevel: 25, rate: 24 },  // Growlithe
+    { pokemonId: 37,  minLevel: 18, maxLevel: 25, rate: 20 },  // Vulpix
+    { pokemonId: 77,  minLevel: 20, maxLevel: 27, rate: 16 },  // Ponyta
     { pokemonId: 126, minLevel: 22, maxLevel: 28, rate: 12 },  // Magmar
-    { pokemonId: 59,  minLevel: 28, maxLevel: 32, rate: 3  },  // Arcanine ⭐
+    { pokemonId: 4,   minLevel: 18, maxLevel: 24, rate: 10 },  // Charmander ⭐
+    { pokemonId: 78,  minLevel: 25, maxLevel: 30, rate: 7  },  // Rapidash
+    { pokemonId: 5,   minLevel: 24, maxLevel: 28, rate: 4  },  // Charmeleon ⭐
+    { pokemonId: 59,  minLevel: 28, maxLevel: 32, rate: 4  },  // Arcanine ⭐
+    { pokemonId: 81,  minLevel: 20, maxLevel: 25, rate: 2  },  // Magnemite
+    { pokemonId: 136, minLevel: 22, maxLevel: 28, rate: 1  },  // Flareon ⭐
   ],
   waterPokemon: [],
   trainers: [],

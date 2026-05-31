@@ -28,19 +28,37 @@ export const flowerMeadow: MapData = {
     [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 14
   ],
   wildPokemon: [
-    { pokemonId: 43,  minLevel: 5,  maxLevel: 10, rate: 30 },  // Oddish
-    { pokemonId: 35,  minLevel: 5,  maxLevel: 10, rate: 25 },  // Clefairy
-    { pokemonId: 69,  minLevel: 6,  maxLevel: 11, rate: 20 },  // Bellsprout
-    { pokemonId: 12,  minLevel: 8,  maxLevel: 12, rate: 10 },  // Butterfree
-    { pokemonId: 133, minLevel: 8,  maxLevel: 12, rate: 12 },  // Eevee
-    { pokemonId: 132, minLevel: 10, maxLevel: 14, rate: 3  },  // Ditto
+    { pokemonId: 43,  minLevel: 5,  maxLevel: 10, rate: 16 },  // Oddish
+    { pokemonId: 35,  minLevel: 5,  maxLevel: 10, rate: 14 },  // Clefairy
+    { pokemonId: 69,  minLevel: 5,  maxLevel: 10, rate: 13 },  // Bellsprout
+    { pokemonId: 102, minLevel: 6,  maxLevel: 10, rate: 9  },  // Exeggcute
+    { pokemonId: 30,  minLevel: 7,  maxLevel: 11, rate: 7  },  // Nidorina
+    { pokemonId: 33,  minLevel: 7,  maxLevel: 11, rate: 7  },  // Nidorino
+    { pokemonId: 12,  minLevel: 8,  maxLevel: 12, rate: 6  },  // Butterfree
+    { pokemonId: 44,  minLevel: 8,  maxLevel: 12, rate: 5  },  // Gloom
+    { pokemonId: 70,  minLevel: 8,  maxLevel: 12, rate: 5  },  // Weepinbell
+    { pokemonId: 63,  minLevel: 6,  maxLevel: 11, rate: 4  },  // Abra
+    { pokemonId: 49,  minLevel: 8,  maxLevel: 12, rate: 3  },  // Venomoth
+    { pokemonId: 133, minLevel: 8,  maxLevel: 12, rate: 3  },  // Eevee ⭐
+    { pokemonId: 132, minLevel: 10, maxLevel: 14, rate: 3  },  // Ditto ⭐
+    { pokemonId: 113, minLevel: 10, maxLevel: 14, rate: 2  },  // Chansey ⭐
+    { pokemonId: 122, minLevel: 10, maxLevel: 14, rate: 2  },  // Mr. Mime
+    { pokemonId: 108, minLevel: 9,  maxLevel: 13, rate: 2  },  // Lickitung
+    { pokemonId: 124, minLevel: 10, maxLevel: 14, rate: 2  },  // Jynx ⭐
+    { pokemonId: 45,  minLevel: 12, maxLevel: 16, rate: 2  },  // Vileplume
+    { pokemonId: 71,  minLevel: 12, maxLevel: 16, rate: 2  },  // Victreebel
+    { pokemonId: 103, minLevel: 12, maxLevel: 16, rate: 1  },  // Exeggutor
+    { pokemonId: 36,  minLevel: 12, maxLevel: 16, rate: 1  },  // Clefable
+    { pokemonId: 31,  minLevel: 14, maxLevel: 18, rate: 1  },  // Nidoqueen ⭐
+    { pokemonId: 34,  minLevel: 14, maxLevel: 18, rate: 1  },  // Nidoking ⭐
+    { pokemonId: 151, minLevel: 30, maxLevel: 35, rate: 1  },  // Mew ⭐
   ],
   trainers: [],
   exits: [
     { x: 0, y: 6, targetMap: 'mistyLake',      targetX: 17, targetY: 6 },
     { x: 0, y: 7, targetMap: 'mistyLake',      targetX: 17, targetY: 7 },
-    { x: 7, y: 0, targetMap: 'viridianForest', targetX: 7,  targetY: 14 },
-    { x: 8, y: 0, targetMap: 'viridianForest', targetX: 8,  targetY: 14 },
+    { x: 7, y: 0, targetMap: 'viridianForest', targetX: 7,  targetY: 15 },
+    { x: 8, y: 0, targetMap: 'viridianForest', targetX: 8,  targetY: 15 },
   ],
   doors: [],
 }
