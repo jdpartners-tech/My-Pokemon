@@ -29,6 +29,8 @@ const TILE_FILES: Record<string, string> = {
   tree:     'tiles/tile_tree.png?v=2',
   flower:   'tiles/tile_flower.png',
   flower2:  'tiles/tile_flower2.png',
+  flower3:  'tiles/tile_flower3.png',
+  brush2:   'tiles/tile_brush2.png',
   bldBig:   'tiles/tile_building_big.png',
   bldSmall: 'tiles/tile_building1.png',
   bldPC:    'tiles/tile_pokemon_center.png',
@@ -401,7 +403,7 @@ export default function WorldMap() {
     for (const [mapId, count] of Object.entries(ITEM_MAPS)) {
       const map = MAPS[mapId]
       if (!map) continue
-      const WALKABLE = new Set(['grass', 'land', 'path', 'flower', 'flower2'])
+      const WALKABLE = new Set(['grass', 'land', 'path', 'flower', 'flower2', 'flower3', 'brush2'])
       const exitSet = new Set(map.exits.map(e => `${e.x},${e.y}`))
       const trainerSet = new Set(map.trainers.map(t => `${t.x},${t.y}`))
       const validTiles: Array<[number, number]> = []
@@ -553,6 +555,51 @@ export default function WorldMap() {
               ctx.fillStyle = 'rgba(200,40,0,0.15)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
             }
             // skip normal rendering for this tile
+          } else if (tile === 'path' && map.id === 'rockyCave') {
+            // Rocky cave floor — dark muddy stone with pebble variation
+            const s = (mx * 5 + my * 11) & 7
+            ctx.fillStyle = s < 3 ? '#2a1e10' : s < 6 ? '#1e1608' : '#251a0c'
+            ctx.fillRect(x, y, TILE, TILE)
+            ctx.fillStyle = `rgba(90,65,35,${0.35 + (s & 3) * 0.08})`
+            ctx.fillRect(x + 3 + (s & 3) * 3, y + 4, 5, 3)
+            ctx.fillRect(x + TILE - 9 - (s % 3) * 2, y + TILE - 7, 6, 3)
+            ctx.fillStyle = 'rgba(55,30,10,0.25)'
+            ctx.beginPath()
+            ctx.ellipse(x + TILE * 0.4, y + TILE * 0.6, 5, 3, s * 0.3, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (tile === 'fence' && map.id === 'trainerRoad') {
+            // Training gear — draw grass base then gym equipment
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
+            const eq = (mx * 3 + my * 7) % 4
+            if (eq === 0) {
+              // Barbell
+              ctx.fillStyle = '#555'; ctx.fillRect(x + 2, y + TILE / 2 - 3, TILE - 4, 6)
+              ctx.fillStyle = '#333'
+              ctx.fillRect(x, y + TILE / 2 - 7, 5, 14)
+              ctx.fillRect(x + TILE - 5, y + TILE / 2 - 7, 5, 14)
+            } else if (eq === 1) {
+              // Punching bag
+              ctx.fillStyle = '#8B0000'
+              ctx.beginPath(); ctx.ellipse(x + TILE / 2, y + TILE * 0.62, 7, 10, 0, 0, Math.PI * 2); ctx.fill()
+              ctx.strokeStyle = '#600'; ctx.lineWidth = 1; ctx.stroke()
+              ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5
+              ctx.beginPath(); ctx.moveTo(x + TILE / 2, y + TILE * 0.62 - 10); ctx.lineTo(x + TILE / 2, y + 2); ctx.stroke()
+            } else if (eq === 2) {
+              // Weight bench
+              ctx.fillStyle = '#3a3a3a'
+              ctx.fillRect(x + 3, y + TILE * 0.5, TILE - 6, 6)
+              ctx.fillRect(x + 3, y + TILE * 0.56, 3, TILE * 0.35)
+              ctx.fillRect(x + TILE - 6, y + TILE * 0.56, 3, TILE * 0.35)
+              ctx.fillStyle = '#666'; ctx.fillRect(x + 1, y + TILE * 0.38, TILE - 2, 4)
+              ctx.fillStyle = '#333'; ctx.fillRect(x, y + TILE * 0.33, 5, 11); ctx.fillRect(x + TILE - 5, y + TILE * 0.33, 5, 11)
+            } else {
+              // Pull-up bar
+              ctx.fillStyle = '#444'; ctx.fillRect(x, y + 4, TILE, 5)
+              ctx.strokeStyle = '#555'; ctx.lineWidth = 2.5
+              ctx.beginPath(); ctx.moveTo(x + 5, y + 9); ctx.lineTo(x + 5, y + TILE - 2); ctx.stroke()
+              ctx.beginPath(); ctx.moveTo(x + TILE - 5, y + 9); ctx.lineTo(x + TILE - 5, y + TILE - 2); ctx.stroke()
+            }
           } else if (tile === 'land' || tile === 'path') {
             const img = TILE_IMGS.land
             if (img?.complete && img.naturalWidth > 0) ctx.drawImage(img, x, y, TILE, TILE)
@@ -572,6 +619,22 @@ export default function WorldMap() {
             if (fi?.complete && fi.naturalWidth > 0) {
               if (!TILE_CANVASES['flower2']) TILE_CANVASES['flower2'] = applyChromaKey(fi)
               ctx.drawImage(TILE_CANVASES['flower2']!, x, y, TILE, TILE)
+            }
+          } else if (tile === 'flower3') {
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
+            const fi = TILE_IMGS.flower3
+            if (fi?.complete && fi.naturalWidth > 0) {
+              if (!TILE_CANVASES['flower3']) TILE_CANVASES['flower3'] = applyChromaKey(fi)
+              ctx.drawImage(TILE_CANVASES['flower3']!, x, y, TILE, TILE)
+            }
+          } else if (tile === 'brush2') {
+            if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
+            else { ctx.fillStyle = '#48b048'; ctx.fillRect(x, y, TILE, TILE) }
+            const fi = TILE_IMGS.brush2
+            if (fi?.complete && fi.naturalWidth > 0) {
+              if (!TILE_CANVASES['brush2']) TILE_CANVASES['brush2'] = applyChromaKey(fi)
+              ctx.drawImage(TILE_CANVASES['brush2']!, x, y, TILE, TILE)
             }
           } else if (tile === 'water') {
             ctx.fillStyle = '#48a8e0'; ctx.fillRect(x, y, TILE, TILE)
@@ -646,7 +709,7 @@ export default function WorldMap() {
 
       // ── Pass 3: Route signs & cave mouths (auto-detected from exits) ────
       if (!map.isInterior) {
-        const SKIP_TARGETS = new Set(['pokecenter', 'pokemart'])
+        const SKIP_TARGETS = new Set(['pokecenter', 'pokemart', 'cinnabarPokecenter'])
         const groups: Record<string, typeof map.exits> = {}
         for (const e of map.exits) {
           if (SKIP_TARGETS.has(e.targetMap)) continue
@@ -1014,7 +1077,7 @@ export default function WorldMap() {
     const currentMap = mapRef.current
     const hasLandWild = currentMap.wildPokemon.length > 0
     const hasWaterWild = (currentMap.waterPokemon ?? []).length > 0
-    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2'
+    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2' || tile === 'flower3' || tile === 'brush2'
     const isWaterTile = tile === 'water'
     if (((hasLandWild && isLandTile) || (hasWaterWild && isWaterTile)) && Math.random() < ENCOUNTER_RATE) {
       setTimeout(() => startWildBattleRef.current(nx, ny), 0)
@@ -1061,7 +1124,7 @@ export default function WorldMap() {
     const map = mapRef.current
     const tile = map.tiles[playerY]?.[playerX]
     const isWaterTile = tile === 'water'
-    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2'
+    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2' || tile === 'flower3' || tile === 'brush2'
     if (!isLandTile && !isWaterTile) return
     const pool = isWaterTile ? (map.waterPokemon ?? []) : map.wildPokemon
     const currentProfile = useProfileStore.getState().profile

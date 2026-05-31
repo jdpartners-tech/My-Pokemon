@@ -25,7 +25,7 @@ export const cinnabarPokeCenter: MapData = {
   wildPokemon: [],
   trainers: [],
   exits: [
-    { x: 5, y: 8, targetMap: 'cinnabarTown', targetX: 4, targetY: 8 },
+    { x: 5, y: 8, targetMap: 'cinnabarTown', targetX: 7, targetY: 8 },
   ],
   doors: [],
 }

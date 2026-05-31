@@ -3,6 +3,7 @@ import { MapData } from './types'
 const T = 'tree'  as const
 const G = 'grass' as const
 const L = 'land'  as const
+const F = 'fence' as const  // training equipment (impassable)
 
 export const trainerRoad: MapData = {
   id: 'trainerRoad',
@@ -12,14 +13,14 @@ export const trainerRoad: MapData = {
   tiles: [
     [T,T,T,T,T,T,T,L,L,T,T,T,T,T,T,T,T,T],  // row  0: north exit (→ Rocky Cave) x=7-8
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  1
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  2
+    [T,G,F,F,G,G,G,G,G,G,G,F,F,G,G,G,G,T],  // row  2: barbells x=2-3, punch bags x=11-12
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  3
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  4
+    [T,G,F,G,G,G,G,G,G,G,G,G,G,G,G,G,F,T],  // row  4: weight bench x=2, pull-up bar x=16
     [T,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  5: main road (east exit x=17)
     [T,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L,L],  // row  6: main road (east exit x=17)
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  7
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  8
-    [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row  9
+    [T,G,F,G,G,G,G,G,G,G,F,F,G,G,G,G,F,T],  // row  8: equipment x=2, boxing ring x=10-11, weights x=16
+    [T,G,F,G,G,G,G,G,G,G,F,F,G,G,G,G,G,T],  // row  9: equipment x=2, boxing ring x=10-11
     [T,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,T],  // row 10
     [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 11
   ],

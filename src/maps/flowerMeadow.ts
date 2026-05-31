@@ -12,17 +12,17 @@ export const flowerMeadow: MapData = {
   height: 15,
   tiles: [
     [T,T,T,T,T,T,T,G,G,T,T,T,T,T,T],  // row  0: north exit (→ Viridian Forest) x=7-8
-    [T,G,G,F,G,G,G,G,G,F,G,G,G,T,T],  // row  1
-    [T,G,F,G,G,F,G,G,G,F,G,F,G,T,T],  // row  2
-    [T,F,G,G,F,G,G,F,G,G,F,G,G,F,T],  // row  3
-    [T,G,G,F,G,G,G,G,G,G,F,G,G,T,T],  // row  4
-    [T,G,F,G,G,G,F,G,F,G,G,G,G,T,T],  // row  5: west wall
-    [G,G,G,G,F,G,G,G,G,G,F,G,G,T,T],  // row  6: west exit x=0
-    [G,F,G,G,G,G,G,G,G,G,G,F,G,T,T],  // row  7: west exit x=0
-    [T,G,G,F,G,G,F,G,G,F,G,G,G,T,T],  // row  8: west wall (old exit closed)
-    [T,G,F,G,G,F,G,G,G,G,G,F,F,T,T],  // row  9: west wall
-    [T,G,G,G,F,G,G,F,G,G,F,G,G,T,T],  // row 10
-    [T,T,G,G,G,F,G,G,N,F,G,G,T,T,T],  // row 11
+    [T,G,G,G,G,G,G,G,G,G,G,G,G,T,T],  // row  1
+    [T,G,G,G,F,F,G,G,G,F,F,G,G,T,T],  // row  2: heart — two top bumps
+    [T,G,G,F,F,F,F,G,F,F,F,F,G,T,T],  // row  3: bumps widen
+    [T,G,G,F,F,F,F,F,F,F,F,F,G,T,T],  // row  4: full heart body
+    [T,G,G,F,F,F,F,F,F,F,F,F,G,T,T],  // row  5: full heart body
+    [G,G,G,G,F,F,F,F,F,F,F,G,G,T,T],  // row  6: heart narrows (west exit x=0)
+    [G,G,G,G,G,F,F,F,F,F,G,G,G,T,T],  // row  7: heart narrows (west exit x=0)
+    [T,G,G,G,G,G,F,F,F,G,G,G,G,T,T],  // row  8: nearly point
+    [T,G,G,G,G,G,G,F,G,G,G,G,G,T,T],  // row  9: heart tip
+    [T,F,G,G,G,G,G,G,G,G,G,G,F,T,T],  // row 10: corner flowers
+    [T,T,F,G,G,N,G,G,N,G,G,F,T,T,T],  // row 11: corner flowers
     [T,T,T,T,G,G,G,G,G,G,G,T,T,T,T],  // row 12
     [T,T,T,T,T,T,G,G,G,T,T,T,T,T,T],  // row 13
     [T,T,T,T,T,T,T,T,T,T,T,T,T,T,T],  // row 14

@@ -1,6 +1,6 @@
 export type TileType =
   | 'path' | 'grass' | 'tree' | 'water' | 'building' | 'door' | 'gym'
-  | 'land' | 'flower' | 'flower2' | 'fence' | 'brush'
+  | 'land' | 'flower' | 'flower2' | 'flower3' | 'fence' | 'brush' | 'brush2'
 
 export interface BuildingOverlay {
   x: number         // map tile col of image top-left
