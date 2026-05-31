@@ -1275,10 +1275,13 @@ export default function WorldMap() {
       background: '#1a1a2e', display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
     }}>
-      {/* Top bar — fixed height */}
+      {/* Top bar — fixed height, respects iPhone notch/Dynamic Island */}
       <div style={{
         flexShrink: 0, display: 'flex', justifyContent: 'flex-end',
-        alignItems: 'center', padding: '6px 12px', gap: 8,
+        alignItems: 'center',
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
+        paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
+        gap: 8,
       }}>
         <button onClick={() => navigate('/team')}
           className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
@@ -1360,7 +1363,9 @@ export default function WorldMap() {
 
           {/* DPad — overlaid at bottom-center, sits on top of the canvas */}
           <div style={{
-            position: 'absolute', bottom: 16, left: '50%',
+            position: 'absolute',
+            bottom: 'max(16px, env(safe-area-inset-bottom))',
+            left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
           }}>
             <DPad onMove={(dx, dy) => {
@@ -1370,8 +1375,8 @@ export default function WorldMap() {
             }} />
           </div>
 
-          {/* Mini-map: small overlay bottom-right on mobile (hidden on desktop) */}
-          <div className="absolute bottom-2 right-1 lg:hidden" style={{ zIndex: 10, transform: 'scale(0.6)', transformOrigin: 'bottom right' }}>
+          {/* Mini-map: small overlay top-right on mobile (hidden on desktop) */}
+          <div className="absolute top-2 right-1 lg:hidden" style={{ zIndex: 10, transform: 'scale(0.55)', transformOrigin: 'top right' }}>
             <MiniMap currentMapId={currentMapId} />
           </div>
 
