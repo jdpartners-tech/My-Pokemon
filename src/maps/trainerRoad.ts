@@ -54,7 +54,7 @@ export const trainerRoad: MapData = {
   trainers: [
     { x: 4,  y: 3, direction: 'down' as const, name: 'Monk',
       party: [{ pokemonId: 46, level: 18 }, { pokemonId: 48, level: 19 }, { pokemonId: 102, level: 20 }] },
-    { x: 15, y: 9, direction: 'up'   as const, name: 'Team Rocket 1',
+    { x: 14, y: 9, direction: 'up'   as const, name: 'Team Rocket 1',
       party: [{ pokemonId: 74, level: 20 }, { pokemonId: 41, level: 20 }, { pokemonId: 109, level: 22 }] },
     { x: 14, y: 3, direction: 'down' as const, name: 'Black Rocket',
       party: [{ pokemonId: 59, level: 24 }, { pokemonId: 38, level: 24 }, { pokemonId: 126, level: 26 }] },
