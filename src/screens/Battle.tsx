@@ -101,6 +101,191 @@ function bezier(t: number) {
 // Phase durations in ms — match mockup timings
 const BALL_PHASE_MS = [600, 700, 250, 700, 900, 500]
 
+// ── type-based hit effect renderer (pure, no hooks) ──────────────────────────
+function drawHitEffect(ctx: CanvasRenderingContext2D, type: string, cx: number, cy: number, p: number) {
+  const ease = 1 - Math.pow(1 - p, 2)
+  const r = 42 * ease
+  switch (type) {
+    case 'fire': {
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(255,${80+i*50},0,${(1-p)*(0.9-i*0.2)})`
+        ctx.lineWidth = 4 - i
+        ctx.beginPath(); ctx.arc(cx, cy, r*(0.4+i*0.3), 0, Math.PI*2); ctx.stroke()
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = (i/8)*Math.PI*2
+        ctx.fillStyle = `rgba(255,180,0,${1-p})`
+        ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r*1.3, cy+Math.sin(a)*r*1.3, 3*(1-p), 0, Math.PI*2); ctx.fill()
+      }
+      break
+    }
+    case 'water': {
+      for (let i = 0; i < 3; i++) {
+        const pp = Math.max(0, (p - i*0.15) / (1 - i*0.15))
+        if (pp <= 0) continue
+        ctx.strokeStyle = `rgba(80,160,255,${0.9*(1-pp)})`
+        ctx.lineWidth = 3
+        ctx.beginPath(); ctx.arc(cx, cy, 36*pp, 0, Math.PI*2); ctx.stroke()
+      }
+      for (let i = 0; i < 6; i++) {
+        const a = (i/6)*Math.PI*2
+        ctx.fillStyle = `rgba(100,190,255,${0.8*(1-p)})`
+        ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r*0.8, cy+Math.sin(a)*r*0.8, 4*(1-p*0.5), 0, Math.PI*2); ctx.fill()
+      }
+      break
+    }
+    case 'electric': {
+      for (let i = 0; i < 6; i++) {
+        const a = (i/6)*Math.PI*2
+        const len = 32*ease
+        ctx.strokeStyle = `rgba(255,220,0,${1-p*0.8})`; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.moveTo(cx, cy)
+        ctx.lineTo(cx+Math.cos(a+0.3)*len*0.4, cy+Math.sin(a+0.3)*len*0.4)
+        ctx.lineTo(cx+Math.cos(a-0.3)*len*0.7, cy+Math.sin(a-0.3)*len*0.7)
+        ctx.lineTo(cx+Math.cos(a)*len, cy+Math.sin(a)*len); ctx.stroke()
+      }
+      ctx.fillStyle = `rgba(255,255,150,${(1-p)*0.6})`
+      ctx.beginPath(); ctx.arc(cx, cy, 12*(1-p), 0, Math.PI*2); ctx.fill()
+      break
+    }
+    case 'grass': {
+      for (let i = 0; i < 8; i++) {
+        const a = (i/8)*Math.PI*2 + p*Math.PI
+        ctx.fillStyle = `rgba(80,200,80,${1-p})`
+        ctx.save(); ctx.translate(cx+Math.cos(a)*r*1.1, cy+Math.sin(a)*r*1.1); ctx.rotate(a+p*Math.PI*2)
+        ctx.beginPath(); ctx.ellipse(0, 0, 6*(1-p*0.3), 3*(1-p*0.3), 0, 0, Math.PI*2); ctx.fill(); ctx.restore()
+      }
+      break
+    }
+    case 'ice': {
+      for (let i = 0; i < 8; i++) {
+        const a = (i/8)*Math.PI*2
+        const len = 32*ease
+        ctx.strokeStyle = `rgba(180,240,255,${1-p})`; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+Math.cos(a)*len, cy+Math.sin(a)*len); ctx.stroke()
+        if (i%2===0) {
+          const mx = cx+Math.cos(a)*len*0.6, my = cy+Math.sin(a)*len*0.6
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(mx+Math.cos(a+Math.PI/2)*7, my+Math.sin(a+Math.PI/2)*7)
+          ctx.lineTo(mx+Math.cos(a-Math.PI/2)*7, my+Math.sin(a-Math.PI/2)*7); ctx.stroke()
+        }
+      }
+      ctx.strokeStyle = `rgba(200,245,255,${0.7*(1-p)})`; ctx.lineWidth = 3
+      ctx.beginPath(); ctx.arc(cx, cy, 22*ease, 0, Math.PI*2); ctx.stroke()
+      break
+    }
+    case 'psychic': {
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(255,100,180,${0.8*(1-p)*(1-i*0.2)})`; ctx.lineWidth = 3-i
+        ctx.beginPath(); ctx.ellipse(cx, cy, (10+i*13)*ease, (4+i*5)*ease, p*Math.PI*(i+1)*0.5, 0, Math.PI*2); ctx.stroke()
+      }
+      ctx.fillStyle = `rgba(255,80,200,${0.5*(1-p)})`
+      ctx.beginPath(); ctx.arc(cx, cy, 10*(1-p), 0, Math.PI*2); ctx.fill()
+      break
+    }
+    case 'fighting': {
+      ctx.strokeStyle = `rgba(255,200,80,${1-p})`; ctx.lineWidth = 3
+      for (let i = 0; i < 3; i++) {
+        const off = (i-1)*12
+        ctx.beginPath(); ctx.moveTo(cx-20+off, cy-20); ctx.lineTo(cx+20+off, cy+20); ctx.stroke()
+      }
+      ctx.strokeStyle = `rgba(255,240,150,${(1-p)*0.6})`; ctx.lineWidth = 8
+      ctx.beginPath(); ctx.moveTo(cx-22, cy-22); ctx.lineTo(cx+22, cy+22); ctx.stroke()
+      break
+    }
+    case 'poison': {
+      for (let i = 0; i < 6; i++) {
+        const a = (i/6)*Math.PI*2
+        ctx.strokeStyle = `rgba(180,60,200,${1-p})`; ctx.lineWidth = 1.5
+        ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r*0.8, cy+Math.sin(a)*r*0.8-10*p, 5*(1-p*0.5), 0, Math.PI*2); ctx.stroke()
+      }
+      ctx.fillStyle = `rgba(160,40,180,${0.4*(1-p)})`
+      ctx.beginPath(); ctx.arc(cx, cy, 20*ease, 0, Math.PI*2); ctx.fill()
+      break
+    }
+    case 'ground': {
+      for (let i = 0; i < 8; i++) {
+        const a = (i/8)*Math.PI*2
+        ctx.fillStyle = `rgba(180,120,40,${1-p})`
+        ctx.fillRect(cx+Math.cos(a)*r-4*(1-p), cy+Math.sin(a)*r-4*(1-p), 8*(1-p), 8*(1-p))
+      }
+      ctx.fillStyle = `rgba(200,160,80,${0.35*(1-p)})`
+      ctx.beginPath(); ctx.arc(cx, cy, 26*ease, 0, Math.PI*2); ctx.fill()
+      break
+    }
+    case 'flying': {
+      ctx.strokeStyle = `rgba(200,230,255,${1-p})`; ctx.lineWidth = 2.5
+      for (let i = 0; i < 3; i++) {
+        const off = (i-1)*10
+        ctx.beginPath(); ctx.moveTo(cx-25, cy+off-10)
+        ctx.quadraticCurveTo(cx, cy+off-20*ease, cx+25, cy+off-10); ctx.stroke()
+      }
+      break
+    }
+    case 'rock': {
+      for (let i = 0; i < 6; i++) {
+        const a = (i/6)*Math.PI*2
+        ctx.fillStyle = `rgba(160,120,60,${1-p})`
+        ctx.save(); ctx.translate(cx+Math.cos(a)*r, cy+Math.sin(a)*r); ctx.rotate(a*2+p)
+        ctx.beginPath(); ctx.moveTo(0,-6*(1-p)); ctx.lineTo(5*(1-p),4*(1-p)); ctx.lineTo(-5*(1-p),4*(1-p)); ctx.closePath(); ctx.fill(); ctx.restore()
+      }
+      break
+    }
+    case 'ghost': {
+      for (let i = 0; i < 5; i++) {
+        const rot = p*Math.PI*2+(i/5)*Math.PI*2
+        ctx.fillStyle = `rgba(80,0,120,${0.6*(1-p)})`
+        ctx.beginPath(); ctx.arc(cx+Math.cos(rot)*r*0.7, cy+Math.sin(rot)*r*0.7, 7*(1-p), 0, Math.PI*2); ctx.fill()
+      }
+      ctx.fillStyle = `rgba(30,0,60,${0.3*(1-p)})`
+      ctx.beginPath(); ctx.arc(cx, cy, 30*ease, 0, Math.PI*2); ctx.fill()
+      break
+    }
+    case 'dragon': {
+      const dcolors = ['255,80,0','200,0,200','0,100,255']
+      for (let c = 0; c < 3; c++) {
+        const rot = p*Math.PI*3+(c/3)*Math.PI*2
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = `rgba(${dcolors[c]},${(1-p)*0.7})`
+          ctx.beginPath(); ctx.arc(cx+Math.cos(rot+i*0.5)*r*(0.3+i*0.2), cy+Math.sin(rot+i*0.5)*r*(0.3+i*0.2), 5*(1-p), 0, Math.PI*2); ctx.fill()
+        }
+      }
+      break
+    }
+    case 'dark': {
+      ctx.strokeStyle = `rgba(40,0,80,${1-p*0.5})`; ctx.lineWidth = 4
+      for (let i = 0; i < 3; i++) {
+        const off = (i-1)*14
+        ctx.beginPath(); ctx.moveTo(cx-22+off, cy+22-off); ctx.lineTo(cx+22+off, cy-22-off); ctx.stroke()
+      }
+      break
+    }
+    case 'steel': {
+      for (let i = 0; i < 8; i++) {
+        const a = (i/8)*Math.PI*2
+        ctx.fillStyle = `rgba(200,200,220,${1-p})`
+        ctx.save(); ctx.translate(cx+Math.cos(a)*r, cy+Math.sin(a)*r); ctx.rotate(a)
+        ctx.fillRect(-2, -6*(1-p), 4, 12*(1-p)); ctx.restore()
+      }
+      break
+    }
+    case 'fairy': {
+      for (let i = 0; i < 10; i++) {
+        const a = (i/10)*Math.PI*2+p*Math.PI*2
+        const dist = r*(0.4+0.6*p)
+        ctx.fillStyle = `rgba(255,160,200,${1-p})`
+        ctx.beginPath(); ctx.arc(cx+Math.cos(a)*dist, cy+Math.sin(a)*dist, 4*(1-p*0.5), 0, Math.PI*2); ctx.fill()
+      }
+      break
+    }
+    default: {
+      ctx.strokeStyle = `rgba(255,255,255,${1-p})`; ctx.lineWidth = 5
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke()
+    }
+  }
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 export default function Battle() {
   const navigate = useNavigate()
@@ -120,6 +305,9 @@ export default function Battle() {
   const [hoveredMove, setHoveredMove] = useState(0)
   const ballCanvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
+  const hitCanvasRef = useRef<HTMLCanvasElement>(null)
+  const hitRafRef = useRef<number>(0)
+  const hitEffect = useBattleStore(s => s.hitEffect)
 
   // HP shake on big hits
   const prevOpponentHpRef = useRef(opponentPokemon?.currentHp ?? 0)
@@ -165,6 +353,28 @@ export default function Battle() {
     timers.push(setTimeout(() => setEvoStage('none'), 2800))
     return () => timers.forEach(clearTimeout)
   }, [phase])
+
+  // Hit effect animation
+  useEffect(() => {
+    if (!hitEffect) return
+    const canvas = hitCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    cancelAnimationFrame(hitRafRef.current)
+    const cx = hitEffect.forOpponent ? 259 : 90
+    const cy = hitEffect.forOpponent ? 85 : 170
+    const durationMs = 520
+    const startTs = performance.now()
+    function frame(ts: number) {
+      const p = Math.min(1, (ts - startTs) / durationMs)
+      ctx.clearRect(0, 0, W, SKY_H)
+      drawHitEffect(ctx, hitEffect!.moveType, cx, cy, p)
+      if (p < 1) hitRafRef.current = requestAnimationFrame(frame)
+      else { ctx.clearRect(0, 0, W, SKY_H); useBattleStore.getState().clearHitEffect() }
+    }
+    hitRafRef.current = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(hitRafRef.current)
+  }, [hitEffect])
 
   // Trainer intro: show trainer (1.2s) → throw ball (0.8s) → Pokémon appears
   const [trainerThrowBall, setTrainerThrowBall] = useState(false)
@@ -329,7 +539,8 @@ export default function Battle() {
     )
   }
 
-  const scale = window.innerWidth / W
+  const BATTLE_TOTAL_H = SKY_H + 280  // sky + bottom panel estimate
+  const scale = Math.min(window.innerWidth / W, window.innerHeight / BATTLE_TOTAL_H, 1.8)
   const scaledH = Math.round(window.innerHeight / scale)
 
   return (
@@ -381,6 +592,7 @@ export default function Battle() {
                   objectFit: 'contain', objectPosition: 'bottom',
                   imageRendering: 'pixelated' as const,
                   animation: 'trainerSlideIn 0.5s ease-out',
+                  mixBlendMode: 'multiply' as const,
                 }}
                 alt=""
               />
@@ -512,12 +724,19 @@ export default function Battle() {
           </div>
         )}
 
+        {/* Hit effect animation canvas */}
+        <canvas
+          ref={hitCanvasRef}
+          width={W}
+          height={SKY_H}
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 8 }}
+        />
         {/* Ball throw animation canvas — overlays entire sky zone */}
         <canvas
           ref={ballCanvasRef}
           width={W}
           height={SKY_H}
-          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 9 }}
         />
       </div>
 

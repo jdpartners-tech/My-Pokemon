@@ -85,6 +85,10 @@ interface BattleState {
   showDamagePopup: (amount: number, forOpponent: boolean) => void
   clearDamagePopup: () => void
 
+  hitEffect: { moveType: string; forOpponent: boolean } | null
+  setHitEffect: (moveType: string, forOpponent: boolean) => void
+  clearHitEffect: () => void
+
   battleBanner: string | null
   setBattleBanner: (s: string | null) => void
 
@@ -120,6 +124,7 @@ const initialState = {
   trainerSpriteCol: 0,
   trainerSpriteRow: 0,
   damagePopup: null,
+  hitEffect: null,
   battleBanner: null,
 }
 
@@ -277,6 +282,8 @@ export const useBattleStore = create<BattleState>((set) => ({
 
   showDamagePopup: (amount, forOpponent) => set({ damagePopup: { id: Date.now(), amount, forOpponent } }),
   clearDamagePopup: () => set({ damagePopup: null }),
+  setHitEffect: (moveType, forOpponent) => set({ hitEffect: { moveType, forOpponent } }),
+  clearHitEffect: () => set({ hitEffect: null }),
 
   setBattleBanner: (s) => set({ battleBanner: s }),
 

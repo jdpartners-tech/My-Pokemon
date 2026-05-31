@@ -436,7 +436,8 @@ export default function WorldMap() {
 
   // Auto-heal when entering pokecenter; show area banner on map change
   useEffect(() => {
-    if (currentMapId === 'pokecenter' && prevMapIdRef.current !== 'pokecenter') {
+    const POKECENTER_IDS = new Set(['pokecenter', 'cinnabarPokecenter'])
+    if (POKECENTER_IDS.has(currentMapId) && !POKECENTER_IDS.has(prevMapIdRef.current ?? '')) {
       healParty()
     }
     if (currentMapId !== prevMapIdRef.current) {
@@ -467,7 +468,7 @@ export default function WorldMap() {
 
     // ── Interior maps: canvas-drawn background ────────────────────────────
     if (map.isInterior) {
-      if (map.id === 'pokecenter') {
+      if (map.id === 'pokecenter' || map.id === 'cinnabarPokecenter') {
         const injuredCount = partyRef.current.filter(p => (p.currentHp ?? 0) < (p.maxHp ?? 1)).length
         drawPokeCenter(ctx, cW, cH, injuredCount)
       } else {
@@ -827,11 +828,13 @@ export default function WorldMap() {
         const dx = vx * TILE, dy = vy * TILE
         const npcImg = NPC_FIGURE_IMGS[t.name]
         if (npcImg?.complete && npcImg.naturalWidth > 0) {
+          if (!TILE_CANVASES[`npc_${t.name}`]) TILE_CANVASES[`npc_${t.name}`] = applyChromaKey(npcImg, true)
+          const npcSrc = TILE_CANVASES[`npc_${t.name}`] ?? npcImg
           const aspect = npcImg.naturalWidth / npcImg.naturalHeight
           const h = TILE
           const w = h * aspect
           ctx.imageSmoothingEnabled = true
-          ctx.drawImage(npcImg, vx * TILE + (TILE - w) / 2, vy * TILE, w, h)
+          ctx.drawImage(npcSrc, vx * TILE + (TILE - w) / 2, vy * TILE, w, h)
         } else {
           const sheet = npcSheetRef.current
           // NPC sprite: pick row/col based on trainer class

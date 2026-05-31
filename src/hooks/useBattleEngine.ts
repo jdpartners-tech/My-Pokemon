@@ -187,6 +187,7 @@ export function useBattleEngine() {
         store.dealDamageToOpponent(singleDmg)
         totalDmg += singleDmg
         store.showDamagePopup(singleDmg, true)
+        store.setHitEffect(moveInfo?.type ?? 'normal', true)
         store.setOpponentFlash(true)
         await delay(120)
         store.setOpponentFlash(false)
@@ -329,6 +330,7 @@ export function useBattleEngine() {
       store.dealDamageToPlayer(singleDmg)
       totalDmg += singleDmg
       store.showDamagePopup(singleDmg, false)
+      store.setHitEffect(moveInfo?.type ?? 'normal', false)
       store.setPlayerFlash(true)
       await delay(120)
       store.setPlayerFlash(false)
