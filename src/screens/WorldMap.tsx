@@ -861,10 +861,7 @@ export default function WorldMap() {
         // Exclamation mark for vision cone
         const dirOffset = { down: [0,1], up: [0,-1], left: [-1,0], right: [1,0] }[t.direction] ?? [0,1]
         const pvx = playerX - t.x, pvy = playerY - t.y
-        const inCone = (t.direction === 'down'  && pvx === 0 && pvy > 0 && pvy <= 3) ||
-                       (t.direction === 'up'    && pvx === 0 && pvy < 0 && pvy >= -3) ||
-                       (t.direction === 'left'  && pvy === 0 && pvx < 0 && pvx >= -3) ||
-                       (t.direction === 'right' && pvy === 0 && pvx > 0 && pvx <= 3)
+        const inCone = Math.abs(pvx) <= 1 && Math.abs(pvy) <= 1 && !(pvx === 0 && pvy === 0)
         if (inCone) {
           ctx.font = 'bold 10px monospace'
           ctx.fillStyle = '#e82020'
@@ -975,10 +972,8 @@ export default function WorldMap() {
 
     for (const trainer of map.trainers) {
       const triggered =
-        (trainer.direction === 'down'  && trainer.x === nx && ny > trainer.y  && ny <= trainer.y + 3) ||
-        (trainer.direction === 'up'    && trainer.x === nx && ny < trainer.y  && ny >= trainer.y - 3) ||
-        (trainer.direction === 'left'  && trainer.y === ny && nx < trainer.x  && nx >= trainer.x - 3) ||
-        (trainer.direction === 'right' && trainer.y === ny && nx > trainer.x  && nx <= trainer.x + 3)
+        Math.abs(nx - trainer.x) <= 1 && Math.abs(ny - trainer.y) <= 1 &&
+        !(nx === trainer.x && ny === trainer.y)
       if (triggered) {
         setDialogue(`${trainer.name} wants to battle!`)
         setTimeout(() => startTrainerBattleRef.current(trainer), 1500)
