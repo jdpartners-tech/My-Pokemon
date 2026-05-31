@@ -748,36 +748,72 @@ export default function WorldMap() {
               ctx.stroke()
             }
           } else {
-            // Wooden route sign
+            // Arrow-shaped directional banner
             const svx = sx - (playerX - hw)
             const svy = sy - (playerY - hh)
             if (svx < -1 || svx > COLS || svy < -1 || svy > ROWS) continue
             const px = Math.round(svx * TILE + TILE / 2)
             const py = Math.round(svy * TILE)
-            const arrowGlyph: Record<Dir, string> = {up:'↑', down:'↓', left:'←', right:'→'}
             const label = (MAPS[targetId]?.name ?? targetId).toUpperCase()
-            const text = `${label} ${arrowGlyph[dir]}`
             ctx.font = 'bold 7px monospace'
-            const tw = ctx.measureText(text).width
-            const bw = Math.max(tw + 10, 52), bh = 14
+            const tw = ctx.measureText(label).width
+            const bh = 16, tip = 10  // banner height + arrow tip depth
+            const isHoriz = dir === 'left' || dir === 'right'
+            const bw = isHoriz ? Math.max(tw + 14 + tip, 58) : Math.max(tw + 14, 52)
             const bx = px - bw / 2, by = py + 4
+
             // Post
             ctx.fillStyle = '#6b3f1a'
             ctx.fillRect(px - 1, by + bh, 2, TILE - bh - 2)
-            // Board fill
-            ctx.fillStyle = '#d4a84b'
+
+            // Arrow banner shape
             ctx.beginPath()
-            ctx.roundRect(bx, by, bw, bh, 2)
+            if (dir === 'right') {
+              ctx.moveTo(bx,            by)
+              ctx.lineTo(bx + bw - tip, by)
+              ctx.lineTo(bx + bw,       by + bh / 2)
+              ctx.lineTo(bx + bw - tip, by + bh)
+              ctx.lineTo(bx,            by + bh)
+            } else if (dir === 'left') {
+              ctx.moveTo(bx + bw,       by)
+              ctx.lineTo(bx + tip,      by)
+              ctx.lineTo(bx,            by + bh / 2)
+              ctx.lineTo(bx + tip,      by + bh)
+              ctx.lineTo(bx + bw,       by + bh)
+            } else if (dir === 'down') {
+              ctx.moveTo(bx,            by)
+              ctx.lineTo(bx + bw,       by)
+              ctx.lineTo(bx + bw,       by + bh - tip)
+              ctx.lineTo(bx + bw / 2,   by + bh)
+              ctx.lineTo(bx,            by + bh - tip)
+            } else { // up
+              ctx.moveTo(bx + bw / 2,   by)
+              ctx.lineTo(bx + bw,       by + tip)
+              ctx.lineTo(bx + bw,       by + bh)
+              ctx.lineTo(bx,            by + bh)
+              ctx.lineTo(bx,            by + tip)
+            }
+            ctx.closePath()
+
+            // Fill
+            ctx.fillStyle = '#d4a84b'
             ctx.fill()
-            // Board border
+            // Border
             ctx.strokeStyle = '#6b3f1a'
             ctx.lineWidth = 1.5
             ctx.stroke()
-            // Text
+
+            // Text centred in body (offset inward from tip side)
+            const textX = dir === 'right' ? px - tip / 2
+                        : dir === 'left'  ? px + tip / 2
+                        : px
+            const textY = dir === 'down' ? by + (bh - tip) / 2
+                        : dir === 'up'   ? by + tip + (bh - tip) / 2
+                        : by + bh / 2
             ctx.fillStyle = '#1a0f00'
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
-            ctx.fillText(text, px, by + bh / 2)
+            ctx.fillText(label, textX, textY)
           }
         }
       }
