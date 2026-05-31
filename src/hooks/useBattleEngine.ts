@@ -118,7 +118,7 @@ export function useBattleEngine() {
       store.setAnswerResult({ wasCorrect: false, correctAnswer })
       store.addLog(`${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}... but it missed!`)
 
-      // Track wrong answer in profile
+      // Track wrong answer — fire-and-forget so network hang never blocks the battle
       if (profile?.id && question) {
         const wrongEntry = {
           question: question.question,
@@ -127,10 +127,8 @@ export function useBattleEngine() {
         }
         const existing = profile.wrongAnswers ?? []
         const updated = [...existing.filter(w => w.question !== wrongEntry.question), wrongEntry].slice(-20)
-        try {
-          await updateProfile(profile.id, { wrongAnswers: updated })
-          useProfileStore.getState().setProfile({ ...profile, wrongAnswers: updated })
-        } catch { /* silent */ }
+        useProfileStore.getState().setProfile({ ...profile, wrongAnswers: updated })
+        updateProfile(profile.id, { wrongAnswers: updated }).catch(() => {})
       }
 
       await new Promise<void>(resolve => store.setResolveWrongAnswer(resolve))
@@ -481,17 +479,16 @@ export function useBattleEngine() {
         store.addLog(`${trainerName ?? 'Trainer'} gave you 2 Pokéballs!`)
       }
 
-      try {
-        await updateProfile(profile.id, { party: updatedParty, stats, bag: updatedBag })
-        useProfileStore.getState().setProfile({
-          ...(useProfileStore.getState().profile ?? profile),
-          party: updatedParty,
-          stats,
-          bag: updatedBag,
-        })
-      } catch (e) {
-        console.error('Failed to save battle result:', e)
-      }
+      // Optimistic local update first, then fire-and-forget to Firestore
+      // so a network hang on iOS never freezes the game at 'animating'
+      useProfileStore.getState().setProfile({
+        ...(useProfileStore.getState().profile ?? profile),
+        party: updatedParty,
+        stats,
+        bag: updatedBag,
+      })
+      updateProfile(profile.id, { party: updatedParty, stats, bag: updatedBag })
+        .catch(e => console.error('Failed to save battle result:', e))
     }
 
     store.setPhase('win')
@@ -525,10 +522,8 @@ export function useBattleEngine() {
     const newBag = (profile.bag ?? [])
       .map(b => b.itemId === itemId ? { ...b, qty: b.qty - 1 } : b)
       .filter(b => b.qty > 0)
-    try {
-      await updateProfile(profile.id, { bag: newBag })
-      useProfileStore.getState().setProfile({ ...profile, bag: newBag })
-    } catch { /* silent */ }
+    useProfileStore.getState().setProfile({ ...profile, bag: newBag })
+    updateProfile(profile.id, { bag: newBag }).catch(() => {})
 
     await delay(600)
     await opponentTurn()
@@ -546,14 +541,12 @@ export function useBattleEngine() {
       return
     }
 
-    // Deduct one Pokéball immediately
+    // Deduct one Pokéball immediately — optimistic update, fire-and-forget save
     const newBag = (profile.bag ?? [])
       .map(b => b.itemId === 'pokeball' ? { ...b, qty: b.qty - 1 } : b)
       .filter(b => b.qty > 0)
-    try {
-      await updateProfile(profile.id, { bag: newBag })
-      useProfileStore.getState().setProfile({ ...profile, bag: newBag })
-    } catch { /* silent */ }
+    useProfileStore.getState().setProfile({ ...profile, bag: newBag })
+    updateProfile(profile.id, { bag: newBag }).catch(() => {})
 
     store.setPhase('animating')
 
@@ -632,17 +625,14 @@ export function useBattleEngine() {
         ...(freshProfile.pokedex ?? {}),
         [opponentPokemon.pokemonId]: 'caught' as const,
       }
-      try {
-        await updateProfile(profile.id, { party: updatedCatchParty, box: newBox, pokedex: updatedPokedex })
-        useProfileStore.getState().setProfile({
-          ...freshProfile,
-          party: updatedCatchParty,
-          box: newBox,
-          pokedex: updatedPokedex,
-        })
-      } catch (e) {
-        console.error('Failed to save caught pokemon:', e)
-      }
+      useProfileStore.getState().setProfile({
+        ...freshProfile,
+        party: updatedCatchParty,
+        box: newBox,
+        pokedex: updatedPokedex,
+      })
+      updateProfile(profile.id, { party: updatedCatchParty, box: newBox, pokedex: updatedPokedex })
+        .catch(e => console.error('Failed to save caught pokemon:', e))
       store.setBallAnimPhase(0)
       store.setPhase('win')
     } else {
