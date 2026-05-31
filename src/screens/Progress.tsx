@@ -12,7 +12,7 @@ export default function Progress() {
   const party = profile.party ?? []
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col items-center p-6 gap-4">
+    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col items-center p-6 gap-4" style={{ paddingTop: 'max(24px, env(safe-area-inset-top))' }}>
       <div className="w-full max-w-2xl flex justify-between items-center">
         <button onClick={() => navigate('/map')} className="text-[#4ecdc4] text-sm">Back</button>
         <h1 className="text-yellow-400 font-bold text-lg">{profile.name}'s Adventure</h1>

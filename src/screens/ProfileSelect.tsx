@@ -45,7 +45,8 @@ export default function ProfileSelect() {
   )
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a2e] overflow-hidden flex flex-col items-center justify-center gap-8 p-6">
+    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col items-center gap-8 p-6"
+      style={{ paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
       <h1 className="text-4xl font-bold text-yellow-400">Who's Playing?</h1>
 
       {selected ? (

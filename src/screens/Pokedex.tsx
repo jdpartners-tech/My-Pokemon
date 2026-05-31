@@ -79,7 +79,7 @@ export default function Pokedex() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col">
+    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
 
       {/* Header */}
       <div className="bg-[#0f3460] px-4 py-3 flex items-center gap-3 border-b border-yellow-400/20 flex-shrink-0">

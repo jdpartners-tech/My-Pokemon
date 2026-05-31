@@ -544,7 +544,7 @@ export default function Battle() {
   const scaledH = Math.round(window.innerHeight / scale)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
     <div style={{ zoom: scale, transformOrigin: 'top center', width: W, height: scaledH, display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Battle scene (360 × 240 px = top 48% of Ruby 500px canvas) ── */}
