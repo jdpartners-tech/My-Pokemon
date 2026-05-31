@@ -89,6 +89,7 @@ const NPC_FIGURE_FILES: Record<string, string> = {
   'Team Rocket 2':  'npc/team-rocket-2.png',
   'Cap':            'npc/cap.png',
   'Black Rocket':   'npc/black-rocket.png',
+  'Nurse':          'npc/nurse.png',
 }
 const NPC_FIGURE_IMGS: Record<string, HTMLImageElement> = {}
 Object.entries(NPC_FIGURE_FILES).forEach(([name, file]) => {
@@ -231,63 +232,52 @@ function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number, i
   ctx.fillStyle = 'rgba(0,0,0,0.12)'
   ctx.beginPath(); ctx.ellipse(njX, njY + 4, 9, 3, 0, 0, Math.PI * 2); ctx.fill()
 
-  // Body — white uniform with pink trim
-  ctx.fillStyle = '#f0f0f8'; ctx.fillRect(njX - 9, njY - 12, 18, 16)
-  ctx.fillStyle = '#f0a0b8'
-  ctx.fillRect(njX - 9, njY - 12, 18, 4)
-  ctx.fillRect(njX - 9, njY - 12, 3, 16)
-  ctx.fillRect(njX + 6, njY - 12, 3, 16)
-  // Red cross on uniform
-  ctx.fillStyle = '#e02020'
-  ctx.fillRect(njX - 1, njY - 10, 2, 6)
-  ctx.fillRect(njX - 3, njY - 8, 6, 2)
+  const nurseRaw = NPC_FIGURE_IMGS['Nurse']
+  if (nurseRaw?.complete && nurseRaw.naturalWidth > 0) {
+    // Sprite-based nurse — crisp pixel art scaled to TILE*1.5 tall
+    if (!TILE_CANVASES['npc_Nurse']) TILE_CANVASES['npc_Nurse'] = applyChromaKey(nurseRaw, true)
+    const nurseSrc = TILE_CANVASES['npc_Nurse'] ?? nurseRaw
+    const dh = Math.round(TILE * 1.5)
+    const dw = Math.round(dh * (nurseSrc.width / nurseSrc.height))
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(nurseSrc, njX - dw / 2, njY - dh, dw, dh)
+    ctx.imageSmoothingEnabled = true
+  } else {
+    // Fallback — drawn nurse (while image loads)
+    if (nurseRaw && !nurseRaw.complete) nurseRaw.onload = () => {} // no-op to allow next frame
 
-  // Neck
-  ctx.fillStyle = '#f5c8a8'; ctx.fillRect(njX - 3, njY - 15, 6, 4)
-
-  // Head — oval face
-  ctx.fillStyle = '#f5c8a8'
-  ctx.beginPath(); ctx.ellipse(njX, njY - 22, 8, 10, 0, 0, Math.PI * 2); ctx.fill()
-
-  // Pink hair buns (Nurse Joy signature)
-  ctx.fillStyle = '#e888a8'
-  ctx.beginPath(); ctx.arc(njX - 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(njX + 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
-  ctx.fillRect(njX - 8, njY - 31, 16, 8)
-  ctx.beginPath(); ctx.arc(njX, njY - 31, 8, Math.PI, 0); ctx.fill()
-
-  // Cap — white with red cross
-  ctx.fillStyle = '#f8f8f8'
-  ctx.fillRect(njX - 7, njY - 35, 14, 7)
-  ctx.beginPath(); ctx.arc(njX, njY - 35, 7, Math.PI, 0); ctx.fill()
-  ctx.strokeStyle = '#d0c8c0'; ctx.lineWidth = 1
-  ctx.strokeRect(njX - 7, njY - 35, 14, 7)
-  ctx.fillStyle = '#e02020'
-  ctx.fillRect(njX - 1, njY - 33, 2, 5); ctx.fillRect(njX - 3, njY - 31, 6, 2)
-
-  // Eyes with highlight
-  ctx.fillStyle = '#302820'
-  ctx.beginPath(); ctx.arc(njX - 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(njX + 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath(); ctx.arc(njX - 2.2, njY - 22.5, 0.6, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(njX + 3.8, njY - 22.5, 0.6, 0, Math.PI * 2); ctx.fill()
-
-  // Smile
-  ctx.strokeStyle = '#c07060'; ctx.lineWidth = 1.5
-  ctx.beginPath(); ctx.arc(njX, njY - 18, 3, 0.2, Math.PI - 0.2); ctx.stroke()
-
-  // Rosy cheeks
-  ctx.fillStyle = 'rgba(240,100,120,0.3)'
-  ctx.beginPath(); ctx.ellipse(njX - 5, njY - 19, 2.5, 1.5, 0, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.ellipse(njX + 5, njY - 19, 2.5, 1.5, 0, 0, Math.PI * 2); ctx.fill()
-
-  // Arms & hands
-  ctx.fillStyle = '#f0f0f8'
-  ctx.fillRect(njX - 14, njY - 11, 5, 12); ctx.fillRect(njX + 9, njY - 11, 5, 12)
-  ctx.fillStyle = '#f5c8a8'
-  ctx.beginPath(); ctx.arc(njX - 11, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(njX + 12, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#f0f0f8'; ctx.fillRect(njX - 9, njY - 12, 18, 16)
+    ctx.fillStyle = '#f0a0b8'
+    ctx.fillRect(njX - 9, njY - 12, 18, 4)
+    ctx.fillRect(njX - 9, njY - 12, 3, 16)
+    ctx.fillRect(njX + 6, njY - 12, 3, 16)
+    ctx.fillStyle = '#e02020'
+    ctx.fillRect(njX - 1, njY - 10, 2, 6)
+    ctx.fillRect(njX - 3, njY - 8, 6, 2)
+    ctx.fillStyle = '#f5c8a8'; ctx.fillRect(njX - 3, njY - 15, 6, 4)
+    ctx.fillStyle = '#f5c8a8'
+    ctx.beginPath(); ctx.ellipse(njX, njY - 22, 8, 10, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#e888a8'
+    ctx.beginPath(); ctx.arc(njX - 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(njX + 9, njY - 24, 5, 0, Math.PI * 2); ctx.fill()
+    ctx.fillRect(njX - 8, njY - 31, 16, 8)
+    ctx.beginPath(); ctx.arc(njX, njY - 31, 8, Math.PI, 0); ctx.fill()
+    ctx.fillStyle = '#f8f8f8'
+    ctx.fillRect(njX - 7, njY - 35, 14, 7)
+    ctx.beginPath(); ctx.arc(njX, njY - 35, 7, Math.PI, 0); ctx.fill()
+    ctx.fillStyle = '#e02020'
+    ctx.fillRect(njX - 1, njY - 33, 2, 5); ctx.fillRect(njX - 3, njY - 31, 6, 2)
+    ctx.fillStyle = '#302820'
+    ctx.beginPath(); ctx.arc(njX - 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(njX + 3, njY - 22, 1.8, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#c07060'; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.arc(njX, njY - 18, 3, 0.2, Math.PI - 0.2); ctx.stroke()
+    ctx.fillStyle = '#f0f0f8'
+    ctx.fillRect(njX - 14, njY - 11, 5, 12); ctx.fillRect(njX + 9, njY - 11, 5, 12)
+    ctx.fillStyle = '#f5c8a8'
+    ctx.beginPath(); ctx.arc(njX - 11, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(njX + 12, njY + 2, 3, 0, Math.PI * 2); ctx.fill()
+  }
 
   // ── Side benches ──────────────────────────────────────────────────────────
   ctx.fillStyle = '#905020'
@@ -493,66 +483,71 @@ export default function WorldMap() {
           const x = vx * TILE, y = vy * TILE
 
           if (map.id === 'volcanoTrail') {
-            const s = (mx * 7 + my * 13) & 15  // 0–15, deterministic per tile for variation
+            const s = (mx * 7 + my * 13) & 15  // 0–15, deterministic per tile
             if (tile === 'path') {
-              // Cooled lava floor — dark ash with glowing veins
-              ctx.fillStyle = s < 5 ? '#1a0a00' : s < 10 ? '#140800' : '#1e0c00'
+              // Lava floor — warm orange-red base with glowing blob highlights (ref: Grotte_Volcanique)
+              ctx.fillStyle = s < 5 ? '#8c2800' : s < 10 ? '#7a2000' : '#962e00'
               ctx.fillRect(x, y, TILE, TILE)
-              // Heat shimmer patch on some tiles
-              if (s % 3 === 0) { ctx.fillStyle = 'rgba(180,40,0,0.12)'; ctx.fillRect(x+2, y+2, 10, 10) }
-              // Main lava vein (branching path)
-              ctx.strokeStyle = s < 6 ? '#cc3300' : '#dd4400'
+              // Lighter orange blob patches (lava surface variation)
+              ctx.fillStyle = s < 4 ? 'rgba(220,90,0,0.55)' : 'rgba(200,70,0,0.45)'
+              ctx.beginPath()
+              ctx.ellipse(x + 6 + (s&5), y + 8 + (s%5), 6-(s&1), 4+(s%2), (s%3)*0.4, 0, Math.PI*2)
+              ctx.fill()
+              if (s > 6) {
+                ctx.fillStyle = 'rgba(240,120,0,0.35)'
+                ctx.beginPath()
+                ctx.ellipse(x + TILE-8-(s%4), y + TILE-9+(s&3), 5, 3, 0, 0, Math.PI*2)
+                ctx.fill()
+              }
+              // Bright lava crack lines
+              ctx.strokeStyle = s < 6 ? '#ff6600' : '#ff8000'
               ctx.lineWidth = s < 4 ? 1.5 : 1
               ctx.beginPath()
-              ctx.moveTo(x + 2 + (s&3), y + TILE-4 - (s>>2))
-              ctx.lineTo(x + 8 + (s%5), y + TILE-9)
-              ctx.lineTo(x + 12 + (s&3), y + TILE-13 - (s%3))
+              ctx.moveTo(x+3+(s&3), y+TILE-5-(s>>3))
+              ctx.lineTo(x+9+(s%4), y+TILE-10)
+              ctx.lineTo(x+13+(s&3), y+TILE-14-(s%3))
               ctx.stroke()
-              // Branch crack
-              ctx.strokeStyle = '#ff5500'; ctx.lineWidth = 0.5
-              ctx.beginPath()
-              ctx.moveTo(x + 8 + (s%5), y + TILE-9)
-              ctx.lineTo(x + 14 + (s&3), y + TILE-6)
-              ctx.stroke()
-              // Secondary crack on some tiles
-              if (s > 8) {
-                ctx.beginPath()
-                ctx.moveTo(x + TILE-4, y + 3 + (s%5))
-                ctx.lineTo(x + TILE-9, y + 9 + (s%4))
-                ctx.stroke()
-              }
-              // Heat glow — stronger at bottom edge (lava below)
-              ctx.fillStyle = 'rgba(200,50,0,0.2)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
-              ctx.fillStyle = 'rgba(180,40,0,0.1)'
-              ctx.fillRect(x, y, TILE, 2); ctx.fillRect(x, y, 2, TILE); ctx.fillRect(x+TILE-2, y, 2, TILE)
+              // Hot glow edge
+              ctx.fillStyle = 'rgba(255,80,0,0.22)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
+              ctx.fillStyle = 'rgba(220,60,0,0.1)'
+              ctx.fillRect(x, y, 2, TILE); ctx.fillRect(x+TILE-2, y, 2, TILE)
             } else {
-              // Volcanic rock wall — dark basalt with lava seeping through cracks
-              ctx.fillStyle = s < 4 ? '#2a0808' : s < 8 ? '#3a0e0e' : s < 12 ? '#320a0a' : '#260606'
+              // Rock wall — dark purple-grey with diamond texture (ref: 5vo6v1ygrtjf1)
+              ctx.fillStyle = s < 4 ? '#3a3055' : s < 9 ? '#322848' : s < 13 ? '#3e345c' : '#2e2440'
               ctx.fillRect(x, y, TILE, TILE)
-              // Rock face highlight (top-left lit by lava glow)
-              ctx.fillStyle = s < 6 ? '#581212' : '#4a0e0e'
-              ctx.fillRect(x+2, y+2, TILE-5, TILE-5)
-              // Horizontal strata lines (rock layers)
-              ctx.fillStyle = '#200606'
-              ctx.fillRect(x+2, y+6+(s&3), TILE-4, 1)
-              ctx.fillRect(x+3, y+13+(s%3), TILE-6, 1)
-              // Shadow corner
-              ctx.fillStyle = '#180404'
-              ctx.fillRect(x+TILE-5, y+TILE-5, 4, 4)
-              ctx.fillRect(x+3, y+TILE-4, TILE-7, 2)
-              // Lava crack — soft glow halo then bright line on top
-              const cx = x + 4 + (s&5), cy = y + 4 + (s>>3)
-              ctx.strokeStyle = 'rgba(255,100,0,0.4)'; ctx.lineWidth = 3
-              ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+3+(s&3), cy+5+(s%3)); ctx.lineTo(cx+1, cy+9+(s&3)); ctx.stroke()
-              ctx.strokeStyle = '#ff5500'; ctx.lineWidth = 1
-              ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+3+(s&3), cy+5+(s%3)); ctx.lineTo(cx+1, cy+9+(s&3)); ctx.stroke()
-              // Second crack on some tiles
+              // Diamond lattice pattern
+              const dl = s < 8 ? '#4a3a6a' : '#443060'
+              ctx.fillStyle = dl
+              for (let di = 0; di < 4; di++) {
+                const dx = x + (di % 2) * 16 + (Math.floor(di/2) % 2) * 8
+                const dy2 = y + Math.floor(di/2) * 16
+                ctx.beginPath()
+                ctx.moveTo(dx+8, dy2); ctx.lineTo(dx+16, dy2+8)
+                ctx.lineTo(dx+8, dy2+16); ctx.lineTo(dx, dy2+8)
+                ctx.closePath(); ctx.fill()
+              }
+              // Darker diamond borders
+              ctx.strokeStyle = s < 8 ? '#26203a' : '#221c36'; ctx.lineWidth = 0.5
+              for (let di = 0; di < 4; di++) {
+                const dx = x + (di % 2) * 16 + (Math.floor(di/2) % 2) * 8
+                const dy2 = y + Math.floor(di/2) * 16
+                ctx.beginPath()
+                ctx.moveTo(dx+8, dy2); ctx.lineTo(dx+16, dy2+8)
+                ctx.lineTo(dx+8, dy2+16); ctx.lineTo(dx, dy2+8)
+                ctx.closePath(); ctx.stroke()
+              }
+              // Lava crack glowing through rock — bright orange
+              const crx = x + 4 + (s&5), cry = y + 4 + (s>>3)
+              ctx.strokeStyle = 'rgba(255,120,0,0.5)'; ctx.lineWidth = 3
+              ctx.beginPath(); ctx.moveTo(crx, cry); ctx.lineTo(crx+3+(s&3), cry+5+(s%3)); ctx.lineTo(crx+1, cry+9+(s&3)); ctx.stroke()
+              ctx.strokeStyle = '#ff7000'; ctx.lineWidth = 1
+              ctx.beginPath(); ctx.moveTo(crx, cry); ctx.lineTo(crx+3+(s&3), cry+5+(s%3)); ctx.lineTo(crx+1, cry+9+(s&3)); ctx.stroke()
               if (s > 9) {
-                ctx.strokeStyle = '#cc2200'; ctx.lineWidth = 0.5
+                ctx.strokeStyle = '#ff5500'; ctx.lineWidth = 0.5
                 ctx.beginPath(); ctx.moveTo(x+TILE-6-(s%4), y+5); ctx.lineTo(x+TILE-10, y+11+(s%3)); ctx.stroke()
               }
-              // Ambient lava glow seeping up from bottom
-              ctx.fillStyle = 'rgba(200,40,0,0.15)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
+              // Warm lava glow at base
+              ctx.fillStyle = 'rgba(200,60,0,0.18)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
             }
             // skip normal rendering for this tile
           } else if (tile === 'path' && map.id === 'rockyCave') {
