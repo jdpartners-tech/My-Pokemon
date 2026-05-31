@@ -1,5 +1,6 @@
 import { palletTown } from './palletTown'
 import { pokeCenter } from './pokecenter'
+import { cinnabarPokeCenter } from './cinnabarPokecenter'
 import { sunlitMeadow } from './sunlitMeadow'
 import { viridianForest } from './viridianForest'
 import { flowerMeadow } from './flowerMeadow'
@@ -13,6 +14,7 @@ import { MapData } from './types'
 export const MAPS: Record<string, MapData> = {
   pallet: palletTown,
   pokecenter: pokeCenter,
+  cinnabarPokecenter: cinnabarPokeCenter,
   sunlitMeadow,
   viridianForest,
   flowerMeadow,
