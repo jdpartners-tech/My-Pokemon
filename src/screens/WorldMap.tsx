@@ -314,27 +314,46 @@ export default function WorldMap() {
   const [areaBanner, setAreaBanner] = useState<string | null>(null)
   const areaBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [worldBagOpen, setWorldBagOpen] = useState(false)
+  const [pendingWorldItem, setPendingWorldItem] = useState<{ itemId: string } | null>(null)
 
-  // Canvas size — ResizeObserver fills the container while maintaining 11:9 ratio
+  // Canvas size — use window dimensions directly (reliable on iOS Safari)
+  const mainAreaRef = useRef<HTMLDivElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [canvasCssSize, setCanvasCssSize] = useState<{ w: number; h: number } | null>(null)
   useEffect(() => {
-    const container = canvasContainerRef.current
-    if (!container) return
-    const observer = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect
+    const TOPBAR_H  = 44
+    const DPAD_H    = 172
+    const MINIMAP_W = 396   // mini-map sidebar + gap, desktop only
+
+    function compute() {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const isDesktop = vw >= 1024
+      const availH = Math.max(vh - TOPBAR_H - DPAD_H, 100)
+      const availW = Math.max(isDesktop ? vw - MINIMAP_W : vw - 16, 100)
       const ratio = COLS / ROWS
-      let w = width, h = height
-      if (w / h > ratio) { w = Math.floor(h * ratio) } else { h = Math.floor(w / ratio) }
+      const wFromH = Math.floor(availH * ratio)
+      const w = Math.min(wFromH, availW)
+      const h = Math.floor(w / ratio)
       setCanvasCssSize({ w, h })
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
+    }
+
+    compute()
+    window.addEventListener('resize', compute)
+    // iOS: viewport changes after orientation change — wait for layout
+    const onOrient = () => setTimeout(compute, 150)
+    window.addEventListener('orientationchange', onOrient)
+    return () => {
+      window.removeEventListener('resize', compute)
+      window.removeEventListener('orientationchange', onOrient)
+    }
   }, [])
 
   // Feature D: items on map — generate once on mount (respawn on game restart only)
   type MapItem = { mapId: string; x: number; y: number; itemId: 'pokeball' | 'potion' }
   const [mapItems, setMapItems] = useState<MapItem[]>([])
+  const mapItemsRef = useRef<MapItem[]>([])
+  useEffect(() => { mapItemsRef.current = mapItems }, [mapItems])
 
   // NPC sprite sheet (npc-sheet.png is 164×925, ~16×16 sprites, 10 cols)
   const npcSheetRef = useRef<HTMLImageElement | null>(null)
@@ -356,8 +375,8 @@ export default function WorldMap() {
 
   useEffect(() => { if (!profile) navigate('/') }, [profile, navigate])
 
-  // Generate map items once on mount — Pokéballs (60%) and Potions (40%)
-  useEffect(() => {
+  // Generate (or regenerate) map items — Pokéballs (60%) and Potions (40%)
+  function generateMapItems() {
     const items: MapItem[] = []
     const ITEM_MAPS: Record<string, number> = {
       sunlitMeadow: 3, viridianForest: 3, flowerMeadow: 3,
@@ -378,7 +397,6 @@ export default function WorldMap() {
           }
         }
       }
-      // Fisher-Yates shuffle then take `count`
       for (let i = validTiles.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [validTiles[i], validTiles[j]] = [validTiles[j], validTiles[i]]
@@ -388,7 +406,16 @@ export default function WorldMap() {
         items.push({ mapId, x, y, itemId: Math.random() < 0.6 ? 'pokeball' : 'potion' })
       }
     }
+    mapItemsRef.current = items
     setMapItems(items)
+    setTimeout(() => drawMap(pxRef.current, pyRef.current, 'down', false), 50)
+  }
+
+  // Generate on mount, then respawn every 5 minutes of game time
+  useEffect(() => {
+    generateMapItems()
+    const respawnTimer = setInterval(generateMapItems, 5 * 60 * 1000)
+    return () => clearInterval(respawnTimer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -441,11 +468,76 @@ export default function WorldMap() {
         for (let vx = 0; vx < COLS; vx++) {
           const mx = playerX - hw + vx
           const my = playerY - hh + vy
-          const tile: TileType = (my >= 0 && my < map.height && mx >= 0 && mx < map.width)
-            ? map.tiles[my][mx] : 'tree'
+          const outOfBounds = my < 0 || my >= map.height || mx < 0 || mx >= map.width
+          const tile: TileType = outOfBounds
+            ? (map.id === 'volcanoTrail' || map.id === 'rockyCave' ? 'building' : 'tree')
+            : map.tiles[my][mx]
           const x = vx * TILE, y = vy * TILE
 
-          if (tile === 'land' || tile === 'path') {
+          if (map.id === 'volcanoTrail') {
+            const s = (mx * 7 + my * 13) & 15  // 0–15, deterministic per tile for variation
+            if (tile === 'path') {
+              // Cooled lava floor — dark ash with glowing veins
+              ctx.fillStyle = s < 5 ? '#1a0a00' : s < 10 ? '#140800' : '#1e0c00'
+              ctx.fillRect(x, y, TILE, TILE)
+              // Heat shimmer patch on some tiles
+              if (s % 3 === 0) { ctx.fillStyle = 'rgba(180,40,0,0.12)'; ctx.fillRect(x+2, y+2, 10, 10) }
+              // Main lava vein (branching path)
+              ctx.strokeStyle = s < 6 ? '#cc3300' : '#dd4400'
+              ctx.lineWidth = s < 4 ? 1.5 : 1
+              ctx.beginPath()
+              ctx.moveTo(x + 2 + (s&3), y + TILE-4 - (s>>2))
+              ctx.lineTo(x + 8 + (s%5), y + TILE-9)
+              ctx.lineTo(x + 12 + (s&3), y + TILE-13 - (s%3))
+              ctx.stroke()
+              // Branch crack
+              ctx.strokeStyle = '#ff5500'; ctx.lineWidth = 0.5
+              ctx.beginPath()
+              ctx.moveTo(x + 8 + (s%5), y + TILE-9)
+              ctx.lineTo(x + 14 + (s&3), y + TILE-6)
+              ctx.stroke()
+              // Secondary crack on some tiles
+              if (s > 8) {
+                ctx.beginPath()
+                ctx.moveTo(x + TILE-4, y + 3 + (s%5))
+                ctx.lineTo(x + TILE-9, y + 9 + (s%4))
+                ctx.stroke()
+              }
+              // Heat glow — stronger at bottom edge (lava below)
+              ctx.fillStyle = 'rgba(200,50,0,0.2)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
+              ctx.fillStyle = 'rgba(180,40,0,0.1)'
+              ctx.fillRect(x, y, TILE, 2); ctx.fillRect(x, y, 2, TILE); ctx.fillRect(x+TILE-2, y, 2, TILE)
+            } else {
+              // Volcanic rock wall — dark basalt with lava seeping through cracks
+              ctx.fillStyle = s < 4 ? '#2a0808' : s < 8 ? '#3a0e0e' : s < 12 ? '#320a0a' : '#260606'
+              ctx.fillRect(x, y, TILE, TILE)
+              // Rock face highlight (top-left lit by lava glow)
+              ctx.fillStyle = s < 6 ? '#581212' : '#4a0e0e'
+              ctx.fillRect(x+2, y+2, TILE-5, TILE-5)
+              // Horizontal strata lines (rock layers)
+              ctx.fillStyle = '#200606'
+              ctx.fillRect(x+2, y+6+(s&3), TILE-4, 1)
+              ctx.fillRect(x+3, y+13+(s%3), TILE-6, 1)
+              // Shadow corner
+              ctx.fillStyle = '#180404'
+              ctx.fillRect(x+TILE-5, y+TILE-5, 4, 4)
+              ctx.fillRect(x+3, y+TILE-4, TILE-7, 2)
+              // Lava crack — soft glow halo then bright line on top
+              const cx = x + 4 + (s&5), cy = y + 4 + (s>>3)
+              ctx.strokeStyle = 'rgba(255,100,0,0.4)'; ctx.lineWidth = 3
+              ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+3+(s&3), cy+5+(s%3)); ctx.lineTo(cx+1, cy+9+(s&3)); ctx.stroke()
+              ctx.strokeStyle = '#ff5500'; ctx.lineWidth = 1
+              ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+3+(s&3), cy+5+(s%3)); ctx.lineTo(cx+1, cy+9+(s&3)); ctx.stroke()
+              // Second crack on some tiles
+              if (s > 9) {
+                ctx.strokeStyle = '#cc2200'; ctx.lineWidth = 0.5
+                ctx.beginPath(); ctx.moveTo(x+TILE-6-(s%4), y+5); ctx.lineTo(x+TILE-10, y+11+(s%3)); ctx.stroke()
+              }
+              // Ambient lava glow seeping up from bottom
+              ctx.fillStyle = 'rgba(200,40,0,0.15)'; ctx.fillRect(x, y+TILE-3, TILE, 3)
+            }
+            // skip normal rendering for this tile
+          } else if (tile === 'land' || tile === 'path') {
             const img = TILE_IMGS.land
             if (img?.complete && img.naturalWidth > 0) ctx.drawImage(img, x, y, TILE, TILE)
             else { ctx.fillStyle = '#c8a870'; ctx.fillRect(x, y, TILE, TILE) }
@@ -470,6 +562,20 @@ export default function WorldMap() {
             ctx.fillStyle = 'rgba(255,255,255,0.45)'
             ctx.beginPath(); ctx.ellipse(x+TILE*0.28, y+TILE*0.38, TILE*0.18, TILE*0.09, 0, 0, Math.PI*2); ctx.fill()
             ctx.beginPath(); ctx.ellipse(x+TILE*0.70, y+TILE*0.65, TILE*0.16, TILE*0.08, 0, 0, Math.PI*2); ctx.fill()
+          } else if (tile === 'building' && map.id === 'rockyCave') {
+            // Cave rock wall — draw as stone boulder
+            ctx.fillStyle = '#5a5060'; ctx.fillRect(x, y, TILE, TILE)
+            // Rock highlight (top-left)
+            ctx.fillStyle = '#7a7080'
+            ctx.fillRect(x + 3, y + 3, TILE - 8, TILE - 10)
+            // Rock shadow (bottom-right)
+            ctx.fillStyle = '#3a3040'
+            ctx.fillRect(x + TILE - 7, y + TILE - 7, 5, 5)
+            ctx.fillRect(x + 4, y + TILE - 6, TILE - 8, 4)
+            // Rock crack detail
+            ctx.strokeStyle = '#4a4050'; ctx.lineWidth = 1
+            ctx.beginPath(); ctx.moveTo(x + 6, y + 8); ctx.lineTo(x + 12, y + 14); ctx.stroke()
+            ctx.beginPath(); ctx.moveTo(x + TILE - 9, y + 6); ctx.lineTo(x + TILE - 14, y + 12); ctx.stroke()
           } else {
             // grass, tree, building, door, fence, brush, gym — all use grass base
             if (grassReady) ctx.drawImage(grassImg, x, y, TILE, TILE)
@@ -480,7 +586,7 @@ export default function WorldMap() {
 
       // ── Pass 1b: Tree images (proportional, chroma-keyed, drawn over grass base) ─
       const treeImg = TILE_IMGS.tree
-      if (treeImg?.complete && treeImg.naturalWidth > 0) {
+      if (treeImg?.complete && treeImg.naturalWidth > 0 && map.id !== 'volcanoTrail' && map.id !== 'rockyCave') {
         if (!TILE_CANVASES['tree']) {
           if (treeImg.complete) TILE_CANVASES['tree'] = applyChromaKey(treeImg)
           else treeImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
@@ -598,33 +704,104 @@ export default function WorldMap() {
       }
 
       // ── Pass 4: Map items (Pokéballs and Potions) ────────────────────────
-      const visibleItems = mapItems.filter(it => it.mapId === map.id)
+      const visibleItems = mapItemsRef.current.filter(it => it.mapId === map.id)
       for (const item of visibleItems) {
         const vx = item.x - playerX + hw
         const vy = item.y - playerY + hh
         if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
-        const ix = vx * TILE + TILE / 2, iy = vy * TILE + TILE / 2
+        const ix = vx * TILE + TILE / 2, iy = vy * TILE + TILE / 2 - 2
+
+        ctx.save()
         if (item.itemId === 'pokeball') {
-          // Pokéball: red top, white bottom
-          ctx.fillStyle = '#e82020'
-          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, Math.PI, 0); ctx.fill()
-          ctx.fillStyle = '#f8f8f8'
-          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, 0, Math.PI); ctx.fill()
-          ctx.strokeStyle = '#181808'; ctx.lineWidth = 1.2
-          ctx.beginPath(); ctx.arc(ix, iy - 1, 6, 0, Math.PI * 2); ctx.stroke()
-          ctx.beginPath(); ctx.moveTo(ix - 6, iy - 1); ctx.lineTo(ix + 6, iy - 1); ctx.stroke()
-          ctx.fillStyle = '#f8f8f8'; ctx.beginPath(); ctx.arc(ix, iy - 1, 1.5, 0, Math.PI * 2); ctx.fill()
+          const r = 11
+          const cy = iy + 1
+
+          // Outer glow
+          ctx.shadowColor = 'rgba(220,40,20,0.55)'
+          ctx.shadowBlur = 10
+
+          // Red top half
+          ctx.fillStyle = '#d82010'
+          ctx.beginPath(); ctx.arc(ix, cy, r, Math.PI, 0); ctx.fill()
+          // Red shine highlight (top-left crescent)
+          ctx.fillStyle = 'rgba(255,130,110,0.55)'
+          ctx.beginPath(); ctx.arc(ix - r * 0.28, cy - r * 0.28, r * 0.42, 0, Math.PI * 2); ctx.fill()
+
+          ctx.shadowBlur = 0
+
+          // White bottom half
+          ctx.fillStyle = '#f2f2f2'
+          ctx.beginPath(); ctx.arc(ix, cy, r, 0, Math.PI); ctx.fill()
+          // Subtle grey reflection on white
+          ctx.fillStyle = 'rgba(160,160,160,0.18)'
+          ctx.beginPath(); ctx.arc(ix + r * 0.22, cy + r * 0.32, r * 0.48, 0, Math.PI * 2); ctx.fill()
+
+          // Outline
+          ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 2
+          ctx.beginPath(); ctx.arc(ix, cy, r, 0, Math.PI * 2); ctx.stroke()
+
+          // Center band
+          ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 2.5
+          ctx.beginPath(); ctx.moveTo(ix - r + 1.5, cy); ctx.lineTo(ix + r - 1.5, cy); ctx.stroke()
+
+          // Button circle
+          ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 1.8
+          ctx.beginPath(); ctx.arc(ix, cy, 3.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
+          // Button inner shine
+          ctx.fillStyle = 'rgba(255,255,255,0.9)'
+          ctx.beginPath(); ctx.arc(ix - 1.2, cy - 1.2, 1.4, 0, Math.PI * 2); ctx.fill()
+
+
         } else {
-          // Potion: blue bottle
-          ctx.fillStyle = '#3060e0'
-          ctx.beginPath(); ctx.roundRect(ix - 3, iy - 7, 6, 9, 2); ctx.fill()
-          ctx.fillStyle = '#80c0ff'
-          ctx.fillRect(ix - 2, iy - 6, 2, 4)
-          ctx.fillStyle = '#a0d0ff'
-          ctx.beginPath(); ctx.roundRect(ix - 2, iy - 9, 4, 3, 1); ctx.fill()
-          ctx.strokeStyle = '#1840a0'; ctx.lineWidth = 1
-          ctx.beginPath(); ctx.roundRect(ix - 3, iy - 7, 6, 9, 2); ctx.stroke()
+          // Potion: beautiful glass bottle with coloured liquid
+          const bx = ix, by = iy + 4
+          const bw = 13, bh = 14
+
+          // Drop shadow / glow
+          ctx.shadowColor = 'rgba(60,120,230,0.5)'
+          ctx.shadowBlur = 10
+
+          // Bottle body (dark blue outline fill)
+          ctx.fillStyle = '#1a3ab0'
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 4); ctx.fill()
+
+          ctx.shadowBlur = 0
+
+          // Liquid inside (lighter blue, slightly inset)
+          ctx.fillStyle = '#3a70e8'
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 2, by - bh / 2 + 2, bw - 4, bh - 3, 3); ctx.fill()
+
+          // Liquid highlight — bright stripe on left
+          ctx.fillStyle = 'rgba(140,210,255,0.7)'
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 2.5, by - bh / 2 + 3, 3, bh - 6, 2); ctx.fill()
+
+          // Liquid shine (oval at top-left of bottle)
+          ctx.fillStyle = 'rgba(200,235,255,0.45)'
+          ctx.beginPath(); ctx.ellipse(bx - 2, by - bh / 2 + 3, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill()
+
+          // Neck
+          ctx.fillStyle = '#2a50c8'
+          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 7, 7, 8, 2); ctx.fill()
+          // Neck highlight
+          ctx.fillStyle = 'rgba(140,200,255,0.5)'
+          ctx.fillRect(bx - 2.5, by - bh / 2 - 6, 2, 4)
+
+          // Cap (pink/magenta)
+          ctx.fillStyle = '#d83070'
+          ctx.beginPath(); ctx.roundRect(bx - 4.5, by - bh / 2 - 12, 9, 6, 2.5); ctx.fill()
+          // Cap highlight
+          ctx.fillStyle = 'rgba(255,180,200,0.6)'
+          ctx.beginPath(); ctx.roundRect(bx - 3, by - bh / 2 - 11, 3, 2, 1); ctx.fill()
+
+          // Outlines
+          ctx.strokeStyle = '#0a1e60'; ctx.lineWidth = 1.5
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 4); ctx.stroke()
+          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 7, 7, 8, 2); ctx.stroke()
+          ctx.strokeStyle = '#801838'
+          ctx.beginPath(); ctx.roundRect(bx - 4.5, by - bh / 2 - 12, 9, 6, 2.5); ctx.stroke()
+
         }
+        ctx.restore()
       }
 
       // ── Pass 5: NPC trainers — drawn from sprite sheet ───────────────────
@@ -726,11 +903,11 @@ export default function WorldMap() {
     const nx = prevPx + dx
     const ny = prevPy + dy
 
-    if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) return
-    const tile = map.tiles[ny][nx]
+    // Helper: is this tile at the map border?
+    const isBorderTile = (x: number, y: number) =>
+      x === 0 || x === map.width - 1 || y === 0 || y === map.height - 1
 
-    const exit = map.exits.find(e => e.x === nx && e.y === ny)
-    if (exit) {
+    function doExit(exit: typeof map.exits[number]) {
       mapRef.current = getMap(exit.targetMap)
       setCurrentMapId(exit.targetMap)
       setDialogue(null)
@@ -738,15 +915,26 @@ export default function WorldMap() {
       pyRef.current = exit.targetY
       setPx(exit.targetX)
       setPy(exit.targetY)
-      // Persist player position so it survives logout/login
       const cp = useProfileStore.getState().profile
       if (cp?.id) {
         const posUpdate = { currentRoute: exit.targetMap, playerX: exit.targetX, playerY: exit.targetY }
         useProfileStore.getState().setProfile({ ...cp, ...posUpdate })
         updateProfileRef.current(cp.id, posUpdate).catch(() => {})
       }
+    }
+
+    // Trying to step off-map — check if current tile is a border exit
+    if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) {
+      const exit = map.exits.find(e => e.x === prevPx && e.y === prevPy)
+      if (exit) doExit(exit)
       return
     }
+
+    const tile = map.tiles[ny][nx]
+
+    // Interior exits (door tiles, not at map border) — keep instant trigger
+    const interiorExit = map.exits.find(e => e.x === nx && e.y === ny && !isBorderTile(e.x, e.y))
+    if (interiorExit) { doExit(interiorExit); return }
 
     if (BLOCKED_TILES.has(tile)) return
 
@@ -798,7 +986,14 @@ export default function WorldMap() {
       return prev.filter((_, i) => i !== idx)
     })
 
-    if ((tile === 'grass' || tile === 'water') && Math.random() < ENCOUNTER_RATE) {
+    // Trigger encounters on any walkable tile if the map has wild Pokemon defined
+    // (Volcano/Cave use 'path' tiles; grass maps use 'grass'; water triggers waterPokemon)
+    const currentMap = mapRef.current
+    const hasLandWild = currentMap.wildPokemon.length > 0
+    const hasWaterWild = (currentMap.waterPokemon ?? []).length > 0
+    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2'
+    const isWaterTile = tile === 'water'
+    if (((hasLandWild && isLandTile) || (hasWaterWild && isWaterTile)) && Math.random() < ENCOUNTER_RATE) {
       setTimeout(() => startWildBattleRef.current(nx, ny), 0)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -842,8 +1037,10 @@ export default function WorldMap() {
   function startWildBattle(playerX: number, playerY: number) {
     const map = mapRef.current
     const tile = map.tiles[playerY]?.[playerX]
-    if (tile !== 'grass' && tile !== 'water') return
-    const pool = tile === 'water' ? (map.waterPokemon ?? []) : map.wildPokemon
+    const isWaterTile = tile === 'water'
+    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2'
+    if (!isLandTile && !isWaterTile) return
+    const pool = isWaterTile ? (map.waterPokemon ?? []) : map.wildPokemon
     const currentProfile = useProfileStore.getState().profile
     if (!currentProfile?.party?.length || !pool.length) return
     const total = pool.reduce((s, w) => s + w.rate, 0)
@@ -959,8 +1156,9 @@ export default function WorldMap() {
 
   return (
     <div style={{
-      height: '100vh', overflow: 'hidden',
+      position: 'fixed', inset: 0,  // reliable full-screen on iOS Safari
       background: '#1a1a2e', display: 'flex', flexDirection: 'column',
+      overflow: 'hidden',
     }}>
       {/* Top bar — fixed height */}
       <div style={{
@@ -985,20 +1183,23 @@ export default function WorldMap() {
         </button>
       </div>
 
-      {/* Main area — fills remaining height, no overflow */}
-      <div style={{
-        flex: 1, minHeight: 0, overflow: 'hidden',
-        display: 'flex', flexDirection: 'row', gap: 8,
-        padding: '0 8px 8px',
-        alignItems: 'stretch',
-      }}>
+      {/* Main area — centred row: canvas column + mini-map column */}
+      <div
+        ref={mainAreaRef}
+        style={{
+          flex: 1, minHeight: 0, overflow: 'hidden',
+          display: 'flex', flexDirection: 'row', gap: 8,
+          padding: '0 8px 8px',
+          alignItems: 'stretch',
+        }}
+      >
 
-        {/* Left column: canvas fills everything, DPad overlaid at bottom */}
+        {/* Canvas column — flex:1 fills available space; canvas sized by window compute */}
         <div
           ref={canvasContainerRef}
-          style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}
+          style={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative' }}
         >
-          {/* Canvas — sized by ResizeObserver, centered */}
+          {/* Canvas */}
           <canvas
             ref={canvasRef}
             width={COLS * TILE}
@@ -1009,8 +1210,8 @@ export default function WorldMap() {
               position: 'absolute',
               top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: canvasCssSize ? canvasCssSize.w : '100%',
-              height: canvasCssSize ? canvasCssSize.h : 'auto',
+              width: canvasCssSize ? canvasCssSize.w : COLS * TILE,
+              height: canvasCssSize ? canvasCssSize.h : ROWS * TILE,
             }}
           />
 
@@ -1036,7 +1237,7 @@ export default function WorldMap() {
             <div
               onClick={() => setDialogue(null)}
               className="absolute left-2 right-2 bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 text-white text-sm cursor-pointer"
-              style={{ bottom: 180, zIndex: 15 }}
+              style={{ bottom: 178, zIndex: 15 }}
             >
               {dialogue}
             </div>
@@ -1054,18 +1255,16 @@ export default function WorldMap() {
             }} />
           </div>
 
-          {/* Mini-map: overlay bottom-right on mobile (hidden on desktop) */}
-          <div className="absolute bottom-2 right-2 lg:hidden" style={{ zIndex: 10 }}>
+          {/* Mini-map: small overlay bottom-right on mobile (hidden on desktop) */}
+          <div className="absolute bottom-2 right-1 lg:hidden" style={{ zIndex: 10, transform: 'scale(0.6)', transformOrigin: 'bottom right' }}>
             <MiniMap currentMapId={currentMapId} />
           </div>
 
         </div>
 
-        {/* Right column: mini-map, vertically centred, no overflow */}
-        <div style={{
-          flexShrink: 0, width: 380, overflow: 'hidden',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        }}
+        {/* Right column: mini-map, desktop only. No inline display — Tailwind hidden/flex controls it */}
+        <div
+          style={{ flexShrink: 0, width: 380, overflow: 'hidden', flexDirection: 'column', justifyContent: 'center' }}
           className="hidden lg:flex"
         >
           <MiniMap currentMapId={currentMapId} />
@@ -1081,40 +1280,79 @@ export default function WorldMap() {
         />
       )}
 
-      {worldBagOpen && profile && (
+      {worldBagOpen && profile && !pendingWorldItem && (
         <BagMenu
           bag={profile.bag ?? []}
-          onUse={async (itemId) => {
-            const item = ITEMS.find(i => i.id === itemId)
-            if (!item || !profile.id) return
-            const party = profile.party ?? []
-            let newParty = party
-            if (item.effect === 'heal') {
-              const target = party.findIndex(p => p.currentHp < p.maxHp)
-              if (target === -1) { setDialogue('All Pokémon are healthy!'); return }
-              newParty = party.map((p, i) => i === target
-                ? { ...p, currentHp: Math.min(p.maxHp, (p.currentHp ?? 0) + item.power) }
-                : p)
-              setDialogue(`${party[target].nickname ?? 'Pokémon'} recovered ${item.power} HP!`)
-            } else if (item.effect === 'revive') {
-              const target = party.findIndex(p => (p.currentHp ?? 0) <= 0)
-              if (target === -1) { setDialogue('No fainted Pokémon!'); return }
-              newParty = party.map((p, i) => i === target
-                ? { ...p, currentHp: Math.floor(p.maxHp / 2) }
-                : p)
-              setDialogue(`${party[target].nickname ?? 'Pokémon'} was revived!`)
-            }
-            const newBag = (profile.bag ?? [])
-              .map(b => b.itemId === itemId ? { ...b, qty: b.qty - 1 } : b)
-              .filter(b => b.qty > 0)
-            try {
-              await updateProfile(profile.id, { party: newParty, bag: newBag })
-              useProfileStore.getState().setProfile({ ...profile, party: newParty, bag: newBag })
-            } catch { /* silent */ }
+          onUse={(itemId) => {
             setWorldBagOpen(false)
+            setPendingWorldItem({ itemId })
           }}
           onClose={() => setWorldBagOpen(false)}
         />
+      )}
+
+      {/* Pokémon picker — shown after selecting a bag item */}
+      {pendingWorldItem && profile && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
+          onClick={() => setPendingWorldItem(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-[#0f3460] border-t-2 border-yellow-400 rounded-t-2xl p-4 flex flex-col gap-3"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-yellow-400 font-bold text-sm">Which Pokémon?</div>
+            {(profile.party ?? []).map((mon, idx) => {
+              const item = ITEMS.find(i => i.id === pendingWorldItem.itemId)
+              const isUsable = item?.effect === 'revive'
+                ? (mon.currentHp ?? 0) <= 0
+                : (mon.currentHp ?? 0) < mon.maxHp
+              const hpPct = mon.maxHp > 0 ? Math.max(0, mon.currentHp / mon.maxHp) : 0
+              const hpColor = hpPct > 0.5 ? '#58d040' : hpPct > 0.25 ? '#e8a018' : '#e02820'
+              return (
+                <button
+                  key={idx}
+                  disabled={!isUsable}
+                  onClick={async () => {
+                    if (!item || !profile.id) return
+                    let newParty = [...(profile.party ?? [])]
+                    if (item.effect === 'heal') {
+                      newParty[idx] = { ...newParty[idx], currentHp: Math.min(newParty[idx].maxHp, (newParty[idx].currentHp ?? 0) + item.power) }
+                      setDialogue(`${newParty[idx].nickname ?? 'Pokémon'} recovered ${item.power} HP!`)
+                    } else if (item.effect === 'revive') {
+                      newParty[idx] = { ...newParty[idx], currentHp: Math.floor(newParty[idx].maxHp / 2) }
+                      setDialogue(`${newParty[idx].nickname ?? 'Pokémon'} was revived!`)
+                    }
+                    const newBag = (profile.bag ?? [])
+                      .map(b => b.itemId === pendingWorldItem.itemId ? { ...b, qty: b.qty - 1 } : b)
+                      .filter(b => b.qty > 0)
+                    setPendingWorldItem(null)
+                    try {
+                      await updateProfile(profile.id, { party: newParty, bag: newBag })
+                      useProfileStore.getState().setProfile({ ...profile, party: newParty, bag: newBag })
+                    } catch { /* silent */ }
+                  }}
+                  className="flex items-center gap-3 bg-[#1a1a2e] disabled:opacity-40 rounded-xl px-3 py-2 text-left transition-all hover:bg-[#16213e]"
+                >
+                  <img
+                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.pokemonId}.png`}
+                    alt="" style={{ width: 36, height: 36, imageRendering: 'pixelated' }}
+                  />
+                  <div className="flex-1">
+                    <div className="text-white text-sm font-bold">{mon.nickname ?? `#${mon.pokemonId}`} <span className="text-gray-400 text-xs font-normal">Lv{mon.level}</span></div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div style={{ width: `${hpPct * 100}%`, height: '100%', background: hpColor, borderRadius: 9999 }} />
+                      </div>
+                      <span className="text-xs text-gray-400">{mon.currentHp}/{mon.maxHp}</span>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+            <button onClick={() => setPendingWorldItem(null)} className="text-gray-400 text-sm underline text-center">Cancel</button>
+          </div>
+        </div>
       )}
 
       {battleFlash && (
