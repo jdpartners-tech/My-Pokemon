@@ -1333,17 +1333,17 @@ export default function WorldMap() {
             }}
           />
 
-          {/* Area name banner */}
+          {/* Area name banner — left-aligned on mobile (mini-map is top-right), centred on desktop */}
           {areaBanner && (
             <div
               key={areaBanner}
-              className="absolute left-1/2 font-bold text-sm pointer-events-none"
+              className="absolute left-2 lg:left-1/2 lg:-translate-x-1/2 font-bold text-sm pointer-events-none"
               style={{
-                top: 8, transform: 'translateX(-50%)',
+                top: 8,
                 background: 'rgba(10,16,32,0.85)', border: '1.5px solid #ffd700',
                 borderRadius: 8, color: '#ffd700', padding: '4px 14px',
                 whiteSpace: 'nowrap', animation: 'fadeBanner 3s ease-out forwards',
-                zIndex: 5,
+                zIndex: 15,
               }}
             >
               {areaBanner}
