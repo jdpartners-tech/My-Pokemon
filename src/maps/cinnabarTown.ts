@@ -28,7 +28,13 @@ export const cinnabarTown: MapData = {
   buildingOverlays: [
     { x: 4, y: 2, image: 'tile_pokemon_center.png', heightTiles: 5 },
   ],
-  wildPokemon: [],
+  wildPokemon: [
+    { pokemonId: 58,  minLevel: 18, maxLevel: 25, rate: 35 },  // Growlithe
+    { pokemonId: 37,  minLevel: 18, maxLevel: 25, rate: 30 },  // Vulpix
+    { pokemonId: 77,  minLevel: 20, maxLevel: 27, rate: 20 },  // Ponyta
+    { pokemonId: 126, minLevel: 22, maxLevel: 28, rate: 12 },  // Magmar
+    { pokemonId: 59,  minLevel: 28, maxLevel: 32, rate: 3  },  // Arcanine ⭐
+  ],
   waterPokemon: [],
   trainers: [],
   exits: [
