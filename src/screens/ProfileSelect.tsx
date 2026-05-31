@@ -73,33 +73,31 @@ export default function ProfileSelect() {
                     {/* Unified player card */}
                     <button
                       onClick={() => { setSelected(p); setPinError('') }}
-                      className="w-full flex-1 bg-[#16213e] border-2 border-[#4ecdc4]/40 hover:border-yellow-400 rounded-2xl p-5 flex flex-col gap-4 transition-all active:scale-95 text-left"
+                      className="w-full flex-1 bg-[#16213e] border-2 border-[#4ecdc4]/40 hover:border-yellow-400 rounded-2xl p-5 flex flex-col items-center gap-4 transition-all active:scale-95 text-center"
                     >
                       {/* Header: lead Pokemon + identity */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-center gap-2">
                         <img
                           src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${leadId}.png`}
                           alt=""
                           style={{ width: 96, height: 96, objectFit: 'contain', imageRendering: 'pixelated' }}
                         />
-                        <div className="flex flex-col gap-1.5">
-                          <div className="text-white font-bold text-2xl">{p.name}</div>
-                          <div className="text-gray-400 text-sm">Age {p.age}</div>
-                          <span className={`text-xs font-bold px-3 py-1 rounded-full w-fit ${
-                            p.difficulty === 'advanced'
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                              : 'bg-green-500/20 text-green-400 border border-green-500/40'
-                          }`}>
-                            {p.difficulty === 'advanced' ? 'Advanced' : 'Beginner'}
-                          </span>
-                        </div>
+                        <div className="text-white font-bold text-2xl">{p.name}</div>
+                        <div className="text-gray-400 text-sm">Age {p.age}</div>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full w-fit ${
+                          p.difficulty === 'advanced'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                            : 'bg-green-500/20 text-green-400 border border-green-500/40'
+                        }`}>
+                          {p.difficulty === 'advanced' ? 'Advanced' : 'Beginner'}
+                        </span>
                       </div>
 
                       {/* Party row */}
                       {party.length > 0 && (
-                        <div className="border-t border-[#2a3a5a] pt-3">
+                        <div className="border-t border-[#2a3a5a] pt-3 w-full">
                           <div className="text-xs text-[#4a6a8a] mb-2">My Team</div>
-                          <div className="flex gap-2 flex-wrap">
+                          <div className="flex gap-2 flex-wrap justify-center">
                             {party.map((mon, i) => {
                               const hpPct = mon.maxHp > 0 ? Math.max(0, mon.currentHp / mon.maxHp) : 0
                               const hpColor = hpPct > 0.5 ? '#58d040' : hpPct > 0.25 ? '#e8a018' : '#e02820'
@@ -122,12 +120,12 @@ export default function ProfileSelect() {
                       )}
 
                       {/* Stats footer */}
-                      <div className="border-t border-[#2a3a5a] pt-2 flex gap-4 items-center">
+                      <div className="border-t border-[#2a3a5a] pt-2 w-full flex gap-4 items-center justify-center">
                         <span className="text-sm text-gray-400">&#x2694;&#xFE0F; {battlesWon} battles won</span>
                         <span className="text-sm text-gray-400 flex items-center gap-1">
                           <svg width="14" height="14" viewBox="0 0 14 14">
-                            <circle cx="7" cy="7" r="6.5" fill="#e82020" />
-                            <path d="M0.5 7 A6.5 6.5 0 0 1 13.5 7" fill="#f8f8f8" />
+                            <circle cx="7" cy="7" r="6.5" fill="#f8f8f8" />
+                            <path d="M0.5 7 A6.5 6.5 0 0 1 13.5 7" fill="#e82020" />
                             <line x1="0.5" y1="7" x2="13.5" y2="7" stroke="#1a1208" strokeWidth="1.2" />
                             <circle cx="7" cy="7" r="6.5" fill="none" stroke="#1a1208" strokeWidth="1" />
                             <circle cx="7" cy="7" r="2.2" fill="#f8f8f8" stroke="#1a1208" strokeWidth="1" />
