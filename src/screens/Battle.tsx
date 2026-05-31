@@ -303,6 +303,14 @@ export default function Battle() {
   const [bagOpen, setBagOpen] = useState(false)
   const [, setFlashOn] = useState(false)
   const [hoveredMove, setHoveredMove] = useState(0)
+  const [safeAreaTop, setSafeAreaTop] = useState(0)
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px)'
+    document.body.appendChild(el)
+    setSafeAreaTop(parseFloat(getComputedStyle(el).paddingTop) || 0)
+    document.body.removeChild(el)
+  }, [])
   const ballCanvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const hitCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -539,12 +547,13 @@ export default function Battle() {
     )
   }
 
+  const availH = window.innerHeight - safeAreaTop
   const BATTLE_TOTAL_H = SKY_H + 280  // sky + bottom panel estimate
-  const scale = Math.min(window.innerWidth / W, window.innerHeight / BATTLE_TOTAL_H, 1.8)
-  const scaledH = Math.round(window.innerHeight / scale)
+  const scale = Math.min(window.innerWidth / W, availH / BATTLE_TOTAL_H, 1.8)
+  const scaledH = Math.round(availH / scale)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: safeAreaTop }}>
     <div style={{ zoom: scale, transformOrigin: 'top center', width: W, height: scaledH, display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Battle scene (360 × 240 px = top 48% of Ruby 500px canvas) ── */}
