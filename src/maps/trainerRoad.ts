@@ -55,6 +55,7 @@ export const trainerRoad: MapData = {
       party: [{ pokemonId: 58, level: 20 }, { pokemonId: 37, level: 20 }] },
     { x: 12, y: 8, direction: 'down', name: 'Lass Mika',
       party: [{ pokemonId: 35, level: 18 }, { pokemonId: 39, level: 19 }, { pokemonId: 52, level: 18 }] },
+    { x: 4, y: 8, direction: 'down' as const, name: 'Cap', party: [{ pokemonId: 56, level: 22 }, { pokemonId: 66, level: 22 }, { pokemonId: 100, level: 24 }] },
   ],
   exits: [
     { x: 7,  y: 0, targetMap: 'rockyCave',    targetX: 7,  targetY: 13 },

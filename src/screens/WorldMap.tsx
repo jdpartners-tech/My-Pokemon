@@ -80,6 +80,21 @@ const SPRITE_FILES: Record<string, string> = {
 const SPRITE_IMGS: Record<string, HTMLImageElement> = {}
 const SPRITE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
 
+// ── NPC trainer figure images ─────────────────────────────────────────────
+const NPC_FIGURE_FILES: Record<string, string> = {
+  'Monk':           'npc/monk.png',
+  'Team Rocket 1':  'npc/team-rocket-1.png',
+  'Team Rocket 2':  'npc/team-rocket-2.png',
+  'Cap':            'npc/cap.png',
+  'Black Rocket':   'npc/black-rocket.png',
+}
+const NPC_FIGURE_IMGS: Record<string, HTMLImageElement> = {}
+Object.entries(NPC_FIGURE_FILES).forEach(([name, file]) => {
+  const img = new Image()
+  img.src = `${import.meta.env.BASE_URL}${file}`
+  NPC_FIGURE_IMGS[name] = img
+})
+
 // whiteOnly=true  → only flood-fill from corners that are near-white (building images)
 // whiteOnly=false → flood-fill from all corners regardless of color (sprites / tile overlays)
 function applyChromaKey(img: HTMLImageElement, whiteOnly = false): HTMLCanvasElement {
@@ -804,31 +819,42 @@ export default function WorldMap() {
         ctx.restore()
       }
 
-      // ── Pass 5: NPC trainers — drawn from sprite sheet ───────────────────
+      // ── Pass 5: NPC trainers ─────────────────────────────────────────────
       for (const t of map.trainers) {
         const vx = t.x - playerX + hw
         const vy = t.y - playerY + hh
         if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
         const dx = vx * TILE, dy = vy * TILE
-        const sheet = npcSheetRef.current
-        // NPC sprite: pick row/col based on trainer class
-        const NPC_CLASS_SPRITES: Record<string, {row: number, col: number}> = {
-          'Biker':   { row: 4, col: 5 },
-          'Lass':    { row: 2, col: 3 },
-          'Swimmer': { row: 3, col: 2 },
-          'Hiker':   { row: 5, col: 1 },
-          'default': { row: 1, col: 5 },
-        }
-        const npcCls = t.name.split(' ')[0]
-        const npcSprite = NPC_CLASS_SPRITES[npcCls] ?? NPC_CLASS_SPRITES['default']
-        const sx = npcSprite.col * 16, sy = npcSprite.row * 16
-        if (sheet && sheet.complete) {
-          ctx.imageSmoothingEnabled = false
-          ctx.drawImage(sheet, sx, sy, 16, 16, dx + 2, dy + 4, TILE - 4, TILE - 4)
+        const npcImg = NPC_FIGURE_IMGS[t.name]
+        if (npcImg?.complete && npcImg.naturalWidth > 0) {
+          const aspect = npcImg.naturalWidth / npcImg.naturalHeight
+          const h = TILE
+          const w = h * aspect
+          ctx.imageSmoothingEnabled = true
+          ctx.drawImage(npcImg, vx * TILE + (TILE - w) / 2, vy * TILE, w, h)
         } else {
-          ctx.font = `${TILE * 0.7}px serif`
-          ctx.textAlign = 'center'
-          ctx.fillText('🧑', dx + TILE / 2, dy + TILE * 0.8)
+          const sheet = npcSheetRef.current
+          // NPC sprite: pick row/col based on trainer class
+          const NPC_CLASS_SPRITES: Record<string, {row: number, col: number}> = {
+            'Biker':   { row: 4, col: 5 },
+            'Lass':    { row: 2, col: 3 },
+            'Swimmer': { row: 3, col: 2 },
+            'Hiker':   { row: 5, col: 1 },
+            'default': { row: 1, col: 5 },
+          }
+          const npcCls = t.name.split(' ')[0]
+          const npcSprite = NPC_CLASS_SPRITES[npcCls] ?? NPC_CLASS_SPRITES['default']
+          const sx = npcSprite.col * 16, sy = npcSprite.row * 16
+          if (sheet && sheet.complete) {
+            ctx.imageSmoothingEnabled = false
+            ctx.drawImage(sheet, sx, sy, 16, 16, dx + 2, dy + 4, TILE - 4, TILE - 4)
+          } else {
+            ctx.font = `${TILE * 0.7}px serif`
+            ctx.textAlign = 'center'
+            ctx.fillText('🧑', dx + TILE / 2, dy + TILE * 0.8)
+          }
+          // trigger redraw when image loads
+          if (npcImg && !npcImg.complete) npcImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
         }
         // Exclamation mark for vision cone
         const dirOffset = { down: [0,1], up: [0,-1], left: [-1,0], right: [1,0] }[t.direction] ?? [0,1]

@@ -41,7 +41,9 @@ export const cinnabarTown: MapData = {
     { pokemonId: 136, minLevel: 22, maxLevel: 28, rate: 1  },  // Flareon ⭐
   ],
   waterPokemon: [],
-  trainers: [],
+  trainers: [
+    { x: 9, y: 9, direction: 'down' as const, name: 'Black Rocket', party: [{ pokemonId: 59, level: 30 }, { pokemonId: 38, level: 30 }, { pokemonId: 126, level: 32 }] },
+  ],
   exits: [
     { x: 0,  y: 5, targetMap: 'trainerRoad',  targetX: 17, targetY: 5 },
     { x: 0,  y: 6, targetMap: 'trainerRoad',  targetX: 17, targetY: 6 },

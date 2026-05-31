@@ -8,7 +8,8 @@ import BagMenu from '../components/BagMenu'
 import movesJson from '../data/moves.json'
 import pokemonJson from '../data/pokemon.json'
 import { MoveData, PokemonData } from '../types/game'
-import { expForLevel } from '../utils/exp'
+import { expForLevel, calculateStat } from '../utils/exp'
+import { getTypeEffectiveness } from '../utils/damage'
 
 const moveDataMap = Object.fromEntries(
   (movesJson as MoveData[]).map(m => [m.id, m])
@@ -72,6 +73,14 @@ function drawPokeball(
 const W = 360
 const SKY_H = 240  // top 48% of 500px
 const MONO = "'Courier New', monospace"
+
+const NPC_BATTLE_PICS: Record<string, string> = {
+  'Monk':           'npc/monk-full.png',
+  'Team Rocket 1':  'npc/team-rocket-1-full.png',
+  'Team Rocket 2':  'npc/team-rocket-2-full.png',
+  'Cap':            'npc/cap-full.png',
+  'Black Rocket':   'npc/black-rocket-full.png',
+}
 const MENU_BG = '#f0ece8'
 const MENU_BD = '#282818'
 const MOVE_W = 201  // Math.floor(360 * 0.56) exact
@@ -101,7 +110,7 @@ export default function Battle() {
     opponentAttacking, playerFlash, playerShakeX,
     isWildBattle, ballAnimPhase, ballCaught, party, answerResult,
     trainerSpriteCol, trainerSpriteRow,
-    damagePopup, battleBanner,
+    damagePopup, battleBanner, trainerName,
   } = useBattleStore()
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
@@ -320,11 +329,12 @@ export default function Battle() {
     )
   }
 
-  const scale = Math.min(window.innerWidth, 430) / W
+  const scale = window.innerWidth / W
+  const scaledH = Math.round(window.innerHeight / scale)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-    <div style={{ zoom: scale, transformOrigin: 'top center', width: W }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden' }}>
+    <div style={{ zoom: scale, transformOrigin: 'top center', width: W, height: scaledH, display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Battle scene (360 × 240 px = top 48% of Ruby 500px canvas) ── */}
       <div style={{ position: 'relative', width: W, height: SKY_H, overflow: 'hidden', flexShrink: 0 }}>
@@ -355,22 +365,37 @@ export default function Battle() {
             currentHp={opponentPokemon.currentHp}
             maxHp={opponentPokemon.maxHp}
             status={opponentPokemon.status}
+            showNums
           />
         </div>
 
         {/* Trainer intro — trainer slides in, then throws a Pokéball */}
         {phase === 'trainer_intro' && (
           <>
-            <div style={{
-              position: 'absolute', right: 8, top: 8,
-              width: 100, height: 128,
-              backgroundImage: 'url(sprites/trainer-sheet.png)',
-              backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
-              backgroundSize: `${398 * 2}px ${513 * 2}px`,
-              backgroundRepeat: 'no-repeat',
-              imageRendering: 'pixelated' as const,
-              animation: 'trainerSlideIn 0.5s ease-out',
-            }} />
+            {NPC_BATTLE_PICS[trainerName ?? ''] ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${NPC_BATTLE_PICS[trainerName!]}`}
+                style={{
+                  position: 'absolute', right: 8, top: 8,
+                  width: 100, height: 128,
+                  objectFit: 'contain', objectPosition: 'bottom',
+                  imageRendering: 'pixelated' as const,
+                  animation: 'trainerSlideIn 0.5s ease-out',
+                }}
+                alt=""
+              />
+            ) : (
+              <div style={{
+                position: 'absolute', right: 8, top: 8,
+                width: 100, height: 128,
+                backgroundImage: 'url(sprites/trainer-sheet.png)',
+                backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
+                backgroundSize: `${398 * 2}px ${513 * 2}px`,
+                backgroundRepeat: 'no-repeat',
+                imageRendering: 'pixelated' as const,
+                animation: 'trainerSlideIn 0.5s ease-out',
+              }} />
+            )}
             {trainerThrowBall && (
               <div style={{
                 position: 'absolute', width: 18, height: 18,
@@ -576,16 +601,38 @@ export default function Battle() {
               })}
             </div>
 
-            {/* Move info panel: POW / PP / TYPE */}
+            {/* Move info panel: DMG / PP / TYPE */}
             <div style={{
               flex: 1, border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
               background: MENU_BG, padding: '6px 8px',
               display: 'flex', flexDirection: 'column', gap: 1,
             }}>
-              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>POW</div>
-              <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>
-                {hoverMd ? (hoverMd.power > 0 ? hoverMd.power : '—') : '—'}
-              </div>
+              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>DMG</div>
+              {(() => {
+                if (!hoverMd || hoverMd.power === 0) return (
+                  <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>—</div>
+                )
+                const atkData = pokemonDataMap[playerPokemon.pokemonId]
+                const defData = pokemonDataMap[opponentPokemon.pokemonId]
+                if (!atkData || !defData) return (
+                  <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>—</div>
+                )
+                const atkStat = calculateStat(atkData.baseStats.atk, playerPokemon.level)
+                const defStat = calculateStat(defData.baseStats.def, opponentPokemon.level)
+                const eff = getTypeEffectiveness(hoverMd.type as any, defData.types as any)
+                if (eff === 0) return (
+                  <div style={{ fontSize: 10, color: '#888', marginBottom: 3 }}>✕ No effect</div>
+                )
+                // Fixed 92.5% factor (midpoint of 85-100% range) for stable display
+                const base = Math.floor((Math.floor((2 * playerPokemon.level) / 5 + 2) * hoverMd.power * atkStat) / defStat / 50) + 2
+                const dmg = Math.max(1, Math.floor(base * eff * 0.925))
+                const color = eff >= 2 ? '#e03020' : eff < 1 ? '#6888c8' : '#181808'
+                return (
+                  <div style={{ fontSize: 11, fontWeight: 'bold', color, marginBottom: 3 }}>
+                    -{dmg}{eff >= 2 ? ' ★' : ''}
+                  </div>
+                )
+              })()}
               <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>PP</div>
               <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>
                 {hoverMv ? `${hoverMv.pp}/${hoverMv.maxPp}` : '—'}
@@ -832,7 +879,7 @@ export default function Battle() {
               {question.question}
             </div>
             <div style={{ color: '#ffd700', fontSize: 10, textAlign: 'center', marginBottom: 16 }}>
-              {question.subject === 'chinese' ? '答对可以给予满额伤害！' : 'Answer correctly for full damage!'}
+              {question.subject === 'chinese' ? '答對可以給予滿額傷害！' : 'Answer correctly for full damage!'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {question.options.map((opt, i) => (

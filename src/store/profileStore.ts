@@ -6,6 +6,9 @@ interface ProfileState {
   setProfile: (profile: Profile) => void
   clearProfile: () => void
   updateProfile: (updates: Partial<Profile>) => void
+  // Team replacement flow: which party slot is being replaced (-1 = none)
+  replacingPartyIdx: number
+  setReplacingPartyIdx: (idx: number) => void
 }
 
 export const useProfileStore = create<ProfileState>((set) => ({
@@ -15,4 +18,6 @@ export const useProfileStore = create<ProfileState>((set) => ({
   updateProfile: (updates) => set((state) => ({
     profile: state.profile ? { ...state.profile, ...updates } : null
   })),
+  replacingPartyIdx: -1,
+  setReplacingPartyIdx: (idx) => set({ replacingPartyIdx: idx }),
 }))

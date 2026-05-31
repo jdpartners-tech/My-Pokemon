@@ -46,7 +46,9 @@ export const viridianForest: MapData = {
     { pokemonId: 26,  minLevel: 10, maxLevel: 14, rate: 1  },  // Raichu ⭐
     { pokemonId: 3,   minLevel: 15, maxLevel: 18, rate: 1  },  // Venusaur ⭐
   ],
-  trainers: [],
+  trainers: [
+    { x: 7, y: 4, direction: 'down' as const, name: 'Monk', party: [{ pokemonId: 46, level: 8 }, { pokemonId: 48, level: 9 }, { pokemonId: 102, level: 10 }] },
+  ],
   exits: [
     { x: 0, y: 6, targetMap: 'sunlitMeadow', targetX: 14, targetY: 6 },
     { x: 0, y: 7, targetMap: 'sunlitMeadow', targetX: 14, targetY: 7 },

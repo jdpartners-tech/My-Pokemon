@@ -559,7 +559,9 @@ export function useBattleEngine() {
     const pokeData = pokemonMap[opponentPokemon.pokemonId]
     const catchRate = pokeData?.catchRate ?? 45
     const hpFactor = opponentPokemon.currentHp / opponentPokemon.maxHp
-    const catchChance = Math.min(1, (catchRate / 255) * (2 - hpFactor))
+    // Quadratic curve: multiplier ranges from 1× (full HP) to 4× (near-faint)
+    const catchMultiplier = 1 + 3 * Math.pow(1 - hpFactor, 2)
+    const catchChance = Math.min(1, (catchRate / 255) * catchMultiplier)
     const caught = Math.random() < catchChance
     store.setBallCaught(caught)
 
@@ -604,20 +606,37 @@ export function useBattleEngine() {
       }
 
       const finalCatchPokemon = useBattleStore.getState().playerPokemon!
-      const currentParty = (useProfileStore.getState().profile ?? profile).party ?? []
+      const freshProfile = useProfileStore.getState().profile ?? profile
+      const currentParty = freshProfile.party ?? []
+      const currentBox = freshProfile.box ?? []
+      // Party not full → add to party; otherwise send to box (lighter BoxPokemon format)
       const partyWithCaught = currentParty.length < 6
         ? [...currentParty, { ...opponentPokemon, nickname: null }]
         : currentParty
+      const newBox = currentParty.length >= 6
+        ? [...currentBox, { pokemonId: opponentPokemon.pokemonId, nickname: null, level: opponentPokemon.level, xp: opponentPokemon.xp }]
+        : currentBox
+
+      if (currentParty.length >= 6) {
+        store.addLog(`Party is full! ${getName(opponentPokemon)} was sent to your Box.`)
+      }
+
       const updatedCatchParty = partyWithCaught.map((p, idx) =>
         idx === 0
           ? { ...p, xp: catchNewXp, level: catchNewLevel, currentHp: finalCatchPokemon.currentHp, moves: finalCatchPokemon.moves }
           : p
       )
+      const updatedPokedex = {
+        ...(freshProfile.pokedex ?? {}),
+        [opponentPokemon.pokemonId]: 'caught' as const,
+      }
       try {
-        await updateProfile(profile.id, { party: updatedCatchParty })
+        await updateProfile(profile.id, { party: updatedCatchParty, box: newBox, pokedex: updatedPokedex })
         useProfileStore.getState().setProfile({
-          ...(useProfileStore.getState().profile ?? profile),
+          ...freshProfile,
           party: updatedCatchParty,
+          box: newBox,
+          pokedex: updatedPokedex,
         })
       } catch (e) {
         console.error('Failed to save caught pokemon:', e)

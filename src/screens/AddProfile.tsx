@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import { buildPartyPokemon } from '../utils/exp'
 import pokemonJson from '../data/pokemon.json'
 import type { Profile, PokemonData, SubjectSettings } from '../types/game'
 
-// ── Pixel-art character renderers (ported from docs/mockup.html) ──────────────
-// Male: Red / FireRed hero — blue cap, red jacket (Pokémon 151 era)
+// â”€â”€ Pixel-art character renderers (ported from docs/mockup.html) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Male: Red / FireRed hero â€” blue cap, red jacket (Pokémon 151 era)
 function drawMaleSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number, s: number) {
   const f = (x: number, y: number, w: number, h: number, c: string) => {
     ctx.fillStyle = c; ctx.fillRect(cx + x*s, cy + y*s, w*s, h*s)
@@ -25,7 +25,7 @@ function drawMaleSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
   f(-5,-2,1,8,'#c08030'); f(4,-2,1,8,'#c08030')
 }
 
-// Female: Leaf / FireRed heroine — white bandana, red top, blue shorts (Pokémon 151 era)
+// Female: Leaf / FireRed heroine â€” white bandana, red top, blue shorts (Pokémon 151 era)
 function drawFemaleSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number, s: number) {
   const f = (x: number, y: number, w: number, h: number, c: string) => {
     ctx.fillStyle = c; ctx.fillRect(cx + x*s, cy + y*s, w*s, h*s)
@@ -45,8 +45,8 @@ function drawFemaleSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   f(-5,-2,1,8,'#c08030'); f(4,-2,1,8,'#c08030')
 }
 
-// Canvas: 80×100px, character at (40, 76), scale 2.0
-// Hat top → 76 − 21×2 = 34px from canvas top; shadow → 76 + 12×2 = 100px (bottom edge)
+// Canvas: 80Ã—100px, character at (40, 76), scale 2.0
+// Hat top â†’ 76 âˆ’ 21Ã—2 = 34px from canvas top; shadow â†’ 76 + 12Ã—2 = 100px (bottom edge)
 const CW = 80, CH = 100
 
 function CharacterCanvas({ gender }: { gender: 'male' | 'female' }) {
@@ -62,7 +62,7 @@ function CharacterCanvas({ gender }: { gender: 'male' | 'female' }) {
   return <canvas ref={ref} width={CW} height={CH} style={{ imageRendering: 'pixelated', display: 'block' }} />
 }
 
-// ── Starter data ──────────────────────────────────────────────────────────────
+// â”€â”€ Starter data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const pokemonMap = Object.fromEntries(
   (pokemonJson as PokemonData[]).map(p => [p.id, p])
 ) as Record<number, PokemonData>
@@ -76,12 +76,12 @@ const STARTERS = [
 ]
 
 const SUBJECT_ICONS: Record<string, string> = {
-  english: '📖',
-  maths:   '🔢',
-  chinese: '🈶',
+  english: '📖',   // 📖
+  maths:   '🔢',   // 🔢
+  chinese: '中文',   // 中文 (text, avoids flag emoji issues)
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function AddProfile() {
   const navigate = useNavigate()
   const { createDefaultProfile, saveProfile } = useFirestoreProfile()
@@ -104,7 +104,7 @@ export default function AddProfile() {
     e.preventDefault()
     setError('')
     if (!name.trim()) return setError('Please enter a name.')
-    if (!age || isNaN(Number(age)) || Number(age) < 1) return setError('Please enter a valid age.')
+    if (!age || isNaN(Number(age)) || Number(age) < 1 || Number(age) > 120) return setError('Please enter a valid age.')
     if (!subjects.english && !subjects.maths && !subjects.chinese)
       return setError('Please select at least one subject.')
     if (!/^\d{4}$/.test(pin)) return setError('PIN must be exactly 4 digits.')
@@ -113,7 +113,7 @@ export default function AddProfile() {
     setSaving(true)
     try {
       const ageNum = Number(age)
-      // Difficulty inferred from age — no manual selection needed
+      // Difficulty inferred from age â€” no manual selection needed
       const difficulty = ageNum >= 7 ? 'advanced' : 'beginner'
 
       const starterIds: Record<string, number> = {
@@ -147,7 +147,7 @@ export default function AddProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6">
+    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm bg-[#0f3460] rounded-2xl p-6 flex flex-col gap-5">
         <h1 className="text-2xl font-bold text-yellow-400 text-center">New Trainer</h1>
 
@@ -165,7 +165,7 @@ export default function AddProfile() {
             />
           </div>
 
-          {/* Character — pixel-art Red (Boy) and Leaf (Girl) */}
+          {/* Character â€” pixel-art Red (Boy) and Leaf (Girl) */}
           <div className="flex flex-col gap-1">
             <label className="text-gray-300 text-sm">Character</label>
             <div className="flex gap-3">
@@ -199,7 +199,6 @@ export default function AddProfile() {
               onChange={e => setAge(e.target.value)}
               placeholder="e.g. 8"
               min={1}
-              max={18}
             />
           </div>
 
@@ -236,7 +235,7 @@ export default function AddProfile() {
             </div>
           </div>
 
-          {/* Starter Pokémon — equal squares, larger icons */}
+          {/* Starter Pokémon â€” equal squares, larger icons */}
           <div className="flex flex-col gap-2">
             <label className="text-gray-300 text-sm">Starter Pokémon</label>
             <div className="grid grid-cols-3 gap-2">
@@ -306,9 +305,10 @@ export default function AddProfile() {
           onClick={() => navigate('/')}
           className="text-gray-400 text-sm underline text-center"
         >
-          ← Back
+          Back
         </button>
       </div>
     </div>
   )
 }
+

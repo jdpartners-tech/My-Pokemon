@@ -54,7 +54,10 @@ export const rockyCave: MapData = {
     { pokemonId: 142, minLevel: 22, maxLevel: 28, rate: 1  },  // Aerodactyl ⭐
   ],
   waterPokemon: [],
-  trainers: [],
+  trainers: [
+    { x: 4, y: 2, direction: 'down' as const, name: 'Team Rocket 1', party: [{ pokemonId: 74, level: 18 }, { pokemonId: 41, level: 18 }, { pokemonId: 109, level: 20 }] },
+    { x: 10, y: 9, direction: 'down' as const, name: 'Team Rocket 2', party: [{ pokemonId: 92, level: 18 }, { pokemonId: 104, level: 19 }, { pokemonId: 88, level: 20 }] },
+  ],
   exits: [
     { x: 15, y: 6, targetMap: 'mistyLake',   targetX: 0, targetY: 6 },
     { x: 15, y: 7, targetMap: 'mistyLake',   targetX: 0, targetY: 7 },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuestions } from '../hooks/useQuestions'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
@@ -38,8 +38,8 @@ export default function Admin() {
 
   if (!unlocked) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-4 p-6">
-        <button onClick={() => navigate('/')} className="self-start text-yellow-400 font-bold text-lg">←</button>
+      <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col items-center justify-center gap-4 p-6">
+        <button onClick={() => navigate('/')} className="self-start text-yellow-400 font-bold text-lg">Back</button>
         <h1 className="text-red-400 font-bold text-2xl">Parent Settings</h1>
         <input type="password" placeholder="Enter parent password" value={password}
           onChange={e => setPassword(e.target.value)}
@@ -58,9 +58,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
+    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col">
       <div className="bg-[#0f3460] px-4 py-3 flex items-center gap-3 border-b border-red-400/20 flex-shrink-0">
-        <button onClick={() => navigate('/')} className="text-yellow-400 font-bold text-xl">←</button>
+        <button onClick={() => navigate('/')} className="text-yellow-400 font-bold text-xl">Back</button>
         <h1 className="text-red-400 font-bold text-lg flex-1">Parent Admin Panel</h1>
       </div>
 
@@ -137,7 +137,7 @@ export default function Admin() {
                     {q.difficulty}
                   </span>
                 </div>
-                <p className="text-green-400 text-xs">✓ {q.answer}</p>
+                <p className="text-green-400 text-xs">âœ“ {q.answer}</p>
                 <div className="flex gap-3 mt-1">
                   <button onClick={() => setEditing(q)} className="text-[#4ecdc4] text-xs underline">Edit</button>
                   <button
@@ -159,9 +159,9 @@ export default function Admin() {
               <div key={p.id} className="bg-[#16213e] border border-gray-700 rounded-xl p-4 flex items-center gap-4">
                 <div className="flex-1">
                   <p className="text-white font-bold text-lg">{p.name}</p>
-                  <p className="text-gray-400 text-sm">Age {p.age} · {p.difficulty}</p>
+                  <p className="text-gray-400 text-sm">Age {p.age} Â· {p.difficulty}</p>
                   <p className="text-gray-500 text-xs">
-                    Battles: {p.stats?.battlesWon ?? 0} ·
+                    Battles: {p.stats?.battlesWon ?? 0} Â·
                     Accuracy: {Math.round(((p.stats?.questionsCorrect ?? 0) / Math.max(1, p.stats?.questionsAnswered ?? 1)) * 100)}%
                   </p>
                 </div>
@@ -207,3 +207,4 @@ export default function Admin() {
     </div>
   )
 }
+
