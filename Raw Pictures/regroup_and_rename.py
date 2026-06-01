@@ -158,8 +158,9 @@ SPLITS: list[tuple[int, str, str]] = [
     (87, "Misty_Walk", "Blue_Round_Pokemon"),  # front+back = Misty walk; left+right = blue sphere Pokemon
 ]
 
-POSE_NAMES_4 = ["front", "back", "left", "right"]
-POSE_NAMES_8 = ["front", "back", "left", "right", "front_walk", "back_walk", "left_walk", "right_walk"]
+POSE_NAMES_4 = ["Look at the front", "Look at the back", "Look at the left", "Look at the right"]
+POSE_NAMES_8 = ["Look at the front", "Look at the back", "Look at the left", "Look at the right",
+                "Look at the front (walk)", "Look at the back (walk)", "Look at the left (walk)", "Look at the right (walk)"]
 SKIP_FONT    = {92, 93, 94}   # font tiles — not real characters
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -183,7 +184,7 @@ def save_char(name: str, tiles: list[Image.Image], pose_names: list[str]) -> Non
     dest = os.path.join(OUT, name)
     os.makedirs(dest, exist_ok=True)
     for tile, pose in zip(tiles, pose_names):
-        tile.save(os.path.join(dest, f"{pose}.png"))
+        tile.save(os.path.join(dest, f"{name} - {pose}.png"))
     print(f"  OK  {name}  ({len(tiles)} poses)")
 
 # ── Main ─────────────────────────────────────────────────────────────────────

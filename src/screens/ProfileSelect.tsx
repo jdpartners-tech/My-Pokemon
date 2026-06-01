@@ -50,10 +50,10 @@ export default function ProfileSelect() {
       <h1 className="text-4xl font-bold text-yellow-400">Who's Playing?</h1>
 
       {selected ? (
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-white text-lg">Enter PIN for <strong>{selected.name}</strong></p>
+        <div className="flex flex-col items-center gap-6">
+          <p className="text-white text-2xl">Enter PIN for <strong>{selected.name}</strong></p>
           <PinEntry onComplete={handlePin} error={pinError} onClear={() => setPinError('')} />
-          <button onClick={() => { setSelected(null); setPinError('') }} className="text-gray-400 text-sm underline">
+          <button onClick={() => { setSelected(null); setPinError('') }} className="text-gray-400 text-base underline">
             Back
           </button>
         </div>

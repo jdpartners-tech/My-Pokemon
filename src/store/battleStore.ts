@@ -150,6 +150,7 @@ export const useBattleStore = create<BattleState>((set) => ({
       'Swimmer': { row: 1, col: 0 },
       'Hiker':   { row: 1, col: 2 },
       'Bug':     { row: 1, col: 3 },
+      'Dark':    { row: 2, col: 0 },
       'default': { row: 0, col: 3 },
     }
     const cls = trainerName.split(' ')[0]

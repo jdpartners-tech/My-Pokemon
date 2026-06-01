@@ -40,6 +40,17 @@ export interface DoorInteraction {
   type: DoorInteractionType
 }
 
+export interface WanderingNpc {
+  id: string
+  name: string          // display name shown on interaction
+  spriteDir: string     // path under public/, e.g. 'sprites/pokemon-npc/pikachu'
+  homeX: number
+  homeY: number
+  wanderRadius: number  // tiles from home it's allowed to roam
+  isTrainer?: boolean   // if true, walking into it starts a battle
+  party?: Array<{ pokemonId: number; level: number }>
+}
+
 export interface MapData {
   id: string
   name: string
@@ -53,4 +64,5 @@ export interface MapData {
   doors: DoorInteraction[]
   buildingOverlays?: BuildingOverlay[]
   isInterior?: boolean
+  wanderingNpcs?: WanderingNpc[]
 }

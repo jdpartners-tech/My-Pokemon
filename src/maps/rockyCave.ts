@@ -55,6 +55,10 @@ export const rockyCave: MapData = {
   ],
   waterPokemon: [],
   trainers: [],
+  wanderingNpcs: [
+    { id: 'koffing_rc_1', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 5,  homeY: 5, wanderRadius: 3 },
+    { id: 'koffing_rc_2', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 11, homeY: 9, wanderRadius: 3 },
+  ],
   exits: [
     { x: 15, y: 6, targetMap: 'mistyLake',   targetX: 0, targetY: 6 },
     { x: 15, y: 7, targetMap: 'mistyLake',   targetX: 0, targetY: 7 },

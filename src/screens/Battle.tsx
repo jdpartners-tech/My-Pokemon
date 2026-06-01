@@ -80,6 +80,7 @@ const NPC_BATTLE_PICS: Record<string, string> = {
   'Team Rocket 2':  'npc/team-rocket-2-full.png',
   'Cap':            'npc/cap-full.png',
   'Black Rocket':   'npc/black-rocket-full.png',
+  'Dark Trainer':   'npc/dark-trainer-full.png',
 }
 const MENU_BG = '#f0ece8'
 const MENU_BD = '#282818'
@@ -1091,8 +1092,8 @@ export default function Battle() {
       }}>
         <div style={{
           background: '#16213e', border: '2px solid #ffd700',
-          borderRadius: 10, width: 336, maxWidth: '95vw',
-          padding: '24px 16px 16px', position: 'relative',
+          borderRadius: 10, width: 290, maxWidth: '88vw',
+          padding: '24px 14px 14px', position: 'relative',
           fontFamily: MONO,
         }}>
           {/* Move name badge */}

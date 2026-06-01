@@ -21,6 +21,8 @@ const TILE = 32
 const COLS = 11
 const ROWS = 9
 const ENCOUNTER_RATE = 0.02
+const MINIMAP_NAT_W = 359  // MiniMap natural rendered width (px)
+const MINIMAP_NAT_H = 271  // MiniMap natural rendered height (px)
 
 // ── Tile image preloading ─────────────────────────────────────────────────
 const TILE_FILES: Record<string, string> = {
@@ -91,11 +93,24 @@ const NPC_FIGURE_FILES: Record<string, string> = {
   'Black Rocket':   'npc/black-rocket.png',
   'Nurse':          'npc/nurse.png',
 }
+// Trainers with full directional sprite sets (spriteDir/front|back|left|right.png)
+const NPC_DIR_FILES: Record<string, string> = {
+  'Dark Trainer': 'sprites/npc/dark-trainer',
+}
 const NPC_FIGURE_IMGS: Record<string, HTMLImageElement> = {}
 Object.entries(NPC_FIGURE_FILES).forEach(([name, file]) => {
   const img = new Image()
   img.src = `${import.meta.env.BASE_URL}${file}`
   NPC_FIGURE_IMGS[name] = img
+})
+// Preload directional sprites for dir-based NPCs: key = "name_dir"
+const NPC_DIR_POSES = ['front','back','left','right'] as const
+Object.entries(NPC_DIR_FILES).forEach(([name, dir]) => {
+  NPC_DIR_POSES.forEach(pose => {
+    const img = new Image()
+    img.src = `${import.meta.env.BASE_URL}${dir}/${pose}.png`
+    NPC_FIGURE_IMGS[`${name}_${pose}`] = img
+  })
 })
 
 // whiteOnly=true  → only flood-fill from corners that are near-white (building images)
@@ -320,7 +335,23 @@ export default function WorldMap() {
   const [battleFlash, setBattleFlash] = useState(false)
   const [areaBanner, setAreaBanner] = useState<string | null>(null)
   const areaBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Wandering NPCs ────────────────────────────────────────────────────────
+  type WanderingState = {
+    id: string; name: string; spriteDir: string;
+    x: number; y: number;
+    dir: 'up'|'down'|'left'|'right';     // last movement direction → selects walk sprite
+    facing: 'up'|'down'|'left'|'right';  // current idle facing → selects look sprite
+    moving: boolean;
+    homeX: number; homeY: number; wanderRadius: number;
+    isTrainer?: boolean;
+    party?: Array<{ pokemonId: number; level: number }>
+  }
+  const [wanderingNpcs, setWanderingNpcs] = useState<WanderingState[]>([])
+  const wanderingNpcsRef = useRef<WanderingState[]>([])
+  const wanderingImgsRef = useRef<Record<string, HTMLImageElement>>({})  // key = "spriteDir/pose"
   const [worldBagOpen, setWorldBagOpen] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(true)
   const [pendingWorldItem, setPendingWorldItem] = useState<{ itemId: string } | null>(null)
 
   // Canvas size — use window dimensions directly (reliable on iOS Safari)
@@ -426,6 +457,61 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Wandering NPC movement — 550ms tick, 20% move probability per NPC
+  // Walk sprite shows for 200ms then clears to idle (brief animation, not a constant run)
+  useEffect(() => {
+    // Look-around pool: left/right most common, up & down occasionally
+    // 'down' included here so NPC can naturally face viewer via look-around
+    const LOOK_POOL: Array<'up'|'down'|'left'|'right'> = ['left','right','left','right','up','down']
+    const DIRS: Array<'up'|'down'|'left'|'right'> = ['up','down','left','right']
+
+    const timer = setInterval(() => {
+      const map = mapRef.current
+      if (!map) return
+      setWanderingNpcs(prev => {
+        const playerX = pxRef.current
+        const playerY = pyRef.current
+        const next = prev.map((w, _i, arr) => {
+          if (Math.random() > 0.20) {
+            // Stopped — occasionally look around
+            if (Math.random() < 0.40) {
+              const newFacing = LOOK_POOL[Math.floor(Math.random() * LOOK_POOL.length)]
+              return { ...w, moving: false, facing: newFacing }
+            }
+            return { ...w, moving: false }
+          }
+          // Attempt to move
+          const d = DIRS[Math.floor(Math.random() * 4)]
+          const nx = w.x + (d === 'right' ? 1 : d === 'left' ? -1 : 0)
+          const ny = w.y + (d === 'down'  ? 1 : d === 'up'   ? -1 : 0)
+          if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) return { ...w, moving: false }
+          const tile = map.tiles[ny]?.[nx]
+          if (!tile || tile === 'tree' || tile === 'building' || tile === 'water' || tile === 'fence') return { ...w, moving: false }
+          if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) return { ...w, moving: false }
+          if (nx === playerX && ny === playerY) return { ...w, moving: false }
+          if (arr.some(other => other.id !== w.id && other.x === nx && other.y === ny)) return { ...w, moving: false }
+          // After moving DOWN: face sideways on arrival (not at viewer)
+          // After any other direction: face that direction
+          const arrivalFacing: typeof d = d === 'down'
+            ? (Math.random() < 0.5 ? 'left' : 'right')
+            : d
+          return { ...w, x: nx, y: ny, dir: d, facing: arrivalFacing, moving: true }
+        })
+        wanderingNpcsRef.current = next
+        // Clear walk sprite after 200ms so NPCs show idle pose quickly
+        setTimeout(() => {
+          setWanderingNpcs(cur => {
+            const cleared = cur.map(w => w.moving ? { ...w, moving: false } : w)
+            wanderingNpcsRef.current = cleared
+            return cleared
+          })
+        }, 200)
+        return next
+      })
+    }, 550)
+    return () => clearInterval(timer)
+  }, [])
+
   // Auto-heal when entering pokecenter; show area banner on map change
   useEffect(() => {
     const POKECENTER_IDS = new Set(['pokecenter', 'cinnabarPokecenter'])
@@ -442,6 +528,30 @@ export default function WorldMap() {
     }
     prevMapIdRef.current = currentMapId
     currentMapIdRef.current = currentMapId
+
+    // Initialise wandering NPCs for the new map
+    const mapData = MAPS[currentMapId]
+    const initial: WanderingState[] = (mapData?.wanderingNpcs ?? []).map(w => ({
+      id: w.id, name: w.name, spriteDir: w.spriteDir,
+      x: w.homeX, y: w.homeY, dir: 'down' as const, facing: 'down' as const, moving: false,
+      homeX: w.homeX, homeY: w.homeY, wanderRadius: w.wanderRadius,
+      isTrainer: w.isTrainer, party: w.party,
+    }))
+    wanderingNpcsRef.current = initial
+    setWanderingNpcs(initial)
+
+    // Preload sprites for each wandering NPC
+    const POSES = ['front','back','left','right','run_back','run_front','walk_left','walk_right','walk_front']
+    initial.forEach(w => {
+      POSES.forEach(pose => {
+        const key = `${w.spriteDir}/${pose}`
+        if (!wanderingImgsRef.current[key]) {
+          const img = new Image()
+          img.src = `${import.meta.env.BASE_URL}${w.spriteDir}/${pose}.png`
+          wanderingImgsRef.current[key] = img
+        }
+      })
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMapId])
 
@@ -822,94 +932,88 @@ export default function WorldMap() {
         const ix = vx * TILE + TILE / 2, iy = vy * TILE + TILE / 2 - 2
 
         ctx.save()
-        if (item.itemId === 'pokeball') {
-          const r = 11
-          const cy = iy + 1
+        // Subtle sparkle star above item
+        const sparkX = ix + 7, sparkY = iy - 8
+        const sparkSize = 2.5
+        ctx.fillStyle = 'rgba(255,255,180,0.92)'
+        for (let a = 0; a < 4; a++) {
+          const ang = (a / 4) * Math.PI * 2 - Math.PI / 4
+          ctx.beginPath()
+          ctx.moveTo(sparkX, sparkY)
+          ctx.lineTo(sparkX + Math.cos(ang) * sparkSize, sparkY + Math.sin(ang) * sparkSize)
+          ctx.lineTo(sparkX + Math.cos(ang + Math.PI / 4) * sparkSize * 0.35, sparkY + Math.sin(ang + Math.PI / 4) * sparkSize * 0.35)
+          ctx.closePath(); ctx.fill()
+        }
 
-          // Outer glow
-          ctx.shadowColor = 'rgba(220,40,20,0.55)'
-          ctx.shadowBlur = 10
+        if (item.itemId === 'pokeball') {
+          const r = 7
+          const cy = iy + 2
+
+          // Subtle glow
+          ctx.shadowColor = 'rgba(220,40,20,0.4)'
+          ctx.shadowBlur = 7
 
           // Red top half
-          ctx.fillStyle = '#d82010'
+          ctx.fillStyle = '#e02010'
           ctx.beginPath(); ctx.arc(ix, cy, r, Math.PI, 0); ctx.fill()
-          // Red shine highlight (top-left crescent)
-          ctx.fillStyle = 'rgba(255,130,110,0.55)'
-          ctx.beginPath(); ctx.arc(ix - r * 0.28, cy - r * 0.28, r * 0.42, 0, Math.PI * 2); ctx.fill()
-
+          // Shine highlight
           ctx.shadowBlur = 0
+          ctx.fillStyle = 'rgba(255,140,120,0.5)'
+          ctx.beginPath(); ctx.arc(ix - r * 0.3, cy - r * 0.3, r * 0.38, 0, Math.PI * 2); ctx.fill()
 
           // White bottom half
-          ctx.fillStyle = '#f2f2f2'
+          ctx.fillStyle = '#f4f4f4'
           ctx.beginPath(); ctx.arc(ix, cy, r, 0, Math.PI); ctx.fill()
-          // Subtle grey reflection on white
-          ctx.fillStyle = 'rgba(160,160,160,0.18)'
-          ctx.beginPath(); ctx.arc(ix + r * 0.22, cy + r * 0.32, r * 0.48, 0, Math.PI * 2); ctx.fill()
 
           // Outline
-          ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 2
+          ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 1.5
           ctx.beginPath(); ctx.arc(ix, cy, r, 0, Math.PI * 2); ctx.stroke()
 
           // Center band
-          ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 2.5
-          ctx.beginPath(); ctx.moveTo(ix - r + 1.5, cy); ctx.lineTo(ix + r - 1.5, cy); ctx.stroke()
+          ctx.lineWidth = 1.8
+          ctx.beginPath(); ctx.moveTo(ix - r + 1, cy); ctx.lineTo(ix + r - 1, cy); ctx.stroke()
 
           // Button circle
-          ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 1.8
-          ctx.beginPath(); ctx.arc(ix, cy, 3.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
-          // Button inner shine
-          ctx.fillStyle = 'rgba(255,255,255,0.9)'
-          ctx.beginPath(); ctx.arc(ix - 1.2, cy - 1.2, 1.4, 0, Math.PI * 2); ctx.fill()
-
+          ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1a1208'; ctx.lineWidth = 1.2
+          ctx.beginPath(); ctx.arc(ix, cy, 2.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
 
         } else {
-          // Potion: beautiful glass bottle with coloured liquid
-          const bx = ix, by = iy + 4
-          const bw = 13, bh = 14
+          // Potion — compact blue bottle
+          const bx = ix, by = iy + 5
+          const bw = 9, bh = 10
 
-          // Drop shadow / glow
-          ctx.shadowColor = 'rgba(60,120,230,0.5)'
-          ctx.shadowBlur = 10
+          ctx.shadowColor = 'rgba(60,120,230,0.4)'
+          ctx.shadowBlur = 7
 
-          // Bottle body (dark blue outline fill)
+          // Bottle body
           ctx.fillStyle = '#1a3ab0'
-          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 4); ctx.fill()
-
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 3); ctx.fill()
           ctx.shadowBlur = 0
 
-          // Liquid inside (lighter blue, slightly inset)
-          ctx.fillStyle = '#3a70e8'
-          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 2, by - bh / 2 + 2, bw - 4, bh - 3, 3); ctx.fill()
+          // Liquid
+          ctx.fillStyle = '#4080f0'
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 1.5, by - bh / 2 + 1.5, bw - 3, bh - 2.5, 2); ctx.fill()
 
-          // Liquid highlight — bright stripe on left
-          ctx.fillStyle = 'rgba(140,210,255,0.7)'
-          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 2.5, by - bh / 2 + 3, 3, bh - 6, 2); ctx.fill()
-
-          // Liquid shine (oval at top-left of bottle)
-          ctx.fillStyle = 'rgba(200,235,255,0.45)'
-          ctx.beginPath(); ctx.ellipse(bx - 2, by - bh / 2 + 3, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill()
+          // Highlight stripe
+          ctx.fillStyle = 'rgba(160,220,255,0.65)'
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2 + 2, by - bh / 2 + 2, 2, bh - 5, 1); ctx.fill()
 
           // Neck
           ctx.fillStyle = '#2a50c8'
-          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 7, 7, 8, 2); ctx.fill()
-          // Neck highlight
-          ctx.fillStyle = 'rgba(140,200,255,0.5)'
-          ctx.fillRect(bx - 2.5, by - bh / 2 - 6, 2, 4)
+          ctx.beginPath(); ctx.roundRect(bx - 2.5, by - bh / 2 - 5, 5, 6, 1.5); ctx.fill()
 
-          // Cap (pink/magenta)
+          // Cap
           ctx.fillStyle = '#d83070'
-          ctx.beginPath(); ctx.roundRect(bx - 4.5, by - bh / 2 - 12, 9, 6, 2.5); ctx.fill()
-          // Cap highlight
-          ctx.fillStyle = 'rgba(255,180,200,0.6)'
-          ctx.beginPath(); ctx.roundRect(bx - 3, by - bh / 2 - 11, 3, 2, 1); ctx.fill()
+          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 9, 7, 5, 2); ctx.fill()
+          ctx.fillStyle = 'rgba(255,180,210,0.55)'
+          ctx.beginPath(); ctx.roundRect(bx - 2.5, by - bh / 2 - 8, 2, 1.5, 1); ctx.fill()
 
           // Outlines
-          ctx.strokeStyle = '#0a1e60'; ctx.lineWidth = 1.5
-          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 4); ctx.stroke()
-          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 7, 7, 8, 2); ctx.stroke()
+          ctx.strokeStyle = '#0a1e60'; ctx.lineWidth = 1.2
+          ctx.beginPath(); ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 3); ctx.stroke()
+          ctx.beginPath(); ctx.roundRect(bx - 2.5, by - bh / 2 - 5, 5, 6, 1.5); ctx.stroke()
           ctx.strokeStyle = '#801838'
-          ctx.beginPath(); ctx.roundRect(bx - 4.5, by - bh / 2 - 12, 9, 6, 2.5); ctx.stroke()
-
+          ctx.beginPath(); ctx.roundRect(bx - 3.5, by - bh / 2 - 9, 7, 5, 2); ctx.stroke()
         }
         ctx.restore()
       }
@@ -920,14 +1024,18 @@ export default function WorldMap() {
         const vy = t.y - playerY + hh
         if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
         const dx = vx * TILE, dy = vy * TILE
-        const npcImg = NPC_FIGURE_IMGS[t.name]
+        // Directional sprite set takes priority, then single figure image
+        const dirPose = t.direction === 'up' ? 'back' : t.direction === 'left' ? 'left' : t.direction === 'right' ? 'right' : 'front'
+        const dirImg = NPC_DIR_FILES[t.name] ? NPC_FIGURE_IMGS[`${t.name}_${dirPose}`] : null
+        const npcImg = dirImg ?? NPC_FIGURE_IMGS[t.name]
         if (npcImg?.complete && npcImg.naturalWidth > 0) {
-          if (!TILE_CANVASES[`npc_${t.name}`]) TILE_CANVASES[`npc_${t.name}`] = applyChromaKey(npcImg, true)
-          const npcSrc = TILE_CANVASES[`npc_${t.name}`] ?? npcImg
+          const cacheKey = dirImg ? `npc_dir_${t.name}_${dirPose}` : `npc_${t.name}`
+          if (!TILE_CANVASES[cacheKey]) TILE_CANVASES[cacheKey] = applyChromaKey(npcImg, !dirImg)
+          const npcSrc = TILE_CANVASES[cacheKey] ?? npcImg
           const dw = TILE
           const dh = Math.round(TILE * 1.3)
           ctx.imageSmoothingEnabled = false
-          ctx.drawImage(npcSrc, vx * TILE, vy * TILE + TILE - dh, dw, dh)
+          ctx.drawImage(npcSrc, 0, 0, npcSrc.width, npcSrc.height, dx + Math.round((TILE - dw) / 2), dy + TILE - dh, dw, dh)
         } else {
           const sheet = npcSheetRef.current
           // NPC sprite: pick row/col based on trainer class
@@ -978,6 +1086,80 @@ export default function WorldMap() {
       }
     }
 
+    // ── Wandering NPCs ────────────────────────────────────────────────────
+    for (const w of wanderingNpcsRef.current) {
+      // Interior maps: draw at absolute tile position so NPCs don't shift with player movement
+      // Exterior maps: use viewport-relative position centered on player
+      let dx: number, dy: number
+      if (map.isInterior) {
+        dx = w.x * TILE
+        dy = w.y * TILE
+      } else {
+        const vx = w.x - playerX + hw
+        const vy = w.y - playerY + hh
+        if (vx < 0 || vx >= COLS || vy < 0 || vy >= ROWS) continue
+        dx = vx * TILE
+        dy = vy * TILE
+      }
+
+      // Pick pose based on direction + moving state
+      // "down" = facing viewer = front sprite; "up" = facing away = back sprite
+      // Walking sprites — indexed by movement direction (dir)
+      const poseWalk: Record<string, string> = {
+        down:  'walk_front', // moving toward viewer → animated walk (falls back to front if absent)
+        up:    'run_back',   // moving away → back running
+        left:  'walk_left',
+        right: 'walk_right',
+      }
+      // Idle sprites — indexed by facing direction (facing)
+      const poseIdle: Record<string, string> = {
+        down:  'front',
+        up:    'back',
+        left:  'left',
+        right: 'right',
+      }
+      const preferred = w.moving ? (poseWalk[w.dir] ?? 'front') : (poseIdle[w.facing] ?? 'front')
+      // Fallback chain: preferred → static direction → front
+      // Fallback chain: preferred → intermediate → static → front
+      const fallback: Record<string, string> = {
+        walk_front: 'run_front', run_front: 'front',
+        run_back: 'back', walk_left: 'left', walk_right: 'right',
+      }
+      const f1 = fallback[preferred] ?? ''
+      const f2 = fallback[f1] ?? ''
+      const tryPoses = [preferred, f1, f2, 'front'].filter((v, i, a) => v && a.indexOf(v) === i)
+
+      let resolvedImg: HTMLImageElement | null = null
+      let resolvedPose = 'front'
+      for (const p of tryPoses) {
+        const candidate = wanderingImgsRef.current[`${w.spriteDir}/${p}`]
+        if (candidate?.complete && candidate.naturalWidth > 0) {
+          resolvedImg = candidate
+          resolvedPose = p
+          break
+        }
+      }
+
+      if (resolvedImg) {
+        const cacheKey = `wandering_${w.spriteDir}/${resolvedPose}`
+        if (!TILE_CANVASES[cacheKey]) TILE_CANVASES[cacheKey] = applyChromaKey(resolvedImg)
+        const src = TILE_CANVASES[cacheKey] ?? resolvedImg
+        const dw = TILE
+        const dh = Math.round(TILE * 1.2)
+        ctx.imageSmoothingEnabled = false
+        ctx.save()
+        ctx.drawImage(src, 0, 0, src.width, src.height,
+          dx + Math.round((TILE - dw) / 2),
+          dy + TILE - dh,
+          dw, dh)
+        ctx.restore()
+      } else {
+        // All sprites still loading — trigger redraw when first one loads
+        const firstImg = wanderingImgsRef.current[`${w.spriteDir}/front`]
+        if (firstImg && !firstImg.complete) firstImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
+      }
+    }
+
     // ── Player sprite ─────────────────────────────────────────────────────
     const gender = profile?.gender === 'female' ? 'female' : 'male'
     const pose = isMoving ? 'run' : 'stand'
@@ -1019,7 +1201,7 @@ export default function WorldMap() {
   useEffect(() => {
     mapRef.current = getMap(currentMapId)
     drawMap(px, py, direction, moving)
-  }, [currentMapId, px, py, direction, moving, drawMap])
+  }, [currentMapId, px, py, direction, moving, wanderingNpcs, drawMap])
 
   const move = useCallback((dx: number, dy: number) => {
     const newDir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy < 0 ? 'up' : 'down'
@@ -1083,6 +1265,18 @@ export default function WorldMap() {
         setTimeout(() => startTrainerBattleRef.current(trainer), 1500)
         return
       }
+    }
+
+    // Wandering NPCs block the player — can't walk through them.
+    // A wandering trainer starts a battle the moment the player bumps into it.
+    const blocker = wanderingNpcsRef.current.find(w => w.x === nx && w.y === ny)
+    if (blocker) {
+      if (blocker.isTrainer && blocker.party?.length) {
+        setDialogue(`${blocker.name} wants to battle!`)
+        const t: TrainerNpc = { x: blocker.x, y: blocker.y, direction: 'down', name: blocker.name, party: blocker.party }
+        setTimeout(() => startTrainerBattleRef.current(t), 1500)
+      }
+      return
     }
 
     shopDismissedRef.current = false  // player moved away — allow shop to reopen next approach
@@ -1311,23 +1505,33 @@ export default function WorldMap() {
           className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
           Progress
         </button>
+        <button
+          onClick={() => setShowMinimap(s => !s)}
+          className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
+            showMinimap
+              ? 'bg-[#16213e] border-yellow-400/60 text-yellow-400'
+              : 'bg-[#16213e] border-gray-600/60 text-gray-500'
+          }`}
+          title="Toggle map"
+        >
+          🗺
+        </button>
       </div>
 
-      {/* Main area — centred row: canvas column + mini-map column */}
+      {/* Main area — canvas column fills full width; mini-map floats as overlay on desktop */}
       <div
         ref={mainAreaRef}
         style={{
           flex: 1, minHeight: 0, overflow: 'hidden',
-          display: 'flex', flexDirection: 'row', gap: 8,
+          position: 'relative',
           padding: '0 8px 8px',
-          alignItems: 'stretch',
         }}
       >
 
-        {/* Canvas column — flex:1 fills available space; canvas sized by window compute */}
+        {/* Canvas column — fills full width so left:50% centers canvas on page */}
         <div
           ref={canvasContainerRef}
-          style={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative' }}
+          style={{ width: '100%', height: '100%', position: 'relative' }}
         >
           {/* Canvas */}
           <canvas
@@ -1338,8 +1542,8 @@ export default function WorldMap() {
             style={{
               imageRendering: 'pixelated', display: 'block',
               position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: 0, left: '50%',
+              transform: 'translateX(-50%)',
               width: canvasCssSize ? canvasCssSize.w : COLS * TILE,
               height: canvasCssSize ? canvasCssSize.h : ROWS * TILE,
             }}
@@ -1373,10 +1577,20 @@ export default function WorldMap() {
             </div>
           )}
 
-          {/* DPad — overlaid at bottom-center, sits on top of the canvas */}
+          {/* DPad — on mobile, sits just below the minimap (or canvas if map hidden) */}
+          {(() => {
+            const isMobile = canvasCssSize !== null && window.innerWidth < 1024
+            const mmScale = isMobile ? (window.innerWidth - 16) / MINIMAP_NAT_W : 1
+            const mmH = Math.round(MINIMAP_NAT_H * mmScale)
+            const dpadTop = isMobile
+              ? (canvasCssSize?.h ?? 280) + 8 + (showMinimap ? mmH + 12 : 0) + 8
+              : undefined
+            return (
           <div style={{
             position: 'absolute',
-            bottom: 'max(16px, env(safe-area-inset-bottom))',
+            ...(dpadTop !== undefined
+              ? { top: dpadTop }
+              : { bottom: 'max(16px, env(safe-area-inset-bottom))' }),
             left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
           }}>
@@ -1386,20 +1600,37 @@ export default function WorldMap() {
               move(dx, dy)
             }} />
           </div>
+            )
+          })()}
 
-          {/* Mini-map: small overlay top-right on mobile (hidden on desktop) */}
-          <div className="absolute top-2 right-1 lg:hidden" style={{ zIndex: 10, transform: 'scale(0.55)', transformOrigin: 'top right' }}>
-            <MiniMap currentMapId={currentMapId} />
-          </div>
+          {/* Mini-map mobile: full-width scaled, sits below canvas */}
+          {showMinimap && (() => {
+            const isMobile = canvasCssSize !== null && window.innerWidth < 1024
+            if (!isMobile) return null
+            const mmScale = (window.innerWidth - 16) / MINIMAP_NAT_W
+            return (
+              <div
+                className="lg:hidden"
+                style={{
+                  position: 'absolute', left: 0, right: 0, zIndex: 10,
+                  top: canvasCssSize ? canvasCssSize.h + 8 : 280,
+                  display: 'flex', justifyContent: 'center',
+                }}
+              >
+                <div style={{ transform: `scale(${mmScale})`, transformOrigin: 'top center' }}>
+                  <MiniMap currentMapId={currentMapId} />
+                </div>
+              </div>
+            )
+          })()}
 
-        </div>
+          {/* Mini-map desktop: top-right overlay */}
+          {showMinimap && (
+            <div className="absolute top-2 right-2 hidden lg:block" style={{ zIndex: 10 }}>
+              <MiniMap currentMapId={currentMapId} />
+            </div>
+          )}
 
-        {/* Right column: mini-map, desktop only. No inline display — Tailwind hidden/flex controls it */}
-        <div
-          style={{ flexShrink: 0, width: 380, overflow: 'hidden', flexDirection: 'column', justifyContent: 'center' }}
-          className="hidden lg:flex"
-        >
-          <MiniMap currentMapId={currentMapId} />
         </div>
 
       </div>

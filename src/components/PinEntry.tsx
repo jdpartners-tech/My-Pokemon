@@ -41,12 +41,12 @@ export default function PinEntry({ onComplete, error, onClear }: Props) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex gap-3">
+    <div className="flex flex-col items-center gap-6">
+      <div className="flex gap-4">
         {[0, 1, 2, 3].map(i => (
           <div
             key={i}
-            className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xl font-bold
+            className={`w-16 h-16 rounded-xl border-2 flex items-center justify-center text-3xl font-bold
               ${pin.length > i
                 ? 'border-yellow-400 bg-yellow-400/20 text-yellow-400'
                 : 'border-gray-600 bg-gray-800'}`}
@@ -55,14 +55,14 @@ export default function PinEntry({ onComplete, error, onClear }: Props) {
           </div>
         ))}
       </div>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      <div className="grid grid-cols-3 gap-2">
+      {error && <p className="text-red-400 text-base">{error}</p>}
+      <div className="grid grid-cols-3 gap-3">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k, i) => (
           <button
             key={i}
             onClick={() => k === '⌫' ? del() : k ? press(k) : undefined}
             disabled={!k}
-            className={`w-14 h-14 rounded-xl text-xl font-bold transition-all
+            className={`w-20 h-20 rounded-2xl text-2xl font-bold transition-all
               ${!k
                 ? 'invisible'
                 : k === '⌫'

@@ -66,6 +66,10 @@ export const mistyLake: MapData = {
     { pokemonId: 9,   minLevel: 25, maxLevel: 30, rate: 1  },  // Blastoise ⭐
   ],
   trainers: [],
+  wanderingNpcs: [
+    { id: 'wingull_ml_1', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 5,  homeY: 5, wanderRadius: 4 },
+    { id: 'wingull_ml_2', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 12, homeY: 8, wanderRadius: 4 },
+  ],
   exits: [
     { x: 0,  y: 6, targetMap: 'rockyCave',    targetX: 15, targetY: 6 },
     { x: 0,  y: 7, targetMap: 'rockyCave',    targetX: 15, targetY: 7 },

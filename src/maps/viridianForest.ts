@@ -4,7 +4,6 @@ const T  = 'tree'    as const
 const G  = 'grass'   as const
 const F  = 'flower'  as const
 const B2 = 'brush2'  as const  // middle forest floor
-const V  = 'flower3' as const  // outer forest edge
 
 export const viridianForest: MapData = {
   id: 'viridianForest',
@@ -13,21 +12,21 @@ export const viridianForest: MapData = {
   height: 16,
   tiles: [
     [T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T],  // row  0: north border
-    [T, V, V, V, V, V, V, V, V, V, V, T, T, V, T, T],  // row  1: outer edge → flower3
-    [T, V, V, T, V, V, T, V, V, V, T, T, V, V, T, T],  // row  2: outer edge → flower3
-    [T, V, T, T, V, V, T, T, T, T, V, T, T, V, T, T],  // row  3: outer edge → flower3
-    [T, B2,B2,B2,B2,B2,B2,B2,B2,T, T, B2,B2,B2,T, T],  // row  4: forest floor → brush2
-    [T, T, B2,B2,F, B2,B2,B2,B2,B2,B2,F, B2,B2,B2,T],  // row  5: brush2 + kept flowers
-    [G, G, B2,B2,B2,B2,T, T, T, B2,B2,B2,B2,B2,B2,T],  // row  6: west exit x=0-1 keep G
-    [G, G, B2,B2,B2,T, T, T, B2,B2,T, B2,B2,B2,B2,T],  // row  7: west exit x=0-1 keep G
-    [T, B2,B2,T, T, B2,B2,B2,B2,T, T, B2,B2,B2,B2,T],  // row  8
-    [T, B2,T, T, T, B2,B2,F, B2,B2,B2,T, T, B2,B2,T],  // row  9: kept flower
-    [T, B2,B2,B2,T, T, T, B2,B2,B2,T, B2,B2,B2,B2,T],  // row 10
-    [T, T, T, B2,B2,T, T, B2,B2,B2,T, T, B2,T, T, T],  // row 11
-    [T, T, T, B2,B2,B2,B2,B2,B2,F, B2,B2,B2,T, T, T],  // row 12: kept flower
-    [T, B2,B2,T, T, B2,B2,B2,B2,B2,B2,B2,B2,B2,T, T],  // row 13
-    [T, V, V, V, V, V, V, V, V, V, V, V, V, V, T, T],  // row 14: outer edge → flower3
-    [T, T, T, T, T, T, T, G, G, T, T, T, T, T, T, T],  // row 15: south exit x=7-8 keep G
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  1
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  2
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  3
+    [T, G, G, G, G, G, G, B2,G, G, G, G, G, G, G, T],  // row  4: single bush
+    [T, G, G, G, F, G, G, G, G, G, G, F, G, G, G, T],  // row  5: 2 flowers
+    [G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  6: west exit
+    [G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  7: west exit
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row  8
+    [T, G, G, G, G, G, G, F, G, G, G, G, G, G, G, T],  // row  9: single flower
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row 10: open
+    [T, G, G, G, G, G, B2,G, G, G, G, G, G, G, G, T],  // row 11: single bush
+    [T, G, G, G, G, F, G, G, G, F, G, G, G, G, G, T],  // row 12: 2 flowers
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row 13: open
+    [T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],  // row 14
+    [T, T, T, T, T, T, T, G, G, T, T, T, T, T, T, T],  // row 15: south exit x=7-8
   ],
   wildPokemon: [
     { pokemonId: 10,  minLevel: 3,  maxLevel: 7,  rate: 18 },  // Caterpie
@@ -49,6 +48,20 @@ export const viridianForest: MapData = {
     { pokemonId: 3,   minLevel: 15, maxLevel: 18, rate: 1  },  // Venusaur ⭐
   ],
   trainers: [],
+  wanderingNpcs: [
+    { id: 'bulbasaur_vf_1', name: 'Bulbasaur', spriteDir: 'sprites/pokemon-npc/bulbasaur', homeX: 5,  homeY: 8,  wanderRadius: 3 },
+    { id: 'bulbasaur_vf_2', name: 'Bulbasaur', spriteDir: 'sprites/pokemon-npc/bulbasaur', homeX: 11, homeY: 10, wanderRadius: 3 },
+    { id: 'wingull_vf_1',   name: 'Wingull',   spriteDir: 'sprites/pokemon-npc/wingull',   homeX: 7,  homeY: 5,  wanderRadius: 4 },
+    {
+      id: 'dark_trainer_vf', name: 'Dark Trainer', spriteDir: 'sprites/npc/dark-trainer',
+      homeX: 9, homeY: 9, wanderRadius: 3, isTrainer: true,
+      party: [
+        { pokemonId: 93,  level: 18 },  // Haunter
+        { pokemonId: 109, level: 20 },  // Koffing
+        { pokemonId: 94,  level: 22 },  // Gengar
+      ],
+    },
+  ],
   exits: [
     { x: 0, y: 6, targetMap: 'sunlitMeadow', targetX: 14, targetY: 6 },
     { x: 0, y: 7, targetMap: 'sunlitMeadow', targetX: 14, targetY: 7 },
