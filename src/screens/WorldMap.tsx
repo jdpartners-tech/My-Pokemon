@@ -932,11 +932,23 @@ export default function WorldMap() {
           const sheet = npcSheetRef.current
           // NPC sprite: pick row/col based on trainer class
           const NPC_CLASS_SPRITES: Record<string, {row: number, col: number}> = {
-            'Biker':   { row: 4, col: 5 },
-            'Lass':    { row: 2, col: 3 },
-            'Swimmer': { row: 3, col: 2 },
-            'Hiker':   { row: 5, col: 1 },
-            'default': { row: 1, col: 5 },
+            'Biker':      { row: 4,  col: 5 },  // Biker
+            'Lass':       { row: 2,  col: 3 },  // Lass
+            'Swimmer':    { row: 3,  col: 2 },  // Swimmer
+            'Hiker':      { row: 3,  col: 3 },  // Hiker
+            'Bug':        { row: 3,  col: 4 },  // Bug Catcher
+            'Youngster':  { row: 0,  col: 2 },  // Youngster
+            'Scientist':  { row: 0,  col: 0 },  // Scientist
+            'Old':        { row: 0,  col: 6 },  // Old Man
+            'Sailor':     { row: 4,  col: 6 },  // Sailor
+            'Psychic':    { row: 8,  col: 2 },  // Psychic Female
+            'Cool':       { row: 4,  col: 3 },  // Cool Trainer Male
+            'Police':     { row: 24, col: 7 },  // Police Officer
+            'Rocket':     { row: 4,  col: 2 },  // Team Rocket fallback
+            'Ash':        { row: 12, col: 0 },  // Ash/Protagonist
+            'Misty':      { row: 32, col: 5 },  // Misty
+            'Pikachu':    { row: 28, col: 8 },  // Pikachu
+            'default':    { row: 1,  col: 5 },
           }
           const npcCls = t.name.split(' ')[0]
           const npcSprite = NPC_CLASS_SPRITES[npcCls] ?? NPC_CLASS_SPRITES['default']
