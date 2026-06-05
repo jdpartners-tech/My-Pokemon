@@ -71,6 +71,10 @@ interface BattleState {
   setBallAnimPhase: (n: number) => void
   setBallCaught: (v: boolean) => void
 
+  // NPC Pokemon catch tracking — set before navigating to battle, cleared on WorldMap mount
+  pendingCatchNpcId: string | null
+  setPendingCatchNpcId: (id: string | null) => void
+
   answerResult: { wasCorrect: boolean; correctAnswer: string } | null
   setAnswerResult: (r: { wasCorrect: boolean; correctAnswer: string } | null) => void
   resolveWrongAnswer: (() => void) | null
@@ -106,6 +110,7 @@ const initialState = {
   isWildBattle: false,
   ballAnimPhase: 0,
   ballCaught: false,
+  pendingCatchNpcId: null,
   trainerName: null,
   question: null,
   selectedMoveIndex: null,
@@ -280,6 +285,7 @@ export const useBattleStore = create<BattleState>((set) => ({
 
   setBallAnimPhase: (n) => set({ ballAnimPhase: n }),
   setBallCaught: (v) => set({ ballCaught: v }),
+  setPendingCatchNpcId: (id) => set({ pendingCatchNpcId: id }),
 
   showDamagePopup: (amount, forOpponent) => set({ damagePopup: { id: Date.now(), amount, forOpponent } }),
   clearDamagePopup: () => set({ damagePopup: null }),

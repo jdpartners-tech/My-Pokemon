@@ -67,8 +67,8 @@ export const mistyLake: MapData = {
   ],
   trainers: [],
   wanderingNpcs: [
-    { id: 'wingull_ml_1', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 5,  homeY: 5, wanderRadius: 4 },
-    { id: 'wingull_ml_2', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 12, homeY: 8, wanderRadius: 4 },
+    { id: 'wingull_ml_1', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 5,  homeY: 5, wanderRadius: 4, pokemonId: 278, minLevel: 5,  maxLevel: 16 },
+    { id: 'wingull_ml_2', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 12, homeY: 8, wanderRadius: 4, pokemonId: 278, minLevel: 5,  maxLevel: 16 },
   ],
   exits: [
     { x: 0,  y: 6, targetMap: 'rockyCave',    targetX: 15, targetY: 6 },

@@ -47,8 +47,11 @@ export interface WanderingNpc {
   homeX: number
   homeY: number
   wanderRadius: number  // tiles from home it's allowed to roam
-  isTrainer?: boolean   // if true, walking into it starts a battle
+  isTrainer?: boolean   // if true, walking into it starts a trainer battle
   party?: Array<{ pokemonId: number; level: number }>
+  pokemonId?: number    // if set, bumping into this NPC starts a catchable wild battle
+  minLevel?: number
+  maxLevel?: number
 }
 
 export interface MapData {

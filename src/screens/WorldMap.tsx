@@ -21,8 +21,6 @@ const TILE = 32
 const COLS = 11
 const ROWS = 9
 const ENCOUNTER_RATE = 0.02
-const MINIMAP_NAT_W = 359  // MiniMap natural rendered width (px)
-const MINIMAP_NAT_H = 271  // MiniMap natural rendered height (px)
 
 // ── Tile image preloading ─────────────────────────────────────────────────
 const TILE_FILES: Record<string, string> = {
@@ -340,19 +338,25 @@ export default function WorldMap() {
   type WanderingState = {
     id: string; name: string; spriteDir: string;
     x: number; y: number;
-    dir: 'up'|'down'|'left'|'right';     // last movement direction → selects walk sprite
-    facing: 'up'|'down'|'left'|'right';  // current idle facing → selects look sprite
+    dir: 'up'|'down'|'left'|'right';
+    facing: 'up'|'down'|'left'|'right';
     moving: boolean;
     homeX: number; homeY: number; wanderRadius: number;
     isTrainer?: boolean;
     party?: Array<{ pokemonId: number; level: number }>
+    pokemonId?: number;
+    level?: number;
   }
   const [wanderingNpcs, setWanderingNpcs] = useState<WanderingState[]>([])
   const wanderingNpcsRef = useRef<WanderingState[]>([])
   const wanderingImgsRef = useRef<Record<string, HTMLImageElement>>({})  // key = "spriteDir/pose"
   const [worldBagOpen, setWorldBagOpen] = useState(false)
-  const [showMinimap, setShowMinimap] = useState(true)
+  const [minimapExpanded, setMinimapExpanded] = useState(false)
   const [pendingWorldItem, setPendingWorldItem] = useState<{ itemId: string } | null>(null)
+  // npcId → expiry timestamp (ms); NPCs hidden after being caught, respawn after 10 min
+  const [hiddenNpcs, setHiddenNpcs] = useState<Record<string, number>>({})
+  const hiddenNpcsRef = useRef<Record<string, number>>({})
+  useEffect(() => { hiddenNpcsRef.current = hiddenNpcs }, [hiddenNpcs])
 
   // Canvas size — use window dimensions directly (reliable on iOS Safari)
   const mainAreaRef = useRef<HTMLDivElement>(null)
@@ -412,6 +416,61 @@ export default function WorldMap() {
   useEffect(() => { partyRef.current = profile?.party ?? [] }, [profile?.party])
 
   useEffect(() => { if (!profile) navigate('/') }, [profile, navigate])
+
+  // On mount: if the player just caught an NPC Pokemon, hide it for 10 minutes
+  useEffect(() => {
+    const { ballCaught, pendingCatchNpcId, setPendingCatchNpcId } = useBattleStore.getState()
+    if (ballCaught && pendingCatchNpcId) {
+      const expiry = Date.now() + 10 * 60 * 1000
+      setHiddenNpcs(prev => ({ ...prev, [pendingCatchNpcId]: expiry }))
+      hiddenNpcsRef.current = { ...hiddenNpcsRef.current, [pendingCatchNpcId]: expiry }
+      setWanderingNpcs(prev => {
+        const next = prev.filter(w => w.id !== pendingCatchNpcId)
+        wanderingNpcsRef.current = next
+        return next
+      })
+    }
+    if (pendingCatchNpcId) setPendingCatchNpcId(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Respawn hidden NPC Pokemon after 10 minutes
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Date.now()
+      const hidden = hiddenNpcsRef.current
+      const expired = Object.entries(hidden).filter(([, expiry]) => now >= expiry)
+      if (expired.length === 0) return
+      const currentMap = mapRef.current
+      expired.forEach(([id]) => {
+        const def = currentMap.wanderingNpcs?.find(n => n.id === id)
+        if (!def) return
+        const lvl = def.minLevel != null && def.maxLevel != null
+          ? def.minLevel + Math.floor(Math.random() * (def.maxLevel - def.minLevel + 1))
+          : undefined
+        const respawned: WanderingState = {
+          id: def.id, name: def.name, spriteDir: def.spriteDir,
+          x: def.homeX, y: def.homeY, dir: 'down', facing: 'down', moving: false,
+          homeX: def.homeX, homeY: def.homeY, wanderRadius: def.wanderRadius,
+          isTrainer: def.isTrainer, party: def.party,
+          pokemonId: def.pokemonId, level: lvl,
+        }
+        setWanderingNpcs(cur => {
+          if (cur.some(w => w.id === id)) return cur
+          const next = [...cur, respawned]
+          wanderingNpcsRef.current = next
+          return next
+        })
+      })
+      setHiddenNpcs(prev => {
+        const next = { ...prev }
+        expired.forEach(([id]) => delete next[id])
+        return next
+      })
+    }, 30_000)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Generate (or regenerate) map items — Pokéballs (60%) and Potions (40%)
   function generateMapItems() {
@@ -529,14 +588,23 @@ export default function WorldMap() {
     prevMapIdRef.current = currentMapId
     currentMapIdRef.current = currentMapId
 
-    // Initialise wandering NPCs for the new map
+    // Initialise wandering NPCs for the new map (skip currently hidden/caught ones)
     const mapData = MAPS[currentMapId]
-    const initial: WanderingState[] = (mapData?.wanderingNpcs ?? []).map(w => ({
-      id: w.id, name: w.name, spriteDir: w.spriteDir,
-      x: w.homeX, y: w.homeY, dir: 'down' as const, facing: 'down' as const, moving: false,
-      homeX: w.homeX, homeY: w.homeY, wanderRadius: w.wanderRadius,
-      isTrainer: w.isTrainer, party: w.party,
-    }))
+    const now = Date.now()
+    const initial: WanderingState[] = (mapData?.wanderingNpcs ?? [])
+      .filter(w => !hiddenNpcsRef.current[w.id] || now >= hiddenNpcsRef.current[w.id])
+      .map(w => {
+        const lvl = w.minLevel != null && w.maxLevel != null
+          ? w.minLevel + Math.floor(Math.random() * (w.maxLevel - w.minLevel + 1))
+          : undefined
+        return {
+          id: w.id, name: w.name, spriteDir: w.spriteDir,
+          x: w.homeX, y: w.homeY, dir: 'down' as const, facing: 'down' as const, moving: false,
+          homeX: w.homeX, homeY: w.homeY, wanderRadius: w.wanderRadius,
+          isTrainer: w.isTrainer, party: w.party,
+          pokemonId: w.pokemonId, level: lvl,
+        }
+      })
     wanderingNpcsRef.current = initial
     setWanderingNpcs(initial)
 
@@ -1275,6 +1343,41 @@ export default function WorldMap() {
         setDialogue(`${blocker.name} wants to battle!`)
         const t: TrainerNpc = { x: blocker.x, y: blocker.y, direction: 'down', name: blocker.name, party: blocker.party }
         setTimeout(() => startTrainerBattleRef.current(t), 1500)
+      } else if (blocker.pokemonId) {
+        // Wild Pokemon NPC — start a catchable wild battle
+        const opponentInfo = pokemonMap[blocker.pokemonId]
+        if (!opponentInfo) return
+        const currentProfile = useProfileStore.getState().profile
+        if (!currentProfile?.party?.length) return
+        const level = blocker.level ?? 5
+        const opponent = buildPartyPokemon(opponentInfo, level)
+        const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
+        if (!playerInfo) return
+        const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
+        player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
+        player.xp = currentProfile.party[0].xp ?? player.xp
+        const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
+        const _usedIds = new Set(_validMoves.map(m => m.moveId))
+        const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
+        player.moves = [..._validMoves, ..._fresh].slice(0, 4)
+        player.nickname = currentProfile.party[0].nickname
+        const fullParty = currentProfile.party.slice(1).map(p => {
+          const info = pokemonMap[p.pokemonId]; if (!info) return null
+          const bp = buildPartyPokemon(info, p.level)
+          bp.currentHp = p.currentHp ?? bp.maxHp; bp.xp = p.xp ?? bp.xp
+          const bpValid = filterValidMoves(p.moves ?? [])
+          const bpUsed = new Set(bpValid.map(m => m.moveId))
+          bp.moves = [...bpValid, ...bp.moves.filter(m => !bpUsed.has(m.moveId))].slice(0, 4)
+          bp.nickname = p.nickname; return bp
+        }).filter(Boolean) as typeof player[]
+        useProfileStore.getState().setProfile({
+          ...currentProfile,
+          playerX: pxRef.current, playerY: pyRef.current,
+          currentRoute: currentMapIdRef.current,
+        })
+        useBattleStore.getState().setPendingCatchNpcId(blocker.id)
+        useBattleStore.getState().startWildBattle(player, opponent, fullParty)
+        flashAndNavigate()
       }
       return
     }
@@ -1448,11 +1551,12 @@ export default function WorldMap() {
   startTrainerBattleRef.current = startTrainerBattle
 
   async function healParty() {
-    if (!profile?.id || !profile.party?.length) return
-    const healedParty = profile.party.map(p => ({ ...p, currentHp: p.maxHp }))
+    const freshProfile = useProfileStore.getState().profile
+    if (!freshProfile?.id || !freshProfile.party?.length) return
+    const healedParty = freshProfile.party.map(p => ({ ...p, currentHp: p.maxHp }))
     try {
-      await updateProfile(profile.id, { party: healedParty })
-      useProfileStore.getState().setProfile({ ...profile, party: healedParty })
+      await updateProfile(freshProfile.id, { party: healedParty })
+      useProfileStore.getState().setProfile({ ...freshProfile, party: healedParty })
       setDialogue("Nurse Joy: Your Pokémon have been healed! ♥")
     } catch {
       setDialogue('Healing failed — please try again.')
@@ -1506,9 +1610,9 @@ export default function WorldMap() {
           Progress
         </button>
         <button
-          onClick={() => setShowMinimap(s => !s)}
+          onClick={() => setMinimapExpanded(s => !s)}
           className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
-            showMinimap
+            minimapExpanded
               ? 'bg-[#16213e] border-yellow-400/60 text-yellow-400'
               : 'bg-[#16213e] border-gray-600/60 text-gray-500'
           }`}
@@ -1577,20 +1681,10 @@ export default function WorldMap() {
             </div>
           )}
 
-          {/* DPad — on mobile, sits just below the minimap (or canvas if map hidden) */}
-          {(() => {
-            const isMobile = canvasCssSize !== null && window.innerWidth < 1024
-            const mmScale = isMobile ? (window.innerWidth - 16) / MINIMAP_NAT_W : 1
-            const mmH = Math.round(MINIMAP_NAT_H * mmScale)
-            const dpadTop = isMobile
-              ? (canvasCssSize?.h ?? 280) + 8 + (showMinimap ? mmH + 12 : 0) + 8
-              : undefined
-            return (
+          {/* DPad — always anchored to the bottom of the main area */}
           <div style={{
             position: 'absolute',
-            ...(dpadTop !== undefined
-              ? { top: dpadTop }
-              : { bottom: 'max(16px, env(safe-area-inset-bottom))' }),
+            bottom: 'max(16px, env(safe-area-inset-bottom))',
             left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
           }}>
@@ -1600,36 +1694,15 @@ export default function WorldMap() {
               move(dx, dy)
             }} />
           </div>
-            )
-          })()}
 
-          {/* Mini-map mobile: full-width scaled, sits below canvas */}
-          {showMinimap && (() => {
-            const isMobile = canvasCssSize !== null && window.innerWidth < 1024
-            if (!isMobile) return null
-            const mmScale = (window.innerWidth - 16) / MINIMAP_NAT_W
-            return (
-              <div
-                className="lg:hidden"
-                style={{
-                  position: 'absolute', left: 0, right: 0, zIndex: 10,
-                  top: canvasCssSize ? canvasCssSize.h + 8 : 280,
-                  display: 'flex', justifyContent: 'center',
-                }}
-              >
-                <div style={{ transform: `scale(${mmScale})`, transformOrigin: 'top center' }}>
-                  <MiniMap currentMapId={currentMapId} />
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Mini-map desktop: top-right overlay */}
-          {showMinimap && (
-            <div className="absolute top-2 right-2 hidden lg:block" style={{ zIndex: 10 }}>
-              <MiniMap currentMapId={currentMapId} />
-            </div>
-          )}
+          {/* Mini-map: collapsible floating overlay, all screen sizes */}
+          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}>
+            <MiniMap
+              currentMapId={currentMapId}
+              expanded={minimapExpanded}
+              onToggle={() => setMinimapExpanded(s => !s)}
+            />
+          </div>
 
         </div>
 

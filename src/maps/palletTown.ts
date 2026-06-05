@@ -31,7 +31,7 @@ export const palletTown: MapData = {
   wildPokemon: [],
   trainers: [],
   wanderingNpcs: [
-    { id: 'pikachu_pallet', name: 'Pikachu', spriteDir: 'sprites/pokemon-npc/pikachu', homeX: 7, homeY: 8, wanderRadius: 4 },
+    { id: 'pikachu_pallet', name: 'Pikachu', spriteDir: 'sprites/pokemon-npc/pikachu', homeX: 7, homeY: 8, wanderRadius: 4, pokemonId: 25, minLevel: 3, maxLevel: 8 },
   ],
   exits: [
     { x: 3,  y: 6, targetMap: 'pokecenter',   targetX: 5,  targetY: 6 },
