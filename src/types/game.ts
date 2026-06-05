@@ -143,9 +143,11 @@ export interface Profile {
     battlesWon: number
     questionsAnswered: number
     questionsCorrect: number
+    questionsWrong: number
   }
   wrongAnswers: Array<{
     question: string
+    givenAnswer: string
     correctAnswer: string
     subject: string
   }>

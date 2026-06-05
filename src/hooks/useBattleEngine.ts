@@ -56,7 +56,7 @@ export function useBattleEngine() {
   async function selectMove(index: number) {
     if (!profile) return
     store.setSelectedMoveIndex(index)
-    store.setPhase('question')
+    store.setPhase('animating')  // hold here while fetching so UI never shows blank 'question' phase
     const questions = await getQuestions()
     // Use getState() to avoid stale closure — usedQuestionIds may have changed since last render
     const { usedQuestionIds } = useBattleStore.getState()
@@ -64,6 +64,10 @@ export function useBattleEngine() {
     if (q) {
       store.setQuestion(shuffleOptions(q))
       if (q.id) store.addUsedQuestionId(q.id)
+      store.setPhase('question')  // only show popup once we actually have a question
+    } else {
+      // No questions available — auto-proceed as correct so battle never freezes
+      await handleAnswer(true)
     }
   }
 
@@ -97,7 +101,7 @@ export function useBattleEngine() {
     store.addLog(`${targetName} ${label[ailment] ?? ailment}!`)
   }
 
-  async function handleAnswer(correct: boolean) {
+  async function handleAnswer(correct: boolean, chosenAnswer?: string) {
     const state = useBattleStore.getState()
     const { playerPokemon, opponentPokemon, selectedMoveIndex, question } = state
     if (!playerPokemon || !opponentPokemon || selectedMoveIndex === null) return
@@ -114,6 +118,19 @@ export function useBattleEngine() {
     const moveInfo = moveMap[move.moveId]
     store.decrementPP(selectedMoveIndex)
 
+    // Track per-question stats on every answer — read from store (not closure) to avoid stale values
+    if (profile?.id) {
+      const profileNow = useProfileStore.getState().profile ?? profile
+      const updatedStats = {
+        battlesWon: profileNow.stats?.battlesWon ?? 0,
+        questionsAnswered: (profileNow.stats?.questionsAnswered ?? 0) + 1,
+        questionsCorrect: (profileNow.stats?.questionsCorrect ?? 0) + (correct ? 1 : 0),
+        questionsWrong: (profileNow.stats?.questionsWrong ?? 0) + (correct ? 0 : 1),
+      }
+      useProfileStore.getState().setProfile({ ...profileNow, stats: updatedStats })
+      updateProfile(profile.id, { stats: updatedStats }).catch(() => {})
+    }
+
     if (!correct) {
       store.setAnswerResult({ wasCorrect: false, correctAnswer })
       store.addLog(`${getName(playerPokemon)} used ${moveInfo?.name ?? 'Move'}... but it missed!`)
@@ -122,12 +139,14 @@ export function useBattleEngine() {
       if (profile?.id && question) {
         const wrongEntry = {
           question: question.question,
+          givenAnswer: chosenAnswer ?? '',
           correctAnswer: correctAnswer,
           subject: question.subject,
         }
-        const existing = profile.wrongAnswers ?? []
-        const updated = [...existing.filter(w => w.question !== wrongEntry.question), wrongEntry].slice(-20)
-        useProfileStore.getState().setProfile({ ...profile, wrongAnswers: updated })
+        const profileNow = useProfileStore.getState().profile ?? profile
+        const existing = profileNow.wrongAnswers ?? []
+        const updated = [...existing.filter(w => w.question !== wrongEntry.question), wrongEntry].slice(-50)
+        useProfileStore.getState().setProfile({ ...profileNow, wrongAnswers: updated })
         updateProfile(profile.id, { wrongAnswers: updated }).catch(() => {})
       }
 
@@ -449,10 +468,10 @@ export function useBattleEngine() {
     }
 
     if (profile.id && profile.party?.length) {
+      const profileNow = useProfileStore.getState().profile ?? profile
       const stats = {
-        battlesWon: (profile.stats?.battlesWon ?? 0) + 1,
-        questionsAnswered: (profile.stats?.questionsAnswered ?? 0) + 1,
-        questionsCorrect: (profile.stats?.questionsCorrect ?? 0) + 1,
+        ...profileNow.stats,
+        battlesWon: (profileNow.stats?.battlesWon ?? 0) + 1,
       }
       const updatedParty = profile.party.map((p, idx) =>
         idx === 0

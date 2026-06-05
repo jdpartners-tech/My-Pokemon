@@ -51,7 +51,7 @@ export const viridianForest: MapData = {
   wanderingNpcs: [
     { id: 'bulbasaur_vf_1', name: 'Bulbasaur', spriteDir: 'sprites/pokemon-npc/bulbasaur', homeX: 5,  homeY: 8,  wanderRadius: 3, pokemonId: 1,   minLevel: 3,  maxLevel: 10 },
     { id: 'bulbasaur_vf_2', name: 'Bulbasaur', spriteDir: 'sprites/pokemon-npc/bulbasaur', homeX: 11, homeY: 10, wanderRadius: 3, pokemonId: 1,   minLevel: 3,  maxLevel: 10 },
-    { id: 'wingull_vf_1',   name: 'Wingull',   spriteDir: 'sprites/pokemon-npc/wingull',   homeX: 7,  homeY: 5,  wanderRadius: 4, pokemonId: 278, minLevel: 3,  maxLevel: 10 },
+    { id: 'wingull_vf_1',   name: 'Wingull',   spriteDir: 'sprites/pokemon-npc/wingull',   homeX: 7,  homeY: 5,  wanderRadius: 4, pokemonId: 16,  minLevel: 3,  maxLevel: 10 },
     {
       id: 'dark_trainer_vf', name: 'Dark Trainer', spriteDir: 'sprites/npc/dark-trainer',
       homeX: 9, homeY: 9, wanderRadius: 3, isTrainer: true,

@@ -351,7 +351,7 @@ export default function WorldMap() {
   const wanderingNpcsRef = useRef<WanderingState[]>([])
   const wanderingImgsRef = useRef<Record<string, HTMLImageElement>>({})  // key = "spriteDir/pose"
   const [worldBagOpen, setWorldBagOpen] = useState(false)
-  const [minimapExpanded, setMinimapExpanded] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(false)      // 🗺 button toggles visibility
   const [pendingWorldItem, setPendingWorldItem] = useState<{ itemId: string } | null>(null)
   // npcId → expiry timestamp (ms); NPCs hidden after being caught, respawn after 10 min
   const [hiddenNpcs, setHiddenNpcs] = useState<Record<string, number>>({})
@@ -364,7 +364,7 @@ export default function WorldMap() {
   const [canvasCssSize, setCanvasCssSize] = useState<{ w: number; h: number } | null>(null)
   useEffect(() => {
     const TOPBAR_H  = 44
-    const DPAD_H    = 172
+    const DPAD_H    = 280
     const MINIMAP_W = 396   // mini-map sidebar + gap, desktop only
 
     function compute() {
@@ -1610,9 +1610,11 @@ export default function WorldMap() {
           Progress
         </button>
         <button
-          onClick={() => setMinimapExpanded(s => !s)}
+          onClick={() => {
+            setShowMinimap(s => !s)
+          }}
           className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
-            minimapExpanded
+            showMinimap
               ? 'bg-[#16213e] border-yellow-400/60 text-yellow-400'
               : 'bg-[#16213e] border-gray-600/60 text-gray-500'
           }`}
@@ -1631,6 +1633,12 @@ export default function WorldMap() {
           padding: '0 8px 8px',
         }}
       >
+        {/* Mini-map: absolute overlay within the game area, below the topbar */}
+        {showMinimap && (
+          <div style={{ position: 'absolute', top: 0, left: -8, right: -8, zIndex: 30 }}>
+            <MiniMap currentMapId={currentMapId} onClose={() => setShowMinimap(false)} />
+          </div>
+        )}
 
         {/* Canvas column — fills full width so left:50% centers canvas on page */}
         <div
@@ -1675,7 +1683,7 @@ export default function WorldMap() {
             <div
               onClick={() => setDialogue(null)}
               className="absolute left-2 right-2 bg-[#16213e] border-2 border-yellow-400 rounded-xl p-3 text-white text-sm cursor-pointer"
-              style={{ bottom: 178, zIndex: 15 }}
+              style={{ bottom: 284, zIndex: 15 }}
             >
               {dialogue}
             </div>
@@ -1695,18 +1703,11 @@ export default function WorldMap() {
             }} />
           </div>
 
-          {/* Mini-map: collapsible floating overlay, all screen sizes */}
-          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}>
-            <MiniMap
-              currentMapId={currentMapId}
-              expanded={minimapExpanded}
-              onToggle={() => setMinimapExpanded(s => !s)}
-            />
-          </div>
 
         </div>
 
       </div>
+
 
       {shopOpen && profile && (
         <ShopModal

@@ -305,12 +305,18 @@ export default function Battle() {
   const [, setFlashOn] = useState(false)
   const [hoveredMove, setHoveredMove] = useState(0)
   const [safeAreaTop, setSafeAreaTop] = useState(0)
+  const [safeAreaBottom, setSafeAreaBottom] = useState(0)
   useEffect(() => {
-    const el = document.createElement('div')
-    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px)'
-    document.body.appendChild(el)
-    setSafeAreaTop(parseFloat(getComputedStyle(el).paddingTop) || 0)
-    document.body.removeChild(el)
+    const topEl = document.createElement('div')
+    topEl.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px)'
+    document.body.appendChild(topEl)
+    setSafeAreaTop(parseFloat(getComputedStyle(topEl).paddingTop) || 0)
+    document.body.removeChild(topEl)
+    const botEl = document.createElement('div')
+    botEl.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px)'
+    document.body.appendChild(botEl)
+    setSafeAreaBottom(parseFloat(getComputedStyle(botEl).paddingBottom) || 0)
+    document.body.removeChild(botEl)
   }, [])
   const ballCanvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
@@ -548,13 +554,14 @@ export default function Battle() {
     )
   }
 
-  const availH = window.innerHeight - safeAreaTop
+  const viewportH = window.visualViewport?.height ?? window.innerHeight
+  const availH = viewportH - safeAreaTop - safeAreaBottom
   const BATTLE_TOTAL_H = SKY_H + 280  // sky + bottom panel estimate
   const scale = Math.min(window.innerWidth / W, availH / BATTLE_TOTAL_H, 1.8)
   const scaledH = Math.round(availH / scale)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: safeAreaTop }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: safeAreaTop, paddingBottom: safeAreaBottom }}>
     <div style={{ zoom: scale, transformOrigin: 'top center', width: W, height: scaledH, display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Battle scene (360 × 240 px = top 48% of Ruby 500px canvas) ── */}
@@ -762,7 +769,7 @@ export default function Battle() {
         <div style={{
           margin: '4px 4px 0', height: DLG_H,
           background: MENU_BG, border: `1.5px solid ${MENU_BD}`,
-          borderRadius: 3, fontSize: 11, color: '#181808',
+          borderRadius: 3, fontSize: 13, color: '#181808',
           display: 'flex', alignItems: 'center', padding: '0 10px',
           flexShrink: 0,
         }}>
@@ -819,10 +826,10 @@ export default function Battle() {
                       fontFamily: MONO, zIndex: 1,
                     }}
                   >
-                    <div style={{ fontSize: 10, fontWeight: 'bold', color: '#181808' }}>
+                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#181808' }}>
                       {isHov ? '▶ ' : ''}{md?.name.toUpperCase() ?? mv.moveId.toUpperCase()}
                     </div>
-                    <div style={{ fontSize: 8, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#999', marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#999', marginTop: 2 }}>
                       {md?.type.toUpperCase() ?? ''}
                     </div>
                   </button>
@@ -836,15 +843,15 @@ export default function Battle() {
               background: MENU_BG, padding: '6px 8px',
               display: 'flex', flexDirection: 'column', gap: 1,
             }}>
-              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>DMG</div>
+              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>DMG</div>
               {(() => {
                 if (!hoverMd || hoverMd.power === 0) return (
-                  <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>—</div>
+                  <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>—</div>
                 )
                 const atkData = pokemonDataMap[playerPokemon.pokemonId]
                 const defData = pokemonDataMap[opponentPokemon.pokemonId]
                 if (!atkData || !defData) return (
-                  <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>—</div>
+                  <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>—</div>
                 )
                 const atkStat = calculateStat(atkData.baseStats.atk, playerPokemon.level)
                 const defStat = calculateStat(defData.baseStats.def, opponentPokemon.level)
@@ -857,26 +864,26 @@ export default function Battle() {
                 const dmg = Math.max(1, Math.floor(base * eff * 0.925))
                 const color = eff >= 2 ? '#e03020' : eff < 1 ? '#6888c8' : '#181808'
                 return (
-                  <div style={{ fontSize: 11, fontWeight: 'bold', color, marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color, marginBottom: 3 }}>
                     -{dmg}{eff >= 2 ? ' ★' : ''}
                   </div>
                 )
               })()}
-              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>PP</div>
-              <div style={{ fontSize: 10, color: '#181808', marginBottom: 3 }}>
+              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>PP</div>
+              <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>
                 {hoverMv ? `${hoverMv.pp}/${hoverMv.maxPp}` : '—'}
               </div>
-              <div style={{ fontSize: 9, fontWeight: 'bold', color: '#484838' }}>TYPE/</div>
+              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>TYPE/</div>
               {hoverMd ? (
                 <div style={{
                   background: TYPE_COLOR[hoverMd.type] ?? '#999',
                   borderRadius: 3, padding: '2px 0',
-                  textAlign: 'center', fontSize: 8, fontWeight: 'bold', color: '#f8f8f8',
+                  textAlign: 'center', fontSize: 11, fontWeight: 'bold', color: '#f8f8f8',
                 }}>
                   {hoverMd.type.toUpperCase()}
                 </div>
               ) : (
-                <div style={{ fontSize: 8, color: '#999' }}>—</div>
+                <div style={{ fontSize: 11, color: '#999' }}>—</div>
               )}
               <div style={{ flex: 1 }} />
               {/* BAG */}
@@ -884,8 +891,8 @@ export default function Battle() {
                 onClick={() => setBagOpen(true)}
                 style={{
                   background: '#e0d8c8', border: `1px solid ${MENU_BD}`,
-                  borderRadius: 3, padding: '4px 0',
-                  fontSize: 9, fontWeight: 'bold', color: '#181808',
+                  borderRadius: 3, padding: '6px 0',
+                  fontSize: 12, fontWeight: 'bold', color: '#181808',
                   cursor: 'pointer', fontFamily: MONO,
                 }}
               >
@@ -901,8 +908,8 @@ export default function Battle() {
                     style={{
                       background: ballCount > 0 ? '#e82020' : '#666',
                       border: `1px solid ${MENU_BD}`,
-                      borderRadius: 3, padding: '4px 0',
-                      fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
+                      borderRadius: 3, padding: '6px 0',
+                      fontSize: 12, fontWeight: 'bold', color: '#f8f8f8',
                       cursor: ballCount > 0 ? 'pointer' : 'default',
                       fontFamily: MONO, marginTop: 2,
                       opacity: ballCount > 0 ? 1 : 0.5,
@@ -917,8 +924,8 @@ export default function Battle() {
                 onClick={() => navigate('/map')}
                 style={{
                   background: '#48a048', border: `1px solid ${MENU_BD}`,
-                  borderRadius: 3, padding: '4px 0',
-                  fontSize: 9, fontWeight: 'bold', color: '#f8f8f8',
+                  borderRadius: 3, padding: '6px 0',
+                  fontSize: 12, fontWeight: 'bold', color: '#f8f8f8',
                   cursor: 'pointer', fontFamily: MONO, marginTop: 2,
                 }}
               >
@@ -1092,8 +1099,8 @@ export default function Battle() {
       }}>
         <div style={{
           background: '#16213e', border: '2px solid #ffd700',
-          borderRadius: 10, width: 290, maxWidth: '88vw',
-          padding: '24px 14px 14px', position: 'relative',
+          borderRadius: 10, width: 380, maxWidth: '95vw',
+          padding: '28px 18px 18px', position: 'relative',
           fontFamily: MONO,
         }}>
           {/* Move name badge */}
@@ -1101,31 +1108,31 @@ export default function Battle() {
             position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
             background: '#c83028', border: '1.5px solid #ffd700',
             borderRadius: 14, padding: '4px 20px',
-            color: '#ffd700', fontWeight: 'bold', fontSize: 11,
+            color: '#ffd700', fontWeight: 'bold', fontSize: 13,
             whiteSpace: 'nowrap',
           }}>
             {(moveDataMap[playerPokemon.moves[selectedMoveIndex]?.moveId]?.name ?? 'MOVE').toUpperCase()}
           </div>
-          <div style={{ color: 'white', fontWeight: 'bold', fontSize: 13, textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center', marginBottom: 8 }}>
             {question.question}
           </div>
-          <div style={{ color: '#ffd700', fontSize: 10, textAlign: 'center', marginBottom: 16 }}>
+          <div style={{ color: '#ffd700', fontSize: 13, textAlign: 'center', marginBottom: 18 }}>
             {question.subject === 'chinese' ? '答對可以給予滿額傷害！' : 'Answer correctly for full damage!'}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {question.options.map((opt, i) => (
               <button
                 key={i}
-                onClick={() => handleAnswer(opt === question.answer)}
+                onClick={() => handleAnswer(opt === question.answer, opt)}
                 style={{
                   background: '#0f3460', border: '1.5px solid #4ecdc4',
-                  borderRadius: 8, padding: '12px 8px',
+                  borderRadius: 8, padding: '16px 10px',
                   cursor: 'pointer', textAlign: 'left', fontFamily: MONO,
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  display: 'flex', alignItems: 'center', gap: 8,
                 }}
               >
-                <span style={{ color: '#4ecdc4', fontWeight: 'bold', fontSize: 12 }}>{'ABCD'[i]}</span>
-                <span style={{ color: 'white', fontSize: 10 }}>{opt}</span>
+                <span style={{ color: '#4ecdc4', fontWeight: 'bold', fontSize: 15 }}>{'ABCD'[i]}</span>
+                <span style={{ color: 'white', fontSize: 14 }}>{opt}</span>
               </button>
             ))}
           </div>
@@ -1146,27 +1153,27 @@ export default function Battle() {
       >
         <div style={{
           background: '#16213e', border: '2px solid #e02820',
-          borderRadius: 10, padding: '24px 20px', textAlign: 'center',
-          fontFamily: MONO, maxWidth: 280,
+          borderRadius: 10, padding: '28px 24px', textAlign: 'center',
+          fontFamily: MONO, maxWidth: 340,
         }}>
-          <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>
+          <div style={{ color: '#e02820', fontWeight: 'bold', fontSize: 22, marginBottom: 14 }}>
             ✗ Wrong Answer
           </div>
-          <div style={{ color: '#aaaaaa', fontSize: 11, marginBottom: 6 }}>
+          <div style={{ color: '#aaaaaa', fontSize: 15, marginBottom: 8 }}>
             The correct answer was:
           </div>
           <div style={{
-            color: '#ffd700', fontWeight: 'bold', fontSize: 13,
-            background: '#0f3460', borderRadius: 6, padding: '8px 12px',
+            color: '#ffd700', fontWeight: 'bold', fontSize: 18,
+            background: '#0f3460', borderRadius: 6, padding: '10px 14px',
           }}>
             {answerResult.correctAnswer}
           </div>
-          <div style={{ color: '#4ecdc4', fontSize: 10, marginTop: 12 }}>
+          <div style={{ color: '#4ecdc4', fontSize: 14, marginTop: 14 }}>
             The attack missed...
           </div>
           <div style={{
-            color: '#666', fontSize: 9, marginTop: 10,
-            borderTop: '1px solid #2a3a5a', paddingTop: 8,
+            color: '#666', fontSize: 13, marginTop: 12,
+            borderTop: '1px solid #2a3a5a', paddingTop: 10,
           }}>
             Tap anywhere to continue
           </div>

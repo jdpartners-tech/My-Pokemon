@@ -95,7 +95,7 @@ export function useFirestoreProfile() {
       currentRoute: 'pallet',
       playerX: 7,
       playerY: 9,
-      stats: { battlesWon: 0, questionsAnswered: 0, questionsCorrect: 0 },
+      stats: { battlesWon: 0, questionsAnswered: 0, questionsCorrect: 0, questionsWrong: 0 },
       wrongAnswers: [],
     }
   }

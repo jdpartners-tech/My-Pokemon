@@ -1,7 +1,6 @@
 interface Props {
   currentMapId: string
-  expanded: boolean
-  onToggle: () => void
+  onClose: () => void
 }
 
 // 3×3 boustrophedon layout — every connection is between adjacent cells, no snake:
@@ -36,68 +35,41 @@ const CONNECTORS: Array<{ cssCol: number; cssRow: number; dir: 'h' | 'v' }> = [
   { cssCol: 4, cssRow: 5, dir: 'h' },  // Cinnabar  → Volcano
 ]
 
-const NODE_W = 80
-const NODE_H = 58
-const CONN_W = 18
+const NODE_H = 54
+const CONN_W = 14
 
-export default function MiniMap({ currentMapId, expanded, onToggle }: Props) {
+export default function MiniMap({ currentMapId, onClose }: Props) {
   const ID_ALIASES: Record<string, string> = {
     pokecenter: 'pallet',
     route1: 'sunlitMeadow',
   }
   const activeId = ID_ALIASES[currentMapId] ?? currentMapId
-  const activeArea = AREAS.find(a => a.id === activeId)
-
-  if (!expanded) {
-    return (
-      <button
-        onClick={onToggle}
-        style={{
-          width: 50, height: 54,
-          background: 'rgba(10, 16, 32, 0.80)',
-          border: '1.5px solid rgba(74, 106, 154, 0.7)',
-          borderRadius: 10,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', gap: 1,
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-        }}
-      >
-        <div style={{ fontSize: 20, lineHeight: 1 }}>🗺</div>
-        <div style={{ fontSize: 15, lineHeight: 1 }}>{activeArea?.emoji ?? '?'}</div>
-      </button>
-    )
-  }
-
-  const colTemplate = `${NODE_W}px ${CONN_W}px ${NODE_W}px ${CONN_W}px ${NODE_W}px`
-  const rowTemplate = `${NODE_H}px ${CONN_W}px ${NODE_H}px ${CONN_W}px ${NODE_H}px`
 
   return (
     <div
-      onClick={onToggle}
+      onClick={onClose}
       style={{
-        background: 'rgba(10, 16, 32, 0.88)',
-        border: '1.5px solid #1e2e4a',
-        borderRadius: 12,
-        padding: '10px 12px 8px',
-        width: 'fit-content',
+        width: '100%',
+        background: 'rgba(10, 16, 32, 0.96)',
+        borderBottom: '2px solid #1e3a5a',
+        padding: '12px 10px 10px',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         cursor: 'pointer',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
       }}
     >
       <div style={{
-        textAlign: 'center', fontSize: 9, fontWeight: 'bold',
+        textAlign: 'center', fontSize: 10, fontWeight: 'bold',
         color: '#4a6a9a', letterSpacing: 3, marginBottom: 8,
       }}>
-        WORLD MAP
+        WORLD MAP · tap to close
       </div>
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: colTemplate,
-        gridTemplateRows: rowTemplate,
+        gridTemplateColumns: `1fr ${CONN_W}px 1fr ${CONN_W}px 1fr`,
+        gridTemplateRows: `${NODE_H}px ${CONN_W}px ${NODE_H}px ${CONN_W}px ${NODE_H}px`,
+        width: '100%',
       }}>
         {AREAS.map(area => {
           const isCurrent = area.id === activeId
@@ -109,26 +81,26 @@ export default function MiniMap({ currentMapId, expanded, onToggle }: Props) {
                 gridRow: area.cssRow,
                 background: isCurrent ? '#0d2a0d' : '#111827',
                 border: isCurrent ? '2.5px solid #ffd700' : '1.5px solid #1e3a5a',
-                borderRadius: 7,
+                borderRadius: 8,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '3px 2px',
+                padding: '4px 2px',
                 overflow: 'hidden',
-                boxShadow: isCurrent ? '0 0 10px rgba(255,215,0,0.5)' : 'none',
+                boxShadow: isCurrent ? '0 0 12px rgba(255,215,0,0.5)' : 'none',
               }}
             >
               <div style={{ fontSize: 16, lineHeight: 1 }}>{area.emoji}</div>
               <div style={{
-                fontSize: 9, fontWeight: 'bold', lineHeight: 1.3, marginTop: 2,
+                fontSize: 10, fontWeight: 'bold', lineHeight: 1.2, marginTop: 3,
                 color: isCurrent ? '#ffd700' : '#a0b8d0',
                 textAlign: 'center', whiteSpace: 'nowrap',
               }}>
                 {isCurrent ? '★ ' : ''}{area.name}
               </div>
               <div style={{
-                fontSize: 7, lineHeight: 1.2, marginTop: 1,
+                fontSize: 9, lineHeight: 1.1, marginTop: 2,
                 color: isCurrent ? '#80c060' : '#3a5870',
                 textAlign: 'center', whiteSpace: 'nowrap',
               }}>
@@ -155,13 +127,6 @@ export default function MiniMap({ currentMapId, expanded, onToggle }: Props) {
             }
           </div>
         ))}
-      </div>
-
-      <div style={{
-        textAlign: 'center', fontSize: 7, color: '#2a4060', marginTop: 5,
-        letterSpacing: 1,
-      }}>
-        tap to close
       </div>
     </div>
   )

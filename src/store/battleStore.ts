@@ -98,7 +98,7 @@ interface BattleState {
 
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
-  handleAnswer: (correct: boolean) => void
+  handleAnswer: (correct: boolean, chosenAnswer?: string) => void
   continueBattle: () => void
 }
 
@@ -303,6 +303,6 @@ export const useBattleStore = create<BattleState>((set) => ({
 
   // Stubs — replaced by useBattleEngine in Task 13
   selectMove: (index) => set({ selectedMoveIndex: index, phase: 'question' }),
-  handleAnswer: (_correct) => {},
+  handleAnswer: (_correct, _chosen) => {},
   continueBattle: () => set({ phase: 'player_turn' }),
 }))
