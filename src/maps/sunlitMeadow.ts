@@ -46,6 +46,13 @@ export const sunlitMeadow: MapData = {
     { pokemonId: 143, minLevel: 12, maxLevel: 15, rate: 1  },  // Snorlax ⭐
   ],
   trainers: [],
+  wanderingNpcs: [
+    {
+      id: 'pichu_sm', name: 'Pichu', spriteDir: 'sprites/npc/pichu',
+      homeX: 10, homeY: 8, wanderRadius: 3, isTrainer: true,
+      party: [{ pokemonId: 39, level: 7 }, { pokemonId: 52, level: 8 }],
+    },
+  ],
   exits: [
     { x: 0,  y: 6, targetMap: 'pallet',         targetX: 14, targetY: 6 },
     { x: 0,  y: 7, targetMap: 'pallet',         targetX: 14, targetY: 7 },

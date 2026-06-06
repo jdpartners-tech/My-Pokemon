@@ -19,6 +19,7 @@ async function hashPin(pin: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+
 function defaultSubjects(): SubjectSettings {
   return {
     english: { enabled: true, types: [] },

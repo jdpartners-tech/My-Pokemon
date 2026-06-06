@@ -11,8 +11,8 @@ export default function PinEntry({ onComplete, error, onClear }: Props) {
 
   useEffect(() => {
     if (pin.length === 4) {
-      onComplete(pin)
-      setPin('')
+      const t = setTimeout(() => { onComplete(pin); setPin('') }, 120)
+      return () => clearTimeout(t)
     }
   }, [pin])
 

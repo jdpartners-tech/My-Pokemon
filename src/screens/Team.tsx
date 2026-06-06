@@ -198,9 +198,10 @@ export default function Team() {
   // ── render ────────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="bg-[#0f3460] px-4 py-3 flex items-center gap-3 border-b border-yellow-400/20 flex-shrink-0">
-        <button onClick={goBack} className="text-yellow-400 font-bold text-xl">Back</button>
-        <h1 className="text-yellow-400 font-bold text-lg">{title()}</h1>
+      <div className="bg-[#0f3460] px-4 py-3 grid grid-cols-3 items-center border-b border-yellow-400/20 flex-shrink-0">
+        <button onClick={goBack} className="text-yellow-400 font-bold text-xl text-left">Back</button>
+        <h1 className="text-yellow-400 font-bold text-lg text-center">{title()}</h1>
+        <div />
       </div>
 
       {/* Party detail */}

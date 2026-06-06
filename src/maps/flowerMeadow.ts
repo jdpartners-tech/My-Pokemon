@@ -54,6 +54,10 @@ export const flowerMeadow: MapData = {
     { pokemonId: 151, minLevel: 30, maxLevel: 35, rate: 1  },  // Mew ⭐
   ],
   trainers: [],
+  wanderingNpcs: [
+    { id: 'shroomish_fm', name: 'Shroomish', spriteDir: 'sprites/pokemon-npc/shroomish',
+      homeX: 4, homeY: 8, wanderRadius: 3, pokemonId: 285, minLevel: 6, maxLevel: 12 },
+  ],
   exits: [
     { x: 0, y: 6, targetMap: 'mistyLake',      targetX: 17, targetY: 6 },
     { x: 0, y: 7, targetMap: 'mistyLake',      targetX: 17, targetY: 7 },

@@ -201,6 +201,10 @@ export function useBattleEngine() {
         if (isCrit) didCrit = true
         const baseDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
         const singleDmg = isCrit ? Math.floor(baseDmg * 1.5) : baseDmg
+        if (h === 0) {
+          store.setProjectileAnim(moveInfo?.type ?? 'normal', true)
+          await delay(360)
+        }
         store.dealDamageToOpponent(singleDmg)
         totalDmg += singleDmg
         store.showDamagePopup(singleDmg, true)
@@ -208,6 +212,7 @@ export function useBattleEngine() {
         store.setOpponentFlash(true)
         await delay(120)
         store.setOpponentFlash(false)
+        if (h === 0) store.clearProjectileAnim()
         if (hits > 1) await delay(80)
       }
 
@@ -344,6 +349,10 @@ export function useBattleEngine() {
     let totalDmg = 0
     for (let h = 0; h < hits; h++) {
       const singleDmg = calculateDamage(opponentPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
+      if (h === 0) {
+        store.setProjectileAnim(moveInfo?.type ?? 'normal', false)
+        await delay(360)
+      }
       store.dealDamageToPlayer(singleDmg)
       totalDmg += singleDmg
       store.showDamagePopup(singleDmg, false)
@@ -351,6 +360,7 @@ export function useBattleEngine() {
       store.setPlayerFlash(true)
       await delay(120)
       store.setPlayerFlash(false)
+      if (h === 0) store.clearProjectileAnim()
       if (hits > 1) await delay(80)
     }
 
@@ -572,10 +582,11 @@ export function useBattleEngine() {
     // Determine catch success before animation starts
     const pokeData = pokemonMap[opponentPokemon.pokemonId]
     const catchRate = pokeData?.catchRate ?? 45
-    const hpFactor = opponentPokemon.currentHp / opponentPokemon.maxHp
-    // Quadratic curve: multiplier ranges from 1× (full HP) to 4× (near-faint)
-    const catchMultiplier = 1 + 3 * Math.pow(1 - hpFactor, 2)
-    const catchChance = Math.min(1, (catchRate / 255) * catchMultiplier)
+    // Gen 3 HP factor: ranges from 1/3 at full HP to 1 at near-faint
+    const hpFactor = (3 * opponentPokemon.maxHp - 2 * opponentPokemon.currentHp) / (3 * opponentPokemon.maxHp)
+    // Level scaling: exponential — Lv10=0.5, Lv20=1.0, Lv30=1.84, Lv35=2.31
+    const levelMod = Math.max(0.5, Math.pow(opponentPokemon.level / 20, 1.5))
+    const catchChance = Math.min(0.95, Math.max(0.01, (catchRate * hpFactor) / (255 * levelMod)))
     const caught = Math.random() < catchChance
     store.setBallCaught(caught)
 

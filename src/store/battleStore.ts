@@ -93,6 +93,10 @@ interface BattleState {
   setHitEffect: (moveType: string, forOpponent: boolean) => void
   clearHitEffect: () => void
 
+  projectileAnim: { moveType: string; forOpponent: boolean } | null
+  setProjectileAnim: (moveType: string, forOpponent: boolean) => void
+  clearProjectileAnim: () => void
+
   battleBanner: string | null
   setBattleBanner: (s: string | null) => void
 
@@ -130,6 +134,7 @@ const initialState = {
   trainerSpriteRow: 0,
   damagePopup: null,
   hitEffect: null,
+  projectileAnim: null,
   battleBanner: null,
 }
 
@@ -291,6 +296,8 @@ export const useBattleStore = create<BattleState>((set) => ({
   clearDamagePopup: () => set({ damagePopup: null }),
   setHitEffect: (moveType, forOpponent) => set({ hitEffect: { moveType, forOpponent } }),
   clearHitEffect: () => set({ hitEffect: null }),
+  setProjectileAnim: (moveType, forOpponent) => set({ projectileAnim: { moveType, forOpponent } }),
+  clearProjectileAnim: () => set({ projectileAnim: null }),
 
   setBattleBanner: (s) => set({ battleBanner: s }),
 

@@ -56,8 +56,15 @@ export const rockyCave: MapData = {
   waterPokemon: [],
   trainers: [],
   wanderingNpcs: [
-    { id: 'koffing_rc_1', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 5,  homeY: 5, wanderRadius: 3, pokemonId: 109, minLevel: 12, maxLevel: 30 },
-    { id: 'koffing_rc_2', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 11, homeY: 9, wanderRadius: 3, pokemonId: 109, minLevel: 12, maxLevel: 30 },
+    {
+      id: 'haunter_rc_1', name: 'Haunter', spriteDir: 'sprites/npc/haunter-trainer',
+      homeX: 5, homeY: 5, wanderRadius: 3, isTrainer: true,
+      party: [
+        { pokemonId: 92,  level: 20 },  // Gastly
+        { pokemonId: 93,  level: 23 },  // Haunter
+        { pokemonId: 94,  level: 26 },  // Gengar
+      ],
+    },
   ],
   exits: [
     { x: 15, y: 6, targetMap: 'mistyLake',   targetX: 0, targetY: 6 },

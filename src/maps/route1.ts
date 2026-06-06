@@ -44,13 +44,15 @@ export const route1: MapData = {
     { pokemonId: 60,  minLevel: 3, maxLevel: 5, rate: 35 },  // Poliwag
     { pokemonId: 118, minLevel: 4, maxLevel: 6, rate: 20 },  // Goldeen
   ],
-  trainers: [
+  trainers: [],
+  wanderingNpcs: [
     {
-      x: 7, y: 6,
-      direction: 'down',
-      name: 'Youngster Jake',
-      party: [{ pokemonId: 19, level: 4 }, { pokemonId: 16, level: 4 }],
+      id: 'youngster_r1', name: 'Youngster', spriteDir: 'sprites/npc/youngster',
+      homeX: 7, homeY: 10, wanderRadius: 4, isTrainer: true,
+      party: [{ pokemonId: 19, level: 3 }, { pokemonId: 16, level: 4 }],
     },
+    { id: 'raichu_r1', name: 'Raichu', spriteDir: 'sprites/pokemon-npc/raichu',
+      homeX: 4, homeY: 4, wanderRadius: 4, pokemonId: 26, minLevel: 5, maxLevel: 10 },
   ],
   exits: [
     { x: 4,  y: 0, targetMap: 'pallet', targetX: 4,  targetY: 10 },

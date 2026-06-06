@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
@@ -21,6 +21,8 @@ export default function Pokedex() {
   const { updateProfile } = useFirestoreProfile()
   const [selected, setSelected] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
+  const outerRef = useRef<HTMLDivElement>(null)
+  const savedScrollRef = useRef(0)
 
   const dex = profile?.pokedex ?? {}
   const party = profile?.party ?? [] as PartyPokemon[]
@@ -69,7 +71,13 @@ export default function Pokedex() {
   }
 
   function handleBack() {
-    if (selected) { setSelected(null); return }
+    if (selected) {
+      setSelected(null)
+      requestAnimationFrame(() => {
+        if (outerRef.current) outerRef.current.scrollTop = savedScrollRef.current
+      })
+      return
+    }
     if (isReplacing) {
       useProfileStore.getState().setReplacingPartyIdx(-1)
       navigate('/team')
@@ -79,15 +87,17 @@ export default function Pokedex() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div ref={outerRef} className="fixed inset-0 bg-[#1a1a2e] overflow-y-auto flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
 
       {/* Header */}
-      <div className="bg-[#0f3460] px-4 py-3 flex items-center gap-3 border-b border-yellow-400/20 flex-shrink-0">
-        <button onClick={handleBack} className="text-yellow-400 font-bold text-xl">Back</button>
-        <h1 className="text-yellow-400 font-bold text-lg flex-1">
-          {isReplacing ? 'Choose a replacement' : 'Pokedex'}
+      <div className="bg-[#0f3460] px-4 py-3 grid grid-cols-3 items-center border-b border-yellow-400/20 flex-shrink-0">
+        <button onClick={handleBack} className="text-yellow-400 font-bold text-xl text-left">Back</button>
+        <h1 className="text-yellow-400 font-bold text-lg text-center">
+          {isReplacing ? 'Choose a replacement' : 'Pokédex'}
         </h1>
-        {!isReplacing && <span className="text-gray-400 text-sm">{caughtCount}/{gen1.length} caught</span>}
+        {!isReplacing
+          ? <span className="text-gray-400 text-sm text-right">{caughtCount}/{gen1.length}</span>
+          : <div />}
       </div>
 
       {/* Replacement mode banner */}
@@ -227,7 +237,7 @@ export default function Pokedex() {
             const inBox = boxMap.has(p.id)
             return (
               <button key={p.id}
-                onClick={() => setSelected(p.id)}
+                onClick={() => { savedScrollRef.current = outerRef.current?.scrollTop ?? 0; setSelected(p.id) }}
                 className={`bg-[#16213e] rounded-xl p-2 flex flex-col items-center border transition-all hover:border-yellow-400
                   ${status === 'caught' ? 'border-green-500/40' :
                     status === 'seen'   ? 'border-blue-500/20' : 'border-gray-700/20'}`}

@@ -13,6 +13,7 @@ import ShopModal from '../components/ShopModal'
 import MiniMap from '../components/MiniMap'
 import BagMenu from '../components/BagMenu'
 import { PokemonData, ItemData } from '../types/game'
+import { TRAINER_BATTLE_PICS } from '../data/trainerPics'
 
 const ITEMS = itemsJson as ItemData[]
 
@@ -78,6 +79,14 @@ const SPRITE_FILES: Record<string, string> = {
   female_run_up:      'characters/Female Character - Run to the back.png',
   female_run_left:    'characters/Female Character - Run to the left.png',
   female_run_right:   'characters/Female Character - Run to the right.png',
+  male_bike_down:    'characters/Male Biker - Look at the front.png',
+  male_bike_up:      'characters/Male Biker - Look at the back.png',
+  male_bike_left:    'characters/Male Biker - Look at the left.png',
+  male_bike_right:   'characters/Male Biker - Look at the right.png',
+  female_bike_down:  'characters/Female Biker - Look at the front.png',
+  female_bike_up:    'characters/Female Biker - Look at the back.png',
+  female_bike_left:  'characters/Female Biker - Look at the left.png',
+  female_bike_right: 'characters/Female Biker - Look at the right.png',
 }
 const SPRITE_IMGS: Record<string, HTMLImageElement> = {}
 const SPRITE_CANVASES: Record<string, HTMLCanvasElement | undefined> = {}
@@ -94,6 +103,10 @@ const NPC_FIGURE_FILES: Record<string, string> = {
 // Trainers with full directional sprite sets (spriteDir/front|back|left|right.png)
 const NPC_DIR_FILES: Record<string, string> = {
   'Dark Trainer': 'sprites/npc/dark-trainer',
+  'Youngster':    'sprites/npc/youngster',
+  'Grimer':       'sprites/npc/grimer',
+  'Pichu':        'sprites/npc/pichu',
+  'Haunter':      'sprites/npc/haunter-trainer',
 }
 const NPC_FIGURE_IMGS: Record<string, HTMLImageElement> = {}
 Object.entries(NPC_FIGURE_FILES).forEach(([name, file]) => {
@@ -176,6 +189,15 @@ Object.entries(TILE_FILES).forEach(([key, file]) => {
   TILE_IMGS[key] = img
 })
 
+// ── Pikachu follower sprites ──────────────────────────────────────────────
+const PIKACHU_FOLLOWER_DIR = 'sprites/pokemon-npc/pikachu'
+const PIKACHU_FOLLOWER_IMGS: Record<string, HTMLImageElement> = {}
+const FOLLOWER_POSES = ['front','back','left','right','walk_front','walk_left','walk_right','run_back']
+FOLLOWER_POSES.forEach(pose => {
+  const img = new Image()
+  img.src = `${import.meta.env.BASE_URL}${PIKACHU_FOLLOWER_DIR}/${pose}.png`
+  PIKACHU_FOLLOWER_IMGS[pose] = img
+})
 
 // ── Pokémon Center interior canvas drawing ────────────────────────────────
 function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number, injuredCount = 0) {
@@ -327,6 +349,8 @@ export default function WorldMap() {
   const [direction, setDirection] = useState<'down'|'up'|'left'|'right'>('down')
   const [moving, setMoving] = useState(false)
   const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isBiking, setIsBiking] = useState(false)
+  const isBikingRef = useRef(false)
   const [dialogue, setDialogue] = useState<string | null>(null)
   const [shopOpen, setShopOpen] = useState(false)
   const shopDismissedRef = useRef(false)
@@ -363,7 +387,7 @@ export default function WorldMap() {
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [canvasCssSize, setCanvasCssSize] = useState<{ w: number; h: number } | null>(null)
   useEffect(() => {
-    const TOPBAR_H  = 44
+    const TOPBAR_H  = 72
     const DPAD_H    = 280
     const MINIMAP_W = 396   // mini-map sidebar + gap, desktop only
 
@@ -414,14 +438,15 @@ export default function WorldMap() {
   const startTrainerBattleRef = useRef<(t: TrainerNpc) => void>(() => {})
   const partyRef = useRef(profile?.party ?? [])
   useEffect(() => { partyRef.current = profile?.party ?? [] }, [profile?.party])
+  const followerPosRef = useRef<{ x: number; y: number; dir: DirKey } | null>(null)
 
   useEffect(() => { if (!profile) navigate('/') }, [profile, navigate])
 
-  // On mount: if the player just caught an NPC Pokemon, hide it for 10 minutes
+  // On mount: if the player defeated or caught an NPC Pokemon, hide it for 5 minutes
   useEffect(() => {
-    const { ballCaught, pendingCatchNpcId, setPendingCatchNpcId } = useBattleStore.getState()
-    if (ballCaught && pendingCatchNpcId) {
-      const expiry = Date.now() + 10 * 60 * 1000
+    const { ballCaught, phase, pendingCatchNpcId, setPendingCatchNpcId } = useBattleStore.getState()
+    if ((ballCaught || phase === 'win') && pendingCatchNpcId) {
+      const expiry = Date.now() + 5 * 60 * 1000
       setHiddenNpcs(prev => ({ ...prev, [pendingCatchNpcId]: expiry }))
       hiddenNpcsRef.current = { ...hiddenNpcsRef.current, [pendingCatchNpcId]: expiry }
       setWanderingNpcs(prev => {
@@ -434,7 +459,7 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Respawn hidden NPC Pokemon after 10 minutes
+  // Respawn hidden NPC Pokemon after 5 minutes
   useEffect(() => {
     const timer = setInterval(() => {
       const now = Date.now()
@@ -516,7 +541,7 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Wandering NPC movement — 550ms tick, 20% move probability per NPC
+  // Wandering NPC movement — 300ms tick for Pokemon NPCs, every 3rd tick (~900ms) for human trainers
   // Walk sprite shows for 200ms then clears to idle (brief animation, not a constant run)
   useEffect(() => {
     // Look-around pool: left/right most common, up & down occasionally
@@ -524,20 +549,60 @@ export default function WorldMap() {
     const LOOK_POOL: Array<'up'|'down'|'left'|'right'> = ['left','right','left','right','up','down']
     const DIRS: Array<'up'|'down'|'left'|'right'> = ['up','down','left','right']
 
+    const FLEE_RADIUS = 6  // tiles — Pokemon NPCs start fleeing when player is within this range
+    let tick = 0
+
     const timer = setInterval(() => {
+      tick++
+      const isTrainerTick = tick % 3 === 0  // human trainers move every 3rd tick (~900ms)
       const map = mapRef.current
       if (!map) return
       setWanderingNpcs(prev => {
         const playerX = pxRef.current
         const playerY = pyRef.current
         const next = prev.map((w, _i, arr) => {
-          if (Math.random() > 0.20) {
-            // Stopped — occasionally look around
-            if (Math.random() < 0.40) {
-              const newFacing = LOOK_POOL[Math.floor(Math.random() * LOOK_POOL.length)]
-              return { ...w, moving: false, facing: newFacing }
+
+          // ── Pokemon NPC flee logic ────────────────────────────────────────
+          if (w.pokemonId && !w.isTrainer) {
+            const dx = w.x - playerX
+            const dy = w.y - playerY
+            const dist = Math.max(Math.abs(dx), Math.abs(dy))
+            if (dist <= 1) return { ...w, moving: false }  // freeze when adjacent — guarantees encounter
+            if (dist <= FLEE_RADIUS) {
+              // Build escape direction priority: move away from player first,
+              // then perpendicular options if primary is blocked.
+              const fleeDirs: Array<'up'|'down'|'left'|'right'> = []
+              if (Math.abs(dx) >= Math.abs(dy)) {
+                const pri = dx > 0 ? 'right' : 'left'
+                const sec = dy > 0 ? 'down' : dy < 0 ? 'up' : (Math.random() < 0.5 ? 'down' : 'up')
+                fleeDirs.push(pri, sec, sec === 'down' ? 'up' : 'down')
+              } else {
+                const pri = dy > 0 ? 'down' : 'up'
+                const sec = dx > 0 ? 'right' : dx < 0 ? 'left' : (Math.random() < 0.5 ? 'right' : 'left')
+                fleeDirs.push(pri, sec, sec === 'right' ? 'left' : 'right')
+              }
+              for (const d of fleeDirs) {
+                const nx = w.x + (d === 'right' ? 1 : d === 'left' ? -1 : 0)
+                const ny = w.y + (d === 'down'  ? 1 : d === 'up'   ? -1 : 0)
+                if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue
+                const tile = map.tiles[ny]?.[nx]
+                if (!tile || BLOCKED_TILES.has(tile) || tile === 'water') continue
+                if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) continue
+                if (nx === playerX && ny === playerY) continue
+                if (arr.some(o => o.id !== w.id && o.x === nx && o.y === ny)) continue
+                const arrivalFacing: typeof d = d === 'down' ? (Math.random() < 0.5 ? 'left' : 'right') : d
+                return { ...w, x: nx, y: ny, dir: d, facing: arrivalFacing, moving: true }
+              }
+              return { ...w, moving: false }  // cornered — stay put
             }
-            return { ...w, moving: false }
+          }
+
+          // ── Normal wandering (trainers + Pokemon NPCs out of flee range) ──
+          // Human trainers move only on slow ticks (~900ms); Pokemon NPCs every tick (300ms)
+          if (!w.pokemonId && !isTrainerTick) return w
+          if (Math.random() > 0.85) {
+            const newFacing = LOOK_POOL[Math.floor(Math.random() * LOOK_POOL.length)]
+            return { ...w, moving: false, facing: newFacing }
           }
           // Attempt to move
           const d = DIRS[Math.floor(Math.random() * 4)]
@@ -545,12 +610,10 @@ export default function WorldMap() {
           const ny = w.y + (d === 'down'  ? 1 : d === 'up'   ? -1 : 0)
           if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) return { ...w, moving: false }
           const tile = map.tiles[ny]?.[nx]
-          if (!tile || tile === 'tree' || tile === 'building' || tile === 'water' || tile === 'fence') return { ...w, moving: false }
+          if (!tile || BLOCKED_TILES.has(tile) || tile === 'water') return { ...w, moving: false }
           if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) return { ...w, moving: false }
           if (nx === playerX && ny === playerY) return { ...w, moving: false }
           if (arr.some(other => other.id !== w.id && other.x === nx && other.y === ny)) return { ...w, moving: false }
-          // After moving DOWN: face sideways on arrival (not at viewer)
-          // After any other direction: face that direction
           const arrivalFacing: typeof d = d === 'down'
             ? (Math.random() < 0.5 ? 'left' : 'right')
             : d
@@ -567,7 +630,7 @@ export default function WorldMap() {
         }, 200)
         return next
       })
-    }, 550)
+    }, 300)
     return () => clearInterval(timer)
   }, [])
 
@@ -588,11 +651,16 @@ export default function WorldMap() {
     prevMapIdRef.current = currentMapId
     currentMapIdRef.current = currentMapId
 
-    // Initialise wandering NPCs for the new map (skip currently hidden/caught ones)
+    // Clear stale wandering-NPC sprite caches so fixed sprite files take effect immediately
+    Object.keys(TILE_CANVASES).forEach(k => { if (k.startsWith('wandering_')) delete TILE_CANVASES[k] })
+    wanderingImgsRef.current = {}
+
+    // Initialise wandering NPCs for the new map (skip hidden ones; skip trainers without large pics)
     const mapData = MAPS[currentMapId]
     const now = Date.now()
     const initial: WanderingState[] = (mapData?.wanderingNpcs ?? [])
       .filter(w => !hiddenNpcsRef.current[w.id] || now >= hiddenNpcsRef.current[w.id])
+      .filter(w => !w.isTrainer || !!TRAINER_BATTLE_PICS[w.name])
       .map(w => {
         const lvl = w.minLevel != null && w.maxLevel != null
           ? w.minLevel + Math.floor(Math.random() * (w.maxLevel - w.minLevel + 1))
@@ -1000,18 +1068,6 @@ export default function WorldMap() {
         const ix = vx * TILE + TILE / 2, iy = vy * TILE + TILE / 2 - 2
 
         ctx.save()
-        // Subtle sparkle star above item
-        const sparkX = ix + 7, sparkY = iy - 8
-        const sparkSize = 2.5
-        ctx.fillStyle = 'rgba(255,255,180,0.92)'
-        for (let a = 0; a < 4; a++) {
-          const ang = (a / 4) * Math.PI * 2 - Math.PI / 4
-          ctx.beginPath()
-          ctx.moveTo(sparkX, sparkY)
-          ctx.lineTo(sparkX + Math.cos(ang) * sparkSize, sparkY + Math.sin(ang) * sparkSize)
-          ctx.lineTo(sparkX + Math.cos(ang + Math.PI / 4) * sparkSize * 0.35, sparkY + Math.sin(ang + Math.PI / 4) * sparkSize * 0.35)
-          ctx.closePath(); ctx.fill()
-        }
 
         if (item.itemId === 'pokeball') {
           const r = 7
@@ -1155,6 +1211,8 @@ export default function WorldMap() {
     }
 
     // ── Wandering NPCs ────────────────────────────────────────────────────
+    ctx.shadowBlur = 0
+    ctx.shadowColor = 'transparent'
     for (const w of wanderingNpcsRef.current) {
       // Interior maps: draw at absolute tile position so NPCs don't shift with player movement
       // Exterior maps: use viewport-relative position centered on player
@@ -1228,9 +1286,48 @@ export default function WorldMap() {
       }
     }
 
+    // ── Pikachu follower ──────────────────────────────────────────────────
+    const leaderPikachu = partyRef.current[0]
+    const follower = followerPosRef.current
+    if (leaderPikachu?.pokemonId === 25 && (leaderPikachu?.currentHp ?? 0) > 0 && follower) {
+      let fdx: number | null = null
+      let fdy: number | null = null
+      if (map.isInterior) {
+        fdx = follower.x * TILE
+        fdy = follower.y * TILE
+      } else {
+        const fvx = follower.x - playerX + hw
+        const fvy = follower.y - playerY + hh
+        if (fvx >= 0 && fvx < COLS && fvy >= 0 && fvy < ROWS) {
+          fdx = fvx * TILE
+          fdy = fvy * TILE
+        }
+      }
+      if (fdx !== null && fdy !== null) {
+        const poseMoving: Record<string, string> = { right: 'walk_right', left: 'walk_left', up: 'run_back', down: 'walk_front' }
+        const poseIdle2: Record<string, string> = { right: 'right', left: 'left', up: 'back', down: 'front' }
+        const followerPose = (isMoving ? poseMoving[follower.dir] : poseIdle2[follower.dir]) ?? 'front'
+        const fImg = PIKACHU_FOLLOWER_IMGS[followerPose] ?? PIKACHU_FOLLOWER_IMGS['front']
+        if (fImg?.complete && fImg.naturalWidth > 0) {
+          const cacheKey = `follower_pikachu_${followerPose}`
+          if (!TILE_CANVASES[cacheKey]) TILE_CANVASES[cacheKey] = applyChromaKey(fImg)
+          const src = TILE_CANVASES[cacheKey]!
+          const fdw = Math.round(TILE * 0.8)
+          const fdh = Math.round(TILE * 0.9)
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(src, 0, 0, src.width, src.height,
+            fdx + Math.round((TILE - fdw) / 2),
+            fdy + TILE - fdh,
+            fdw, fdh)
+        } else if (fImg && !fImg.complete) {
+          fImg.onload = () => drawMap(playerX, playerY, dir, isMoving)
+        }
+      }
+    }
+
     // ── Player sprite ─────────────────────────────────────────────────────
     const gender = profile?.gender === 'female' ? 'female' : 'male'
-    const pose = isMoving ? 'run' : 'stand'
+    const pose = isBikingRef.current ? 'bike' : isMoving ? 'run' : 'stand'
     const dirKey = (['down','up','left','right'].includes(dir) ? dir : 'down') as DirKey
     const spriteKey = `${gender}_${pose}_${dirKey}`
     const rawImg = SPRITE_IMGS[spriteKey]
@@ -1278,148 +1375,157 @@ export default function WorldMap() {
     if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
     moveTimerRef.current = setTimeout(() => setMoving(false), 220)
 
-    const map = mapRef.current
-    const prevPx = pxRef.current
-    const prevPy = pyRef.current
-    const nx = prevPx + dx
-    const ny = prevPy + dy
+    function doStep(fromX: number, fromY: number): boolean {
+      const map = mapRef.current
+      const nx = fromX + dx
+      const ny = fromY + dy
 
-    // Helper: is this tile at the map border?
-    const isBorderTile = (x: number, y: number) =>
-      x === 0 || x === map.width - 1 || y === 0 || y === map.height - 1
+      const isBorderTile = (x: number, y: number) =>
+        x === 0 || x === map.width - 1 || y === 0 || y === map.height - 1
 
-    function doExit(exit: typeof map.exits[number]) {
-      mapRef.current = getMap(exit.targetMap)
-      setCurrentMapId(exit.targetMap)
-      setDialogue(null)
-      pxRef.current = exit.targetX
-      pyRef.current = exit.targetY
-      setPx(exit.targetX)
-      setPy(exit.targetY)
-      const cp = useProfileStore.getState().profile
-      if (cp?.id) {
-        const posUpdate = { currentRoute: exit.targetMap, playerX: exit.targetX, playerY: exit.targetY }
-        useProfileStore.getState().setProfile({ ...cp, ...posUpdate })
-        updateProfileRef.current(cp.id, posUpdate).catch(() => {})
+      function doExit(exit: typeof map.exits[number]) {
+        mapRef.current = getMap(exit.targetMap)
+        setCurrentMapId(exit.targetMap)
+        setDialogue(null)
+        pxRef.current = exit.targetX
+        pyRef.current = exit.targetY
+        setPx(exit.targetX)
+        setPy(exit.targetY)
+        followerPosRef.current = { x: exit.targetX, y: exit.targetY, dir: followerPosRef.current?.dir ?? 'down' }
+        const cp = useProfileStore.getState().profile
+        if (cp?.id) {
+          const posUpdate = { currentRoute: exit.targetMap, playerX: exit.targetX, playerY: exit.targetY }
+          useProfileStore.getState().setProfile({ ...cp, ...posUpdate })
+          updateProfileRef.current(cp.id, posUpdate).catch(() => {})
+        }
       }
-    }
 
-    // Trying to step off-map — check if current tile is a border exit
-    if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) {
-      const exit = map.exits.find(e => e.x === prevPx && e.y === prevPy)
-      if (exit) doExit(exit)
-      return
-    }
-
-    const tile = map.tiles[ny][nx]
-
-    // Interior exits (door tiles, not at map border) — keep instant trigger
-    const interiorExit = map.exits.find(e => e.x === nx && e.y === ny && !isBorderTile(e.x, e.y))
-    if (interiorExit) { doExit(interiorExit); return }
-
-    if (BLOCKED_TILES.has(tile)) return
-
-    const door = map.doors.find(d => d.x === nx && d.y === ny)
-    if (door?.type === 'pokemart') {
-      if (shopDismissedRef.current) return  // player dismissed — don't reopen until they move away
-      setShopOpen(true)
-      return
-    }
-
-    for (const trainer of map.trainers) {
-      const triggered = nx === trainer.x && ny === trainer.y
-      if (triggered) {
-        setDialogue(`${trainer.name} wants to battle!`)
-        setTimeout(() => startTrainerBattleRef.current(trainer), 1500)
-        return
+      if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) {
+        const exit = map.exits.find(e => e.x === fromX && e.y === fromY)
+        if (exit) doExit(exit)
+        return false
       }
-    }
 
-    // Wandering NPCs block the player — can't walk through them.
-    // A wandering trainer starts a battle the moment the player bumps into it.
-    const blocker = wanderingNpcsRef.current.find(w => w.x === nx && w.y === ny)
-    if (blocker) {
-      if (blocker.isTrainer && blocker.party?.length) {
-        setDialogue(`${blocker.name} wants to battle!`)
-        const t: TrainerNpc = { x: blocker.x, y: blocker.y, direction: 'down', name: blocker.name, party: blocker.party }
-        setTimeout(() => startTrainerBattleRef.current(t), 1500)
-      } else if (blocker.pokemonId) {
-        // Wild Pokemon NPC — start a catchable wild battle
-        const opponentInfo = pokemonMap[blocker.pokemonId]
-        if (!opponentInfo) return
+      const tile = map.tiles[ny][nx]
+
+      const interiorExit = map.exits.find(e => e.x === nx && e.y === ny && !isBorderTile(e.x, e.y))
+      if (interiorExit) { doExit(interiorExit); return false }
+
+      if (BLOCKED_TILES.has(tile)) return false
+
+      const door = map.doors.find(d => d.x === nx && d.y === ny)
+      if (door?.type === 'pokemart') {
+        if (shopDismissedRef.current) return false
+        setShopOpen(true)
+        return false
+      }
+
+      if (!isBikingRef.current) {
+        for (const trainer of map.trainers) {
+          if (nx === trainer.x && ny === trainer.y && TRAINER_BATTLE_PICS[trainer.name]) {
+            setDialogue(`${trainer.name} wants to battle!`)
+            setTimeout(() => startTrainerBattleRef.current(trainer), 500)
+            return false
+          }
+        }
+      }
+
+      const blocker = wanderingNpcsRef.current.find(w => w.x === nx && w.y === ny)
+      if (blocker) {
+        if (blocker.isTrainer && blocker.party?.length && !isBikingRef.current && TRAINER_BATTLE_PICS[blocker.name]) {
+          setDialogue(`${blocker.name} wants to battle!`)
+          const t: TrainerNpc = { x: blocker.x, y: blocker.y, direction: 'down', name: blocker.name, party: blocker.party }
+          setTimeout(() => startTrainerBattleRef.current(t), 500)
+        } else if (blocker.pokemonId) {
+          // Pokemon NPC: pick a random Pokemon from the map's wild pool
+          const currentProfile = useProfileStore.getState().profile
+          if (!currentProfile?.party?.length) return false
+          const pool = mapRef.current.wildPokemon
+          if (!pool.length) return false  // decorative NPC on maps with no wild encounters
+          const total = pool.reduce((s, w) => s + w.rate, 0)
+          let roll = Math.random() * total
+          let wild = pool[pool.length - 1]
+          for (const w of pool) { roll -= w.rate; if (roll <= 0) { wild = w; break } }
+          const pokemonId = wild.pokemonId
+          const minLv = wild.minLevel
+          const maxLv = wild.maxLevel
+          const level = minLv + Math.floor(Math.random() * (maxLv - minLv + 1))
+          const opponentInfo = pokemonMap[pokemonId]
+          if (!opponentInfo) return false
+          const opponent = buildPartyPokemon(opponentInfo, level)
+          const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
+          if (!playerInfo) return false
+          const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
+          player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
+          player.xp = currentProfile.party[0].xp ?? player.xp
+          const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
+          const _usedIds = new Set(_validMoves.map(m => m.moveId))
+          const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
+          player.moves = [..._validMoves, ..._fresh].slice(0, 4)
+          player.nickname = currentProfile.party[0].nickname
+          const fullParty = currentProfile.party.slice(1).map(p => {
+            const info = pokemonMap[p.pokemonId]; if (!info) return null
+            const bp = buildPartyPokemon(info, p.level)
+            bp.currentHp = p.currentHp ?? bp.maxHp; bp.xp = p.xp ?? bp.xp
+            const bpValid = filterValidMoves(p.moves ?? [])
+            const bpUsed = new Set(bpValid.map(m => m.moveId))
+            bp.moves = [...bpValid, ...bp.moves.filter(m => !bpUsed.has(m.moveId))].slice(0, 4)
+            bp.nickname = p.nickname; return bp
+          }).filter(Boolean) as typeof player[]
+          useProfileStore.getState().setProfile({
+            ...currentProfile,
+            playerX: pxRef.current, playerY: pyRef.current,
+            currentRoute: currentMapIdRef.current,
+          })
+          useBattleStore.getState().setPendingCatchNpcId(blocker.id)
+          useBattleStore.getState().startWildBattle(player, opponent, fullParty)
+          flashAndNavigate()
+        }
+        return false
+      }
+
+      shopDismissedRef.current = false
+      followerPosRef.current = { x: pxRef.current, y: pyRef.current, dir: newDir }
+      pxRef.current = nx
+      pyRef.current = ny
+      setPx(nx)
+      setPy(ny)
+
+      const currentMapId_ = currentMapIdRef.current
+      setMapItems(prev => {
+        const idx = prev.findIndex(it => it.mapId === currentMapId_ && it.x === nx && it.y === ny)
+        if (idx === -1) return prev
+        const item = prev[idx]
+        const itemName = item.itemId === 'pokeball' ? 'Pokéball' : 'Potion'
+        setDialogue(`You found a ${itemName}!`)
         const currentProfile = useProfileStore.getState().profile
-        if (!currentProfile?.party?.length) return
-        const level = blocker.level ?? 5
-        const opponent = buildPartyPokemon(opponentInfo, level)
-        const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
-        if (!playerInfo) return
-        const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
-        player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
-        player.xp = currentProfile.party[0].xp ?? player.xp
-        const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
-        const _usedIds = new Set(_validMoves.map(m => m.moveId))
-        const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
-        player.moves = [..._validMoves, ..._fresh].slice(0, 4)
-        player.nickname = currentProfile.party[0].nickname
-        const fullParty = currentProfile.party.slice(1).map(p => {
-          const info = pokemonMap[p.pokemonId]; if (!info) return null
-          const bp = buildPartyPokemon(info, p.level)
-          bp.currentHp = p.currentHp ?? bp.maxHp; bp.xp = p.xp ?? bp.xp
-          const bpValid = filterValidMoves(p.moves ?? [])
-          const bpUsed = new Set(bpValid.map(m => m.moveId))
-          bp.moves = [...bpValid, ...bp.moves.filter(m => !bpUsed.has(m.moveId))].slice(0, 4)
-          bp.nickname = p.nickname; return bp
-        }).filter(Boolean) as typeof player[]
-        useProfileStore.getState().setProfile({
-          ...currentProfile,
-          playerX: pxRef.current, playerY: pyRef.current,
-          currentRoute: currentMapIdRef.current,
-        })
-        useBattleStore.getState().setPendingCatchNpcId(blocker.id)
-        useBattleStore.getState().startWildBattle(player, opponent, fullParty)
-        flashAndNavigate()
+        if (currentProfile?.id) {
+          const bag = currentProfile.bag ?? []
+          const existingIdx = bag.findIndex(b => b.itemId === item.itemId)
+          const newBag = existingIdx >= 0
+            ? bag.map((b, i) => i === existingIdx ? { ...b, qty: b.qty + 1 } : b)
+            : [...bag, { itemId: item.itemId, qty: 1 }]
+          updateProfileRef.current(currentProfile.id, { bag: newBag })
+          useProfileStore.getState().setProfile({ ...currentProfile, bag: newBag })
+        }
+        return prev.filter((_, i) => i !== idx)
+      })
+
+      const currentMap = mapRef.current
+      const hasLandWild = currentMap.wildPokemon.length > 0
+      const hasWaterWild = (currentMap.waterPokemon ?? []).length > 0
+      const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2' || tile === 'flower3' || tile === 'brush2'
+      const isWaterTile = tile === 'water'
+      if (!isBikingRef.current && ((hasLandWild && isLandTile) || (hasWaterWild && isWaterTile)) && Math.random() < ENCOUNTER_RATE) {
+        setTimeout(() => startWildBattleRef.current(nx, ny), 0)
+        return false
       }
-      return
+
+      return true
     }
 
-    shopDismissedRef.current = false  // player moved away — allow shop to reopen next approach
-    pxRef.current = nx
-    pyRef.current = ny
-    setPx(nx)
-    setPy(ny)
-
-    // Item pickup
-    const currentMapId_ = currentMapIdRef.current
-    setMapItems(prev => {
-      const idx = prev.findIndex(it => it.mapId === currentMapId_ && it.x === nx && it.y === ny)
-      if (idx === -1) return prev
-      const item = prev[idx]
-      const itemName = item.itemId === 'pokeball' ? 'Pokéball' : 'Potion'
-      setDialogue(`You found a ${itemName}!`)
-      // Add to bag
-      const currentProfile = useProfileStore.getState().profile
-      if (currentProfile?.id) {
-        const bag = currentProfile.bag ?? []
-        const existingIdx = bag.findIndex(b => b.itemId === item.itemId)
-        const newBag = existingIdx >= 0
-          ? bag.map((b, i) => i === existingIdx ? { ...b, qty: b.qty + 1 } : b)
-          : [...bag, { itemId: item.itemId, qty: 1 }]
-        updateProfileRef.current(currentProfile.id, { bag: newBag })
-        useProfileStore.getState().setProfile({ ...currentProfile, bag: newBag })
-      }
-      return prev.filter((_, i) => i !== idx)
-    })
-
-    // Trigger encounters on any walkable tile if the map has wild Pokemon defined
-    // (Volcano/Cave use 'path' tiles; grass maps use 'grass'; water triggers waterPokemon)
-    const currentMap = mapRef.current
-    const hasLandWild = currentMap.wildPokemon.length > 0
-    const hasWaterWild = (currentMap.waterPokemon ?? []).length > 0
-    const isLandTile = tile === 'grass' || tile === 'path' || tile === 'land' || tile === 'flower' || tile === 'flower2' || tile === 'flower3' || tile === 'brush2'
-    const isWaterTile = tile === 'water'
-    if (((hasLandWild && isLandTile) || (hasWaterWild && isWaterTile)) && Math.random() < ENCOUNTER_RATE) {
-      setTimeout(() => startWildBattleRef.current(nx, ny), 0)
-    }
+    const moved = doStep(pxRef.current, pyRef.current)
+    if (moved && isBikingRef.current) doStep(pxRef.current, pyRef.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1546,7 +1652,7 @@ export default function WorldMap() {
       currentRoute: currentMapIdRef.current,
     })
     useBattleStore.getState().startTrainerBattle(player, opponent, trainer.name, fullParty)
-    flashAndNavigate(400)
+    flashAndNavigate(0)
   }
   startTrainerBattleRef.current = startTrainerBattle
 
@@ -1587,33 +1693,30 @@ export default function WorldMap() {
     }}>
       {/* Top bar — fixed height, respects iPhone notch/Dynamic Island */}
       <div style={{
-        flexShrink: 0, display: 'flex', justifyContent: 'flex-end',
-        alignItems: 'center',
-        paddingTop: 'max(12px, env(safe-area-inset-top))',
-        paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
-        gap: 8,
+        flexShrink: 0, display: 'flex', alignItems: 'stretch',
+        paddingTop: 'max(10px, env(safe-area-inset-top))',
+        paddingBottom: 8, paddingLeft: 8, paddingRight: 8,
+        gap: 6,
       }}>
         <button onClick={() => navigate('/team')}
-          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          className="flex-1 bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-sm font-semibold py-3 rounded-lg">
           Team
         </button>
         <button onClick={() => navigate('/pokedex')}
-          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          className="flex-1 bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-sm font-semibold py-3 rounded-lg">
           Pokédex
         </button>
         <button onClick={() => setWorldBagOpen(true)}
-          className="bg-[#16213e] border border-yellow-400/40 text-yellow-400 text-xs px-3 py-1 rounded-lg">
+          className="flex-1 bg-[#16213e] border border-yellow-400/40 text-yellow-400 text-sm font-semibold py-3 rounded-lg">
           Bag
         </button>
         <button onClick={() => navigate('/progress')}
-          className="bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-xs px-3 py-1 rounded-lg">
+          className="flex-1 bg-[#16213e] border border-[#4ecdc4]/40 text-[#4ecdc4] text-sm font-semibold py-3 rounded-lg">
           Progress
         </button>
         <button
-          onClick={() => {
-            setShowMinimap(s => !s)
-          }}
-          className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
+          onClick={() => setShowMinimap(s => !s)}
+          className={`flex-1 text-xl py-3 rounded-lg border font-semibold transition-colors ${
             showMinimap
               ? 'bg-[#16213e] border-yellow-400/60 text-yellow-400'
               : 'bg-[#16213e] border-gray-600/60 text-gray-500'
@@ -1689,18 +1792,23 @@ export default function WorldMap() {
             </div>
           )}
 
-          {/* DPad — always anchored to the bottom of the main area */}
+          {/* DPad — always anchored to the bottom of the main area; bike toggle in center circle */}
           <div style={{
             position: 'absolute',
             bottom: 'max(16px, env(safe-area-inset-bottom))',
             left: '50%',
-            transform: 'translateX(-50%)', zIndex: 10,
+            transform: 'translateX(-50%)',
+            zIndex: 10,
           }}>
-            <DPad onMove={(dx, dy) => {
-              if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
-              if (dialogue) { setDialogue(null); return }
-              move(dx, dy)
-            }} />
+            <DPad
+              isBiking={isBiking}
+              onBikeToggle={() => setIsBiking(prev => { isBikingRef.current = !prev; return !prev })}
+              onMove={(dx, dy) => {
+                if (shopOpen) { setShopOpen(false); shopDismissedRef.current = true; return }
+                if (dialogue) { setDialogue(null); return }
+                move(dx, dy)
+              }}
+            />
           </div>
 
 

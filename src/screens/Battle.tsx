@@ -10,6 +10,7 @@ import pokemonJson from '../data/pokemon.json'
 import { MoveData, PokemonData } from '../types/game'
 import { expForLevel, calculateStat } from '../utils/exp'
 import { getTypeEffectiveness } from '../utils/damage'
+import { TRAINER_BATTLE_PICS } from '../data/trainerPics'
 
 const moveDataMap = Object.fromEntries(
   (movesJson as MoveData[]).map(m => [m.id, m])
@@ -74,14 +75,7 @@ const W = 360
 const SKY_H = 240  // top 48% of 500px
 const MONO = "'Courier New', monospace"
 
-const NPC_BATTLE_PICS: Record<string, string> = {
-  'Monk':           'npc/monk-full.png',
-  'Team Rocket 1':  'npc/team-rocket-1-full.png',
-  'Team Rocket 2':  'npc/team-rocket-2-full.png',
-  'Cap':            'npc/cap-full.png',
-  'Black Rocket':   'npc/black-rocket-full.png',
-  'Dark Trainer':   'npc/dark-trainer-full.png',
-}
+const NPC_BATTLE_PICS = TRAINER_BATTLE_PICS
 const MENU_BG = '#f0ece8'
 const MENU_BD = '#282818'
 const MOVE_W = 201  // Math.floor(360 * 0.56) exact
@@ -101,6 +95,117 @@ function bezier(t: number) {
 
 // Phase durations in ms — match mockup timings
 const BALL_PHASE_MS = [600, 700, 250, 700, 900, 500]
+
+// ── Move type → arena tint colour ─────────────────────────────────────────
+const TYPE_TINT: Record<string, string> = {
+  fire:     'rgba(255,80,0,0.18)',
+  water:    'rgba(60,140,255,0.18)',
+  electric: 'rgba(255,220,0,0.18)',
+  grass:    'rgba(60,200,60,0.18)',
+  ice:      'rgba(180,240,255,0.18)',
+  psychic:  'rgba(255,80,180,0.18)',
+  poison:   'rgba(160,40,200,0.18)',
+  ghost:    'rgba(60,0,100,0.22)',
+  dragon:   'rgba(180,40,0,0.18)',
+  dark:     'rgba(20,0,40,0.25)',
+  rock:     'rgba(160,110,40,0.18)',
+  ground:   'rgba(180,140,60,0.18)',
+  flying:   'rgba(180,220,255,0.15)',
+  steel:    'rgba(180,180,200,0.18)',
+  fairy:    'rgba(255,140,200,0.18)',
+  bug:      'rgba(140,200,0,0.18)',
+  normal:   'rgba(255,255,255,0.12)',
+  fighting: 'rgba(255,200,80,0.18)',
+}
+
+const CONTACT_TYPES = new Set(['normal', 'fighting'])
+
+// ── Projectile animation renderer (pure, no hooks) ────────────────────────
+// p = 0→1 progress. Contact types draw slash marks at (x1,y1).
+// Ranged types arc a type-coloured projectile from (x0,y0) to (x1,y1).
+function drawProjectile(
+  ctx: CanvasRenderingContext2D,
+  type: string,
+  x0: number, y0: number,
+  x1: number, y1: number,
+  p: number
+) {
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+  if (CONTACT_TYPES.has(type)) {
+    const col = type === 'fighting' ? 'rgba(255,200,80,' : 'rgba(255,255,255,'
+    const expand = Math.min(1, p * 2.5)
+    const fade = Math.max(0, 1 - p * 1.2)
+    const angles = [-0.6, 0, 0.6]
+    for (const a of angles) {
+      const len = 28 * expand
+      ctx.save()
+      ctx.translate(x1, y1)
+      ctx.rotate(Math.PI / 4 + a)
+      ctx.strokeStyle = col + fade + ')'
+      ctx.lineWidth = 3.5
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(-len / 2, 0)
+      ctx.lineTo(len / 2, 0)
+      ctx.stroke()
+      ctx.restore()
+    }
+    return
+  }
+
+  const arcDir = y1 < y0 ? -1 : 1
+  const arcH = 22
+  const bx = lerp(x0, x1, p)
+  const by = lerp(y0, y1, p) - arcH * Math.sin(p * Math.PI) * arcDir
+
+  type TypeColors = { ball: string; core: string; trail: string }
+  const colors: Record<string, TypeColors> = {
+    fire:     { ball: '#ff5000', core: '#ffcc00', trail: '#ff8000' },
+    water:    { ball: '#3090ff', core: '#a0d8ff', trail: '#60b0ff' },
+    electric: { ball: '#ffe000', core: '#ffffff', trail: '#ffd000' },
+    grass:    { ball: '#40c840', core: '#c0ffc0', trail: '#60e060' },
+    ice:      { ball: '#a0e8ff', core: '#ffffff', trail: '#c0f0ff' },
+    psychic:  { ball: '#ff50b4', core: '#ffc0e8', trail: '#ff80c8' },
+    poison:   { ball: '#a028c8', core: '#e080ff', trail: '#c050e0' },
+    ghost:    { ball: '#400060', core: '#9040c0', trail: '#600090' },
+    dragon:   { ball: '#e04000', core: '#ff8000', trail: '#c800c8' },
+    dark:     { ball: '#181028', core: '#604080', trail: '#301848' },
+    rock:     { ball: '#a07028', core: '#d0b060', trail: '#c09040' },
+    ground:   { ball: '#b48c3c', core: '#e8c870', trail: '#c8a050' },
+    flying:   { ball: '#b4dcff', core: '#ffffff', trail: '#d0ecff' },
+    steel:    { ball: '#b4b4c8', core: '#e0e0f0', trail: '#c8c8dc' },
+    fairy:    { ball: '#ff8cc8', core: '#ffd0e8', trail: '#ffaad8' },
+    bug:      { ball: '#8cc800', core: '#d0ff60', trail: '#aae010' },
+  }
+  const c = colors[type] ?? { ball: '#ffffff', core: '#ffffff', trail: '#dddddd' }
+
+  const TRAIL_STEPS = 6
+  for (let i = TRAIL_STEPS; i >= 1; i--) {
+    const tp = Math.max(0, p - i * 0.055)
+    const tx = lerp(x0, x1, tp)
+    const ty = lerp(y0, y1, tp) - arcH * Math.sin(tp * Math.PI) * arcDir
+    const alpha = (1 - i / TRAIL_STEPS) * (1 - p * 0.4) * 0.65
+    const radius = Math.max(1, (7 - i) * (1 - p * 0.3))
+    const tr = parseInt(c.trail.slice(1, 3), 16)
+    const tg = parseInt(c.trail.slice(3, 5), 16)
+    const tb2 = parseInt(c.trail.slice(5, 7), 16)
+    ctx.beginPath()
+    ctx.arc(tx, ty, radius, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(${tr},${tg},${tb2},${alpha.toFixed(2)})`
+    ctx.fill()
+  }
+
+  const ballR = 7
+  ctx.beginPath()
+  ctx.arc(bx, by, ballR, 0, Math.PI * 2)
+  ctx.fillStyle = c.ball
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(bx - 2, by - 2, ballR * 0.45, 0, Math.PI * 2)
+  ctx.fillStyle = c.core
+  ctx.fill()
+}
 
 // ── type-based hit effect renderer (pure, no hooks) ──────────────────────────
 function drawHitEffect(ctx: CanvasRenderingContext2D, type: string, cx: number, cy: number, p: number) {
@@ -323,6 +428,10 @@ export default function Battle() {
   const hitCanvasRef = useRef<HTMLCanvasElement>(null)
   const hitRafRef = useRef<number>(0)
   const hitEffect = useBattleStore(s => s.hitEffect)
+  const projCanvasRef = useRef<HTMLCanvasElement>(null)
+  const projRafRef = useRef<number>(0)
+  const arenaTintRef = useRef<HTMLDivElement>(null)
+  const projectileAnim = useBattleStore(s => s.projectileAnim)
 
   // HP shake on big hits
   const prevOpponentHpRef = useRef(opponentPokemon?.currentHp ?? 0)
@@ -390,6 +499,58 @@ export default function Battle() {
     hitRafRef.current = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(hitRafRef.current)
   }, [hitEffect])
+
+  // Projectile animation
+  useEffect(() => {
+    if (!projectileAnim) {
+      const canvas = projCanvasRef.current
+      if (canvas) {
+        const ctx = canvas.getContext('2d')
+        if (ctx) ctx.clearRect(0, 0, W, SKY_H)
+      }
+      if (arenaTintRef.current) arenaTintRef.current.style.opacity = '0'
+      return
+    }
+
+    const canvas = projCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+
+    cancelAnimationFrame(projRafRef.current)
+
+    const x0 = projectileAnim.forOpponent ? 90  : 259
+    const y0 = projectileAnim.forOpponent ? 140 : 55
+    const x1 = projectileAnim.forOpponent ? 259 : 90
+    const y1 = projectileAnim.forOpponent ? 85  : 170
+
+    const DURATION_MS = 450
+    const startTs = performance.now()
+
+    function frame(ts: number) {
+      const p = Math.min(1, (ts - startTs) / DURATION_MS)
+
+      ctx.clearRect(0, 0, W, SKY_H)
+      drawProjectile(ctx, projectileAnim!.moveType, x0, y0, x1, y1, p)
+
+      let tintOpacity = 0
+      if (p < 0.4) tintOpacity = p / 0.4
+      else if (p < 0.9) tintOpacity = 1
+      else tintOpacity = (1 - p) / 0.1
+      if (arenaTintRef.current) {
+        arenaTintRef.current.style.opacity = String(Math.min(1, tintOpacity))
+      }
+
+      if (p < 1) {
+        projRafRef.current = requestAnimationFrame(frame)
+      } else {
+        ctx.clearRect(0, 0, W, SKY_H)
+        if (arenaTintRef.current) arenaTintRef.current.style.opacity = '0'
+      }
+    }
+
+    projRafRef.current = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(projRafRef.current)
+  }, [projectileAnim])
 
   // Trainer intro: show trainer (1.2s) → throw ball (0.8s) → Pokémon appears
   const [trainerThrowBall, setTrainerThrowBall] = useState(false)
@@ -601,23 +762,55 @@ export default function Battle() {
         {phase === 'trainer_intro' && (
           <>
             {NPC_BATTLE_PICS[trainerName ?? ''] ? (
-              <img
-                src={`${import.meta.env.BASE_URL}${NPC_BATTLE_PICS[trainerName!]}`}
-                style={{
-                  position: 'absolute', right: 8, top: 8,
-                  width: 100, height: 128,
-                  objectFit: 'contain', objectPosition: 'bottom',
-                  imageRendering: 'pixelated' as const,
-                  animation: 'trainerSlideIn 0.5s ease-out',
-                  mixBlendMode: 'multiply' as const,
-                }}
-                alt=""
-              />
+              <div style={{
+                position: 'absolute', right: 12, bottom: 0,
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                animation: 'trainerSlideIn 0.5s ease-out',
+              }}>
+                {/* Name tag */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #1a0a3a 0%, #2d1060 100%)',
+                  border: '1px solid rgba(180,120,255,0.5)',
+                  borderRadius: 8,
+                  padding: '2px 10px',
+                  marginBottom: 4,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#e0c8ff',
+                  letterSpacing: 1,
+                  textShadow: '0 0 8px rgba(180,120,255,0.8)',
+                  boxShadow: '0 0 10px rgba(120,60,220,0.4)',
+                  whiteSpace: 'nowrap' as const,
+                }}>
+                  {trainerName?.toUpperCase()}
+                </div>
+                {/* Portrait frame */}
+                <div style={{
+                  background: 'linear-gradient(180deg, rgba(40,20,80,0.7) 0%, rgba(20,10,50,0.85) 100%)',
+                  border: '2px solid rgba(180,120,255,0.45)',
+                  borderBottom: 'none',
+                  borderRadius: '10px 10px 0 0',
+                  padding: '6px 6px 0 6px',
+                  boxShadow: '0 -6px 20px rgba(120,60,220,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
+                }}>
+                  <img
+                    src={`${import.meta.env.BASE_URL}${NPC_BATTLE_PICS[trainerName!]}`}
+                    style={{
+                      height: Math.round(SKY_H * 0.62),
+                      width: 'auto',
+                      display: 'block',
+                      imageRendering: 'pixelated' as const,
+                      filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))',
+                    }}
+                    alt=""
+                  />
+                </div>
+              </div>
             ) : (
               <div style={{
-                position: 'absolute', right: 8, top: 8,
-                width: 100, height: 128,
-                backgroundImage: 'url(sprites/trainer-sheet.png)',
+                position: 'absolute', right: 8, bottom: 8,
+                width: 120, height: 160,
+                backgroundImage: `url(${import.meta.env.BASE_URL}sprites/trainer-sheet.png)`,
                 backgroundPosition: `-${trainerSpriteCol * 50 * 2}px -${trainerSpriteRow * 64 * 2}px`,
                 backgroundSize: `${398 * 2}px ${513 * 2}px`,
                 backgroundRepeat: 'no-repeat',
@@ -740,6 +933,26 @@ export default function Battle() {
             {battleBanner}
           </div>
         )}
+
+        {/* Arena tint overlay — opacity set imperatively by projectile rAF */}
+        <div
+          ref={arenaTintRef}
+          style={{
+            position: 'absolute', inset: 0, height: SKY_H,
+            background: projectileAnim ? (TYPE_TINT[projectileAnim.moveType] ?? 'rgba(255,255,255,0.12)') : 'transparent',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: 6,
+          }}
+        />
+
+        {/* Projectile animation canvas — sits above arena, below sprites */}
+        <canvas
+          ref={projCanvasRef}
+          width={W}
+          height={SKY_H}
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 7 }}
+        />
 
         {/* Hit effect animation canvas */}
         <canvas
@@ -968,8 +1181,9 @@ export default function Battle() {
               </div>
               {/* Catch rate bar */}
               {(() => {
+                const levelFactor = Math.max(0.5, opponentPokemon.level / 20)
                 const pct = Math.min(1, ((pokemonDataMap[opponentPokemon.pokemonId]?.catchRate ?? 45) / 255) *
-                  (2 - opponentPokemon.currentHp / opponentPokemon.maxHp))
+                  (2 - opponentPokemon.currentHp / opponentPokemon.maxHp) / levelFactor)
                 return (
                   <div style={{ width: '80%' }}>
                     <div style={{ background: '#505040', height: 6, borderRadius: 0 }}>

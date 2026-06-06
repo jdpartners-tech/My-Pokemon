@@ -1,8 +1,10 @@
 interface Props {
   onMove: (dx: number, dy: number) => void
+  isBiking?: boolean
+  onBikeToggle?: () => void
 }
 
-export default function DPad({ onMove }: Props) {
+export default function DPad({ onMove, isBiking, onBikeToggle }: Props) {
   const btn = (dx: number, dy: number, label: string) => (
     <button
       onPointerDown={e => { e.preventDefault(); onMove(dx, dy) }}
@@ -14,7 +16,21 @@ export default function DPad({ onMove }: Props) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 80px)', gridTemplateRows: 'repeat(3, 80px)', gap: 8 }}>
       <div />{btn(0, -1, '▲')}<div />
-      {btn(-1, 0, '◄')}<div style={{ width: 80, height: 80, background: '#16213e', borderRadius: '50%', border: '1px solid rgba(78,205,196,0.1)' }} />{btn(1, 0, '►')}
+      {btn(-1, 0, '◄')}
+      <button
+        onPointerDown={e => { e.preventDefault(); onBikeToggle?.() }}
+        style={{
+          width: 80, height: 80, borderRadius: '50%',
+          background: isBiking ? '#4ecdc4' : '#16213e',
+          border: `2px solid ${isBiking ? '#4ecdc4' : 'rgba(78,205,196,0.4)'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 28, cursor: 'pointer', touchAction: 'none', userSelect: 'none',
+          opacity: isBiking ? 1 : 0.5,
+        }}
+      >
+        🚲
+      </button>
+      {btn(1, 0, '►')}
       <div />{btn(0, 1, '▼')}<div />
     </div>
   )

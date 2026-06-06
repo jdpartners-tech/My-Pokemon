@@ -67,8 +67,14 @@ export const mistyLake: MapData = {
   ],
   trainers: [],
   wanderingNpcs: [
-    { id: 'wingull_ml_1', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 5,  homeY: 5, wanderRadius: 4, pokemonId: 54,  minLevel: 5,  maxLevel: 16 },
-    { id: 'wingull_ml_2', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 12, homeY: 8, wanderRadius: 4, pokemonId: 54,  minLevel: 5,  maxLevel: 16 },
+    { id: 'wingull_ml_1', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 5,  homeY: 5, wanderRadius: 4, pokemonId: 54, minLevel: 5,  maxLevel: 16 },
+    { id: 'wingull_ml_2', name: 'Wingull', spriteDir: 'sprites/pokemon-npc/wingull', homeX: 12, homeY: 8, wanderRadius: 4, pokemonId: 54, minLevel: 5,  maxLevel: 16 },
+    { id: 'spheal_ml',    name: 'Spheal',  spriteDir: 'sprites/pokemon-npc/spheal',  homeX: 8,  homeY: 7, wanderRadius: 2, pokemonId: 363, minLevel: 8, maxLevel: 18 },
+    {
+      id: 'grimer_ml', name: 'Grimer', spriteDir: 'sprites/npc/grimer',
+      homeX: 14, homeY: 5, wanderRadius: 3, isTrainer: true,
+      party: [{ pokemonId: 109, level: 12 }, { pokemonId: 88, level: 14 }],
+    },
   ],
   exits: [
     { x: 0,  y: 6, targetMap: 'rockyCave',    targetX: 15, targetY: 6 },
