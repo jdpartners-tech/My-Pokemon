@@ -593,7 +593,7 @@ export default function WorldMap() {
                 const arrivalFacing: typeof d = d === 'down' ? (Math.random() < 0.5 ? 'left' : 'right') : d
                 return { ...w, x: nx, y: ny, dir: d, facing: arrivalFacing, moving: true }
               }
-              return { ...w, moving: false }  // cornered — stay put
+              // cornered by wander radius — fall through to normal random wander
             }
           }
 
