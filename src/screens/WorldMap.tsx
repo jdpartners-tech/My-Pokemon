@@ -587,13 +587,13 @@ export default function WorldMap() {
                 if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue
                 const tile = map.tiles[ny]?.[nx]
                 if (!tile || BLOCKED_TILES.has(tile) || tile === 'water') continue
-                if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) continue
+                // no wander-radius check during flee — NPC can run anywhere on the map
                 if (nx === playerX && ny === playerY) continue
                 if (arr.some(o => o.id !== w.id && o.x === nx && o.y === ny)) continue
                 const arrivalFacing: typeof d = d === 'down' ? (Math.random() < 0.5 ? 'left' : 'right') : d
                 return { ...w, x: nx, y: ny, dir: d, facing: arrivalFacing, moving: true }
               }
-              // cornered by wander radius — fall through to normal random wander
+              return { ...w, moving: false }  // cornered by map edge/walls
             }
           }
 

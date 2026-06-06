@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBattleStore } from '../store/battleStore'
 import { useBattleEngine } from '../hooks/useBattleEngine'
@@ -77,6 +77,42 @@ const MONO = "'Courier New', monospace"
 
 const NPC_BATTLE_PICS = TRAINER_BATTLE_PICS
 const MENU_BG = '#f0ece8'
+
+function ChromaKeyImg({ src, height, style }: { src: string, height: number, style?: React.CSSProperties }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const img = new Image()
+    img.onload = () => {
+      const c = canvasRef.current
+      if (!c) return
+      c.width = img.naturalWidth; c.height = img.naturalHeight
+      const ctx = c.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      const id = ctx.getImageData(0, 0, c.width, c.height)
+      const d = id.data; const W = c.width, H = c.height
+      if (d[3] === 0) return
+      const visited = new Uint8Array(W * H)
+      const stack: number[] = []
+      for (const ci of [0, W-1, (H-1)*W, (H-1)*W+W-1]) {
+        if (visited[ci] || d[ci*4+3] === 0) continue
+        const [bgR, bgG, bgB] = [d[ci*4], d[ci*4+1], d[ci*4+2]]
+        visited[ci] = 1; stack.push(ci)
+        while (stack.length) {
+          const idx = stack.pop()!; d[idx*4+3] = 0
+          const x = idx % W, y = (idx/W)|0
+          for (const ni of [x>0?idx-1:-1, x<W-1?idx+1:-1, y>0?idx-W:-1, y<H-1?idx+W:-1]) {
+            if (ni < 0 || visited[ni]) continue
+            const dr = d[ni*4]-bgR, dg = d[ni*4+1]-bgG, db = d[ni*4+2]-bgB
+            if (Math.sqrt(dr*dr+dg*dg+db*db) <= 40) { visited[ni] = 1; stack.push(ni) }
+          }
+        }
+      }
+      ctx.putImageData(id, 0, 0)
+    }
+    img.src = src
+  }, [src])
+  return <canvas ref={canvasRef} style={{ height, width: 'auto', imageRendering: 'pixelated', ...style }} />
+}
 const MENU_BD = '#282818'
 const MOVE_W = 201  // Math.floor(360 * 0.56) exact
 const DLG_H = 34
@@ -762,50 +798,14 @@ export default function Battle() {
         {phase === 'trainer_intro' && (
           <>
             {NPC_BATTLE_PICS[trainerName ?? ''] ? (
-              <div style={{
-                position: 'absolute', right: 12, bottom: 0,
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                animation: 'trainerSlideIn 0.5s ease-out',
-              }}>
-                {/* Name tag */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #1a0a3a 0%, #2d1060 100%)',
-                  border: '1px solid rgba(180,120,255,0.5)',
-                  borderRadius: 8,
-                  padding: '2px 10px',
-                  marginBottom: 4,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#e0c8ff',
-                  letterSpacing: 1,
-                  textShadow: '0 0 8px rgba(180,120,255,0.8)',
-                  boxShadow: '0 0 10px rgba(120,60,220,0.4)',
-                  whiteSpace: 'nowrap' as const,
-                }}>
-                  {trainerName?.toUpperCase()}
-                </div>
-                {/* Portrait frame */}
-                <div style={{
-                  background: 'linear-gradient(180deg, rgba(40,20,80,0.7) 0%, rgba(20,10,50,0.85) 100%)',
-                  border: '2px solid rgba(180,120,255,0.45)',
-                  borderBottom: 'none',
-                  borderRadius: '10px 10px 0 0',
-                  padding: '6px 6px 0 6px',
-                  boxShadow: '0 -6px 20px rgba(120,60,220,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
-                }}>
-                  <img
-                    src={`${import.meta.env.BASE_URL}${NPC_BATTLE_PICS[trainerName!]}`}
-                    style={{
-                      height: Math.round(SKY_H * 0.62),
-                      width: 'auto',
-                      display: 'block',
-                      imageRendering: 'pixelated' as const,
-                      filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))',
-                    }}
-                    alt=""
-                  />
-                </div>
-              </div>
+              <ChromaKeyImg
+                src={`${import.meta.env.BASE_URL}${NPC_BATTLE_PICS[trainerName!]}`}
+                height={Math.round(SKY_H * 0.55)}
+                style={{
+                  position: 'absolute', right: 16, top: 20,
+                  animation: 'trainerSlideIn 0.5s ease-out',
+                }}
+              />
             ) : (
               <div style={{
                 position: 'absolute', right: 8, bottom: 8,
