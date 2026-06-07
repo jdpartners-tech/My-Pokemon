@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
@@ -22,7 +22,18 @@ export default function Pokedex() {
   const [selected, setSelected] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const outerRef = useRef<HTMLDivElement>(null)
-  const savedScrollRef = useRef(0)
+  const lastSelectedRef = useRef<number | null>(null)
+
+  // After returning from detail view, scroll the previously-selected Pokemon into view.
+  // Uses scrollIntoView so it works regardless of image load timing.
+  useEffect(() => {
+    if (selected !== null || lastSelectedRef.current === null) return
+    const id = lastSelectedRef.current
+    requestAnimationFrame(() => {
+      const el = outerRef.current?.querySelector<HTMLElement>(`[data-pkid="${id}"]`)
+      el?.scrollIntoView({ block: 'center', behavior: 'instant' })
+    })
+  }, [selected])
 
   const dex = profile?.pokedex ?? {}
   const party = profile?.party ?? [] as PartyPokemon[]
@@ -72,10 +83,8 @@ export default function Pokedex() {
 
   function handleBack() {
     if (selected) {
+      lastSelectedRef.current = selected
       setSelected(null)
-      requestAnimationFrame(() => {
-        if (outerRef.current) outerRef.current.scrollTop = savedScrollRef.current
-      })
       return
     }
     if (isReplacing) {
@@ -237,7 +246,8 @@ export default function Pokedex() {
             const inBox = boxMap.has(p.id)
             return (
               <button key={p.id}
-                onClick={() => { savedScrollRef.current = outerRef.current?.scrollTop ?? 0; setSelected(p.id) }}
+                data-pkid={p.id}
+                onClick={() => setSelected(p.id)}
                 className={`bg-[#16213e] rounded-xl p-2 flex flex-col items-center border transition-all hover:border-yellow-400
                   ${status === 'caught' ? 'border-green-500/40' :
                     status === 'seen'   ? 'border-blue-500/20' : 'border-gray-700/20'}`}
