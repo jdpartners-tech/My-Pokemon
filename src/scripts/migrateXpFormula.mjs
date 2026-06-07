@@ -1,4 +1,4 @@
-// Migrates all party & box Pokemon XP from old formula (level^3) to new formula (level^2 * 5)
+// Migrates all party & box Pokemon XP to current formula.
 // Keeps each Pokemon's current level — just recalculates XP to match the new curve.
 import { initializeApp } from 'firebase/app'
 import { getFirestore, collection, getDocs, updateDoc, doc } from 'firebase/firestore'
@@ -22,7 +22,14 @@ const app = initializeApp({
 const db = getFirestore(app)
 const auth = getAuth(app)
 
-const newExpForLevel = (level) => level * level * 5
+function newExpForLevel(level) {
+  if (level <= 1)  return 0
+  if (level <= 11) return (level - 1) * 120
+  if (level <= 21) return 1200 + (level - 11) * 300
+  if (level <= 31) return 4200 + (level - 21) * 500
+  if (level <= 41) return 9200 + (level - 31) * 800
+  return 17200 + (level - 41) * 1100
+}
 
 function migratePokemon(list) {
   if (!Array.isArray(list)) return list
@@ -44,7 +51,7 @@ async function run() {
     console.log(`✓ "${data.name}" — ${all.length} pokemon updated`)
     all.forEach(p => console.log(`   lv${p.level} → xp=${p.xp}`))
   }
-  console.log('\nDone. All Pokemon XP reset to new formula (level² × 5).')
+  console.log('\nDone. All Pokemon XP reset to new formula.')
   process.exit(0)
 }
 

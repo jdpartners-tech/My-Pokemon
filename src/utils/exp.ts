@@ -5,8 +5,15 @@ const moveDataMap = Object.fromEntries(
   (movesJson as MoveData[]).map(m => [m.id, m])
 ) as Record<string, MoveData>
 
+// Total XP required to reach a given level.
+// Sized so typical battles give roughly: lv1-10=2 battles, lv11-20=3, lv21-30=4, lv31-40=5, lv41+=5.
 export function expForLevel(level: number): number {
-  return level * level * 5
+  if (level <= 1)  return 0
+  if (level <= 11) return (level - 1) * 120
+  if (level <= 21) return 1200 + (level - 11) * 300
+  if (level <= 31) return 4200 + (level - 21) * 500
+  if (level <= 41) return 9200 + (level - 31) * 800
+  return 17200 + (level - 41) * 1100
 }
 
 export function getLevel(xp: number): number {
@@ -16,7 +23,7 @@ export function getLevel(xp: number): number {
 }
 
 export function expGained(opponentLevel: number): number {
-  return Math.floor((opponentLevel * 5) + 20)
+  return Math.floor(opponentLevel * 5 + 20)
 }
 
 export function calculateMaxHp(baseHp: number, level: number): number {
