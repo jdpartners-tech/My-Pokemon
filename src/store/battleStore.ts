@@ -17,6 +17,11 @@ interface BattleState {
   playerPokemon: PartyPokemon | null
   opponentPokemon: PartyPokemon | null
   party: PartyPokemon[]
+  // partyIndexMap[i] = original profile.party index for battle slot i
+  // Slot 0 = active pokemon, slots 1+ = bench in battle order
+  // Kept in sync with switches so handleWin can write back to the correct profile slots
+  partyIndexMap: number[]
+  participantProfileIndices: number[]
   isWildBattle: boolean
   trainerName: string | null
   trainerSpriteCol: number  // column index in trainer-sheet.png (0-7)
@@ -27,8 +32,8 @@ interface BattleState {
   usedQuestionIds: Set<string>
 
   // Actions
-  startWildBattle: (player: PartyPokemon, opponent: PartyPokemon, party: PartyPokemon[]) => void
-  startTrainerBattle: (player: PartyPokemon, opponent: PartyPokemon, trainerName: string, party: PartyPokemon[]) => void
+  startWildBattle: (player: PartyPokemon, opponent: PartyPokemon, party: PartyPokemon[], partyIndexMap: number[]) => void
+  startTrainerBattle: (player: PartyPokemon, opponent: PartyPokemon, trainerName: string, party: PartyPokemon[], partyIndexMap: number[]) => void
   switchPokemon: (index: number) => void
   setPhase: (phase: BattlePhase) => void
   setQuestion: (question: Question) => void
@@ -111,6 +116,8 @@ const initialState = {
   playerPokemon: null,
   opponentPokemon: null,
   party: [] as PartyPokemon[],
+  partyIndexMap: [] as number[],
+  participantProfileIndices: [] as number[],
   isWildBattle: false,
   ballAnimPhase: 0,
   ballCaught: false,
@@ -141,19 +148,21 @@ const initialState = {
 export const useBattleStore = create<BattleState>((set) => ({
   ...initialState,
 
-  startWildBattle: (player, opponent, party) => set({
+  startWildBattle: (player, opponent, party, partyIndexMap) => set({
     ...initialState,
     phase: 'player_turn',
     playerPokemon: player,
     opponentPokemon: opponent,
     party,
+    partyIndexMap,
+    participantProfileIndices: [partyIndexMap[0] ?? 0],
     isWildBattle: true,
     trainerName: null,
     log: [`A wild ${_pokeName(opponent)} appeared!`],
     usedQuestionIds: new Set(),
   }),
 
-  startTrainerBattle: (player, opponent, trainerName, party) => {
+  startTrainerBattle: (player, opponent, trainerName, party, partyIndexMap) => {
     const TRAINER_SPRITES: Record<string, {row: number, col: number}> = {
       'Biker':   { row: 2, col: 2 },
       'Lass':    { row: 0, col: 4 },
@@ -171,6 +180,8 @@ export const useBattleStore = create<BattleState>((set) => ({
       playerPokemon: player,
       opponentPokemon: opponent,
       party,
+      partyIndexMap,
+      participantProfileIndices: [partyIndexMap[0] ?? 0],
       isWildBattle: false,
       trainerName,
       trainerSpriteCol: sprite.col,
@@ -186,7 +197,14 @@ export const useBattleStore = create<BattleState>((set) => ({
     const updated = state.party.map((p, i) =>
       i === index ? state.playerPokemon! : p
     ).filter(Boolean) as PartyPokemon[]
-    return { playerPokemon: incoming, party: updated }
+    const newMap = [...state.partyIndexMap]
+    const incomingProfileIdx = newMap[index + 1]
+    ;[newMap[0], newMap[index + 1]] = [newMap[index + 1], newMap[0]]
+    // Record that this pokemon participated (switched in)
+    const newParticipants = state.participantProfileIndices.includes(incomingProfileIdx)
+      ? state.participantProfileIndices
+      : [...state.participantProfileIndices, incomingProfileIdx]
+    return { playerPokemon: incoming, party: updated, partyIndexMap: newMap, participantProfileIndices: newParticipants }
   }),
 
   setPhase: (phase) => set({ phase }),

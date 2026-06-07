@@ -43,7 +43,7 @@ export const volcanoTrail: MapData = {
   trainers: [],
   wanderingNpcs: [
     { id: 'koffing_vt_1', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 8,  homeY: 6,  wanderRadius: 4, pokemonId: 109, minLevel: 28, maxLevel: 38 },
-    { id: 'koffing_vt_2', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 12, homeY: 10, wanderRadius: 4, pokemonId: 109, minLevel: 28, maxLevel: 38 },
+    { id: 'koffing_vt_2', name: 'Koffing', spriteDir: 'sprites/pokemon-npc/koffing', homeX: 13, homeY: 10, wanderRadius: 4, pokemonId: 109, minLevel: 28, maxLevel: 38 },
   ],
   exits: [
     { x: 0, y: 5, targetMap: 'cinnabarTown', targetX: 16, targetY: 5 },

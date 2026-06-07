@@ -108,7 +108,7 @@ export function useBattleEngine() {
       return
     }
     const moveInfo = moveMap[move.moveId]
-    store.decrementPP(selectedMoveIndex)
+    // PP removed — moves have unlimited uses
 
     // Track per-question stats on every answer — read from store (not closure) to avoid stale values
     if (profile?.id) {
@@ -484,19 +484,75 @@ export function useBattleEngine() {
         ...profileNow.stats,
         battlesWon: (profileNow.stats?.battlesWon ?? 0) + 1,
       }
-      const updatedParty = profile.party.map((p, idx) =>
-        idx === 0
-          ? {
-              ...p,
-              pokemonId: finalPokemon.pokemonId,
-              xp: newXp,
-              level: newLevel,
-              currentHp: finalPokemon.currentHp,
-              moves: updatedMoves,
-              nickname: finalPokemon.nickname,
-            }
-          : p
-      )
+      // Use partyIndexMap to write back to the correct profile party slots.
+      // partyIndexMap[0] = profile index of the active (winning) pokemon.
+      // partyIndexMap[i+1] = profile index of bench member i.
+      // This handles mid-battle switches: if the lead fainted and the player switched,
+      // the winner may not be profile.party[0].
+      const { partyIndexMap, party: benchParty } = useBattleStore.getState()
+      const origParty = profileNow.party ?? []
+      const updatedParty = origParty.map(p => ({ ...p }))
+
+      // Update the winning pokemon at its original profile slot
+      const activeProfileIdx = partyIndexMap[0] ?? 0
+      if (updatedParty[activeProfileIdx]) {
+        const winnerInfo = pokemonMap[finalPokemon.pokemonId]
+        const newMaxHp = winnerInfo
+          ? Math.floor((2 * winnerInfo.baseStats.hp * newLevel) / 100 + newLevel + 10)
+          : updatedParty[activeProfileIdx].maxHp
+        updatedParty[activeProfileIdx] = {
+          ...updatedParty[activeProfileIdx],
+          pokemonId: finalPokemon.pokemonId,
+          xp: newXp,
+          level: newLevel,
+          currentHp: Math.min(finalPokemon.currentHp, newMaxHp),
+          maxHp: newMaxHp,
+          moves: updatedMoves,
+          nickname: finalPokemon.nickname,
+        }
+      }
+
+      // Update bench members: 100% if they participated (were switched in), 50% otherwise
+      const { participantProfileIndices } = useBattleStore.getState()
+      benchParty.forEach((benchMon, i) => {
+        const profIdx = partyIndexMap[i + 1]
+        if (profIdx === undefined || !updatedParty[profIdx]) return
+        const base = updatedParty[profIdx]
+        const rate = participantProfileIndices.includes(profIdx) ? 1.0 : 0.5
+        const sharedExp = Math.floor(exp * rate)
+        const bNewXp = base.xp + sharedExp
+        const bNewLevel = getLevel(bNewXp)
+        const bInfo = pokemonMap[base.pokemonId]
+        const bNewMaxHp = bInfo ? Math.floor((2 * bInfo.baseStats.hp * bNewLevel) / 100 + bNewLevel + 10) : base.maxHp
+        // Learn moves from level-ups
+        let bMoves = [...base.moves]
+        if (bNewLevel > base.level && bInfo) {
+          const toLearn = bInfo.learnset.filter(e => e.level > base.level && e.level <= bNewLevel)
+          for (const entry of toLearn) {
+            if (bMoves.some(m => m.moveId === entry.moveId)) continue
+            const newMove = { moveId: entry.moveId, pp: 10, maxPp: 10 }
+            if (bMoves.length < 4) bMoves.push(newMove)
+            else bMoves = [...bMoves.slice(1), newMove]
+            const mvName = moveMap[entry.moveId]?.name ?? entry.moveId
+            store.addLog(`${base.nickname || bInfo.name} learned ${mvName}!`)
+          }
+        }
+        let bPokemonId = base.pokemonId
+        if (bNewLevel > base.level && bInfo?.evolvesAtLevel && bNewLevel >= bInfo.evolvesAtLevel && bInfo.evolvesTo != null) {
+          const bEvolvedInfo = pokemonMap[bInfo.evolvesTo]
+          store.addLog(`${base.nickname || bInfo.name} evolved into ${bEvolvedInfo?.name ?? 'a new form'}!`)
+          bPokemonId = bInfo.evolvesTo
+        }
+        updatedParty[profIdx] = {
+          ...base,
+          pokemonId: bPokemonId,
+          xp: bNewXp,
+          level: bNewLevel,
+          maxHp: bNewMaxHp,
+          currentHp: Math.min(benchMon.currentHp, bNewMaxHp),
+          moves: bMoves,
+        }
+      })
 
       // Trainer battles reward 2 Pokéballs
       const { isWildBattle, trainerName } = useBattleStore.getState()
@@ -509,6 +565,11 @@ export function useBattleEngine() {
         store.addLog(`${trainerName ?? 'Trainer'} gave you 2 Pokéballs!`)
       }
 
+      // Money reward: wild = level×5, trainer = level×10
+      const moneyEarned = opponentPokemon.level * (isWildBattle ? 5 : 10)
+      const newMoney = ((useProfileStore.getState().profile ?? profile).money ?? 0) + moneyEarned
+      store.addLog(`You got ₽${moneyEarned}!`)
+
       // Optimistic local update first, then fire-and-forget to Firestore
       // so a network hang on iOS never freezes the game at 'animating'
       useProfileStore.getState().setProfile({
@@ -516,8 +577,9 @@ export function useBattleEngine() {
         party: updatedParty,
         stats,
         bag: updatedBag,
+        money: newMoney,
       })
-      updateProfile(profile.id, { party: updatedParty, stats, bag: updatedBag })
+      updateProfile(profile.id, { party: updatedParty, stats, bag: updatedBag, money: newMoney })
         .catch(e => console.error('Failed to save battle result:', e))
     }
 
@@ -629,6 +691,16 @@ export function useBattleEngine() {
         store.addLog(`${getName(playerPokemon)} grew to Lv.${catchNewLevel}!`)
         await delay(800)
         store.setLeveledUp(false)
+
+        const catchPokeInfo = pokemonMap[playerPokemon.pokemonId]
+        if (catchPokeInfo?.evolvesAtLevel && catchNewLevel >= catchPokeInfo.evolvesAtLevel && catchPokeInfo.evolvesTo != null) {
+          const catchEvolvedData = pokemonMap[catchPokeInfo.evolvesTo]
+          store.setPhase('evolving')
+          await delay(2400)
+          store.evolvePlayer(catchPokeInfo.evolvesTo, catchEvolvedData?.name ?? getName(playerPokemon))
+          store.addLog(`${getName(playerPokemon)} evolved into ${catchEvolvedData?.name ?? 'a new form'}!`)
+          await delay(600)
+        }
       }
 
       const finalCatchPokemon = useBattleStore.getState().playerPokemon!
@@ -647,22 +719,72 @@ export function useBattleEngine() {
         store.addLog(`Party is full! ${getName(opponentPokemon)} was sent to your Box.`)
       }
 
-      const updatedCatchParty = partyWithCaught.map((p, idx) =>
-        idx === 0
-          ? { ...p, xp: catchNewXp, level: catchNewLevel, currentHp: finalCatchPokemon.currentHp, moves: finalCatchPokemon.moves }
-          : p
-      )
+      // Use partyIndexMap to write XP to the correct profile slot (handles mid-battle switches)
+      const { partyIndexMap: catchPartyMap, party: catchBenchParty, participantProfileIndices: catchParticipants } = useBattleStore.getState()
+      const catchActiveIdx = catchPartyMap[0] ?? 0
+      const catchInfo = pokemonMap[finalCatchPokemon.pokemonId]
+      const catchNewMaxHp = catchInfo
+        ? Math.floor((2 * catchInfo.baseStats.hp * catchNewLevel) / 100 + catchNewLevel + 10)
+        : (partyWithCaught[catchActiveIdx]?.maxHp ?? finalCatchPokemon.maxHp)
+      // Learn moves for level-up on active pokemon
+      let catchUpdatedMoves = [...finalCatchPokemon.moves]
+      if (catchNewLevel > playerPokemon.level && catchInfo) {
+        const toLearn = catchInfo.learnset.filter(e => e.level > playerPokemon.level && e.level <= catchNewLevel)
+        for (const entry of toLearn) {
+          if (catchUpdatedMoves.some(m => m.moveId === entry.moveId)) continue
+          const nm = { moveId: entry.moveId, pp: 10, maxPp: 10 }
+          if (catchUpdatedMoves.length < 4) catchUpdatedMoves.push(nm)
+          else catchUpdatedMoves = [...catchUpdatedMoves.slice(1), nm]
+          store.addLog(`${getName(finalCatchPokemon)} learned ${moveMap[entry.moveId]?.name ?? entry.moveId}!`)
+        }
+      }
+      const updatedCatchParty = partyWithCaught.map((p, idx) => {
+        if (idx === catchActiveIdx) {
+          return { ...p, xp: catchNewXp, level: catchNewLevel, maxHp: catchNewMaxHp, currentHp: Math.min(finalCatchPokemon.currentHp, catchNewMaxHp), moves: catchUpdatedMoves }
+        }
+        // Bench: find this slot's position in the bench array and apply shared XP
+        const benchPos = catchPartyMap.findIndex((pi, mi) => mi > 0 && pi === idx) - 1
+        const benchMon = benchPos >= 0 ? catchBenchParty[benchPos] : null
+        const rate = benchPos >= 0 ? (catchParticipants.includes(idx) ? 1.0 : 0.5) : null
+        if (rate === null) return p
+        const bNewXp = p.xp + Math.floor(catchExp * rate)
+        const bNewLevel = getLevel(bNewXp)
+        const bInfo = pokemonMap[p.pokemonId]
+        const bNewMaxHp = bInfo ? Math.floor((2 * bInfo.baseStats.hp * bNewLevel) / 100 + bNewLevel + 10) : p.maxHp
+        let bMoves = [...p.moves]
+        if (bNewLevel > p.level && bInfo) {
+          const toLearn = bInfo.learnset.filter(e => e.level > p.level && e.level <= bNewLevel)
+          for (const entry of toLearn) {
+            if (bMoves.some(m => m.moveId === entry.moveId)) continue
+            const nm = { moveId: entry.moveId, pp: 10, maxPp: 10 }
+            if (bMoves.length < 4) bMoves.push(nm)
+            else bMoves = [...bMoves.slice(1), nm]
+            store.addLog(`${p.nickname || bInfo.name} learned ${moveMap[entry.moveId]?.name ?? entry.moveId}!`)
+          }
+        }
+        let bPokemonId = p.pokemonId
+        if (bNewLevel > p.level && bInfo?.evolvesAtLevel && bNewLevel >= bInfo.evolvesAtLevel && bInfo.evolvesTo != null) {
+          const bEvolvedInfo = pokemonMap[bInfo.evolvesTo]
+          store.addLog(`${p.nickname || bInfo.name} evolved into ${bEvolvedInfo?.name ?? 'a new form'}!`)
+          bPokemonId = bInfo.evolvesTo
+        }
+        return { ...p, pokemonId: bPokemonId, xp: bNewXp, level: bNewLevel, maxHp: bNewMaxHp, currentHp: Math.min(benchMon?.currentHp ?? p.currentHp, bNewMaxHp), moves: bMoves }
+      })
       const updatedPokedex = {
         ...(freshProfile.pokedex ?? {}),
         [opponentPokemon.pokemonId]: 'caught' as const,
       }
+      const catchMoneyEarned = opponentPokemon.level * 5
+      const catchMoney = (freshProfile.money ?? 0) + catchMoneyEarned
+      store.addLog(`You got ₽${catchMoneyEarned}!`)
       useProfileStore.getState().setProfile({
         ...freshProfile,
         party: updatedCatchParty,
         box: newBox,
         pokedex: updatedPokedex,
+        money: catchMoney,
       })
-      updateProfile(profile.id, { party: updatedCatchParty, box: newBox, pokedex: updatedPokedex })
+      updateProfile(profile.id, { party: updatedCatchParty, box: newBox, pokedex: updatedPokedex, money: catchMoney })
         .catch(e => console.error('Failed to save caught pokemon:', e))
       store.setBallAnimPhase(0)
       store.setPhase('win')

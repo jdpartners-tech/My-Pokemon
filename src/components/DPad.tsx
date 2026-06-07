@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 interface Props {
   onMove: (dx: number, dy: number) => void
   isBiking?: boolean
@@ -5,9 +7,29 @@ interface Props {
 }
 
 export default function DPad({ onMove, isBiking, onBikeToggle }: Props) {
+  const repeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function startPress(dx: number, dy: number) {
+    onMove(dx, dy)
+    if (isBiking) {
+      delayRef.current = setTimeout(() => {
+        repeatRef.current = setInterval(() => onMove(dx, dy), 150)
+      }, 300)
+    }
+  }
+
+  function endPress() {
+    if (delayRef.current) { clearTimeout(delayRef.current); delayRef.current = null }
+    if (repeatRef.current) { clearInterval(repeatRef.current); repeatRef.current = null }
+  }
+
   const btn = (dx: number, dy: number, label: string) => (
     <button
-      onPointerDown={e => { e.preventDefault(); onMove(dx, dy) }}
+      onPointerDown={e => { e.preventDefault(); startPress(dx, dy) }}
+      onPointerUp={endPress}
+      onPointerLeave={endPress}
+      onPointerCancel={endPress}
       className="bg-[#16213e] border border-[#4ecdc4]/40 rounded-xl h-20 w-20 flex items-center justify-center text-white text-3xl font-bold active:bg-[#0f3460] select-none touch-none"
     >
       {label}

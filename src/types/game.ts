@@ -194,7 +194,7 @@ export interface GameMap {
 export type BattlePhase =
   | 'idle' | 'player_turn' | 'question' | 'animating'
   | 'opponent_turn' | 'catch' | 'win' | 'lose' | 'escaped' | 'evolving'
-  | 'switch_pokemon' | 'trainer_intro'
+  | 'switch_pokemon' | 'voluntary_switch' | 'trainer_intro'
 
 export interface ActivePokemon extends PartyPokemon {
   name: string

@@ -52,6 +52,7 @@ export interface WanderingNpc {
   pokemonId?: number    // if set, bumping into this NPC starts a catchable wild battle
   minLevel?: number
   maxLevel?: number
+  canSwim?: boolean     // if true, NPC can move on water tiles
 }
 
 export interface MapData {

@@ -6,7 +6,7 @@ import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
 import { useQuestions } from '../hooks/useQuestions'
 import { getMap, MAPS } from '../maps/index'
 import { MapData, TileType, TrainerNpc } from '../maps/types'
-import { buildPartyPokemon, filterValidMoves } from '../utils/exp'
+import { buildPartyPokemon, filterValidMoves, expForLevel, getLevel } from '../utils/exp'
 import pokemonJson from '../data/pokemon.json'
 import itemsJson from '../data/items.json'
 import DPad from '../components/DPad'
@@ -371,7 +371,9 @@ export default function WorldMap() {
     isTrainer?: boolean;
     party?: Array<{ pokemonId: number; level: number }>
     pokemonId?: number;
-    level?: number;
+    minLevel?: number;
+    maxLevel?: number;
+    canSwim?: boolean;
   }
   const [wanderingNpcs, setWanderingNpcs] = useState<WanderingState[]>([])
   const wanderingNpcsRef = useRef<WanderingState[]>([])
@@ -478,15 +480,13 @@ export default function WorldMap() {
       expired.forEach(([id]) => {
         const def = currentMap.wanderingNpcs?.find(n => n.id === id)
         if (!def) return
-        const lvl = def.minLevel != null && def.maxLevel != null
-          ? def.minLevel + Math.floor(Math.random() * (def.maxLevel - def.minLevel + 1))
-          : undefined
         const respawned: WanderingState = {
           id: def.id, name: def.name, spriteDir: def.spriteDir,
           x: def.homeX, y: def.homeY, dir: 'down', facing: 'down', moving: false,
           homeX: def.homeX, homeY: def.homeY, wanderRadius: def.wanderRadius,
           isTrainer: def.isTrainer, party: def.party,
-          pokemonId: def.pokemonId, level: lvl,
+          pokemonId: def.pokemonId, minLevel: def.minLevel, maxLevel: def.maxLevel,
+          canSwim: def.canSwim,
         }
         setWanderingNpcs(cur => {
           if (cur.some(w => w.id === id)) return cur
@@ -594,7 +594,7 @@ export default function WorldMap() {
                 const ny = w.y + (d === 'down'  ? 1 : d === 'up'   ? -1 : 0)
                 if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue
                 const tile = map.tiles[ny]?.[nx]
-                if (!tile || BLOCKED_TILES.has(tile) || tile === 'water') continue
+                if (!tile || BLOCKED_TILES.has(tile) || (tile === 'water' && !w.canSwim)) continue
                 // no wander-radius check during flee — NPC can run anywhere on the map
                 if (nx === playerX && ny === playerY) continue
                 if (arr.some(o => o.id !== w.id && o.x === nx && o.y === ny)) continue
@@ -618,8 +618,9 @@ export default function WorldMap() {
           const ny = w.y + (d === 'down'  ? 1 : d === 'up'   ? -1 : 0)
           if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) return { ...w, moving: false }
           const tile = map.tiles[ny]?.[nx]
-          if (!tile || BLOCKED_TILES.has(tile) || tile === 'water') return { ...w, moving: false }
+          if (!tile || BLOCKED_TILES.has(tile) || (tile === 'water' && !w.canSwim)) return { ...w, moving: false }
           if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) return { ...w, moving: false }
+          if (map.exits.some(e => e.x === nx && e.y === ny)) return { ...w, moving: false }
           if (nx === playerX && ny === playerY) return { ...w, moving: false }
           if (arr.some(other => other.id !== w.id && other.x === nx && other.y === ny)) return { ...w, moving: false }
           const arrivalFacing: typeof d = d === 'down'
@@ -669,16 +670,18 @@ export default function WorldMap() {
     const initial: WanderingState[] = (mapData?.wanderingNpcs ?? [])
       .filter(w => !hiddenNpcsRef.current[w.id] || now >= hiddenNpcsRef.current[w.id])
       .filter(w => !w.isTrainer || !!TRAINER_BATTLE_PICS[w.name])
+      .filter(w => {
+        const tile = mapData?.tiles[w.homeY]?.[w.homeX]
+        return tile && !BLOCKED_TILES.has(tile) && (tile !== 'water' || w.canSwim)
+      })
       .map(w => {
-        const lvl = w.minLevel != null && w.maxLevel != null
-          ? w.minLevel + Math.floor(Math.random() * (w.maxLevel - w.minLevel + 1))
-          : undefined
         return {
           id: w.id, name: w.name, spriteDir: w.spriteDir,
           x: w.homeX, y: w.homeY, dir: 'down' as const, facing: 'down' as const, moving: false,
           homeX: w.homeX, homeY: w.homeY, wanderRadius: w.wanderRadius,
           isTrainer: w.isTrainer, party: w.party,
-          pokemonId: w.pokemonId, level: lvl,
+          pokemonId: w.pokemonId, minLevel: w.minLevel, maxLevel: w.maxLevel,
+          canSwim: w.canSwim,
         }
       })
     wanderingNpcsRef.current = initial
@@ -1428,13 +1431,13 @@ export default function WorldMap() {
         return false
       }
 
-      if (!isBikingRef.current) {
-        for (const trainer of map.trainers) {
-          if (nx === trainer.x && ny === trainer.y && TRAINER_BATTLE_PICS[trainer.name]) {
+      for (const trainer of map.trainers) {
+        if (nx === trainer.x && ny === trainer.y && TRAINER_BATTLE_PICS[trainer.name]) {
+          if (!isBikingRef.current) {
             setDialogue(`${trainer.name} wants to battle!`)
             setTimeout(() => startTrainerBattleRef.current(trainer), 500)
-            return false
           }
+          return false
         }
       }
 
@@ -1445,48 +1448,25 @@ export default function WorldMap() {
           const t: TrainerNpc = { x: blocker.x, y: blocker.y, direction: 'down', name: blocker.name, party: blocker.party }
           setTimeout(() => startTrainerBattleRef.current(t), 500)
         } else if (blocker.pokemonId) {
-          // Pokemon NPC: pick a random Pokemon from the map's wild pool
+          // Pokemon NPC: battle using the NPC's own pokemonId and level range
           const currentProfile = useProfileStore.getState().profile
           if (!currentProfile?.party?.length) return false
-          const pool = mapRef.current.wildPokemon
-          if (!pool.length) return false  // decorative NPC on maps with no wild encounters
-          const total = pool.reduce((s, w) => s + w.rate, 0)
-          let roll = Math.random() * total
-          let wild = pool[pool.length - 1]
-          for (const w of pool) { roll -= w.rate; if (roll <= 0) { wild = w; break } }
-          const pokemonId = wild.pokemonId
-          const minLv = wild.minLevel
-          const maxLv = wild.maxLevel
+          const minLv = blocker.minLevel ?? 2
+          const maxLv = blocker.maxLevel ?? minLv
           const level = minLv + Math.floor(Math.random() * (maxLv - minLv + 1))
-          const opponentInfo = pokemonMap[pokemonId]
+          const opponentInfo = pokemonMap[blocker.pokemonId]
           if (!opponentInfo) return false
           const opponent = buildPartyPokemon(opponentInfo, level)
-          const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
-          if (!playerInfo) return false
-          const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
-          player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
-          player.xp = currentProfile.party[0].xp ?? player.xp
-          const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
-          const _usedIds = new Set(_validMoves.map(m => m.moveId))
-          const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
-          player.moves = [..._validMoves, ..._fresh].slice(0, 4)
-          player.nickname = currentProfile.party[0].nickname
-          const fullParty = currentProfile.party.slice(1).map(p => {
-            const info = pokemonMap[p.pokemonId]; if (!info) return null
-            const bp = buildPartyPokemon(info, p.level)
-            bp.currentHp = p.currentHp ?? bp.maxHp; bp.xp = p.xp ?? bp.xp
-            const bpValid = filterValidMoves(p.moves ?? [])
-            const bpUsed = new Set(bpValid.map(m => m.moveId))
-            bp.moves = [...bpValid, ...bp.moves.filter(m => !bpUsed.has(m.moveId))].slice(0, 4)
-            bp.nickname = p.nickname; return bp
-          }).filter(Boolean) as typeof player[]
+          const battleParty = buildBattleParty(currentProfile.party)
+          if (!battleParty) return false
+          const { player, bench: fullParty, partyIndexMap } = battleParty
           useProfileStore.getState().setProfile({
             ...currentProfile,
             playerX: pxRef.current, playerY: pyRef.current,
             currentRoute: currentMapIdRef.current,
           })
           useBattleStore.getState().setPendingCatchNpcId(blocker.id)
-          useBattleStore.getState().startWildBattle(player, opponent, fullParty)
+          useBattleStore.getState().startWildBattle(player, opponent, fullParty, partyIndexMap)
           flashAndNavigate()
         }
         return false
@@ -1532,8 +1512,7 @@ export default function WorldMap() {
       return true
     }
 
-    const moved = doStep(pxRef.current, pyRef.current)
-    if (moved && isBikingRef.current) doStep(pxRef.current, pyRef.current)
+    doStep(pxRef.current, pyRef.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1572,6 +1551,38 @@ export default function WorldMap() {
     }, delayMs)
   }
 
+  // Returns the active player pokemon, bench, and partyIndexMap for a battle.
+  // Picks the first healthy (currentHp > 0) pokemon as active so a fainted leader
+  // doesn't appear at the front.
+  function buildBattleParty(profileParty: NonNullable<typeof profile>['party']) {
+    const activeIdx = profileParty.findIndex((p: { currentHp?: number }) => (p.currentHp ?? 0) > 0)
+    if (activeIdx === -1) return null
+    const activeMem = profileParty[activeIdx] as { pokemonId: number; level: number; currentHp?: number; xp?: number; moves?: { moveId: string; pp: number; maxPp: number }[]; nickname?: string | null }
+    const playerInfo = pokemonMap[activeMem.pokemonId]
+    if (!playerInfo) return null
+    const player = buildPartyPokemon(playerInfo, activeMem.level)
+    player.currentHp = activeMem.currentHp ?? player.maxHp
+    const axp = activeMem.xp; player.xp = (axp !== undefined && getLevel(axp) === player.level) ? axp : expForLevel(player.level)
+    const aValid = filterValidMoves(activeMem.moves ?? [])
+    const aUsed = new Set(aValid.map((m: { moveId: string }) => m.moveId))
+    player.moves = [...aValid, ...player.moves.filter(m => !aUsed.has(m.moveId))].slice(0, 4)
+    player.nickname = activeMem.nickname ?? null
+    const benchIndices = profileParty.map((_: unknown, i: number) => i).filter((i: number) => i !== activeIdx)
+    const bench = benchIndices.map((i: number) => {
+      const p = profileParty[i] as typeof activeMem
+      const info = pokemonMap[p.pokemonId]; if (!info) return null
+      const bp = buildPartyPokemon(info, p.level)
+      bp.currentHp = p.currentHp ?? bp.maxHp
+      const bxp = p.xp; bp.xp = (bxp !== undefined && getLevel(bxp) === bp.level) ? bxp : expForLevel(bp.level)
+      const bValid = filterValidMoves(p.moves ?? [])
+      const bUsed = new Set(bValid.map((m: { moveId: string }) => m.moveId))
+      bp.moves = [...bValid, ...bp.moves.filter(m => !bUsed.has(m.moveId))].slice(0, 4)
+      bp.nickname = p.nickname ?? null
+      return bp
+    }).filter(Boolean) as ReturnType<typeof buildPartyPokemon>[]
+    return { player, bench, partyIndexMap: [activeIdx, ...benchIndices] }
+  }
+
   function startWildBattle(playerX: number, playerY: number) {
     const map = mapRef.current
     const tile = map.tiles[playerY]?.[playerX]
@@ -1591,34 +1602,16 @@ export default function WorldMap() {
     const opponent = buildPartyPokemon(opponentInfo, level)
     const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
     if (!playerInfo) return
-    const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
-    player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
-    player.xp = currentProfile.party[0].xp ?? player.xp
-    const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
-    const _usedIds = new Set(_validMoves.map(m => m.moveId))
-    const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
-    player.moves = [..._validMoves, ..._fresh].slice(0, 4)
-    player.nickname = currentProfile.party[0].nickname
-    const fullParty = currentProfile.party.slice(1).map(p => {
-      const info = pokemonMap[p.pokemonId]
-      if (!info) return null
-      const bp = buildPartyPokemon(info, p.level)
-      bp.currentHp = p.currentHp ?? bp.maxHp
-      bp.xp = p.xp ?? bp.xp
-      const _bpValidMoves = filterValidMoves(p.moves ?? [])
-      const _bpUsedIds = new Set(_bpValidMoves.map(m => m.moveId))
-      const _bpFresh = bp.moves.filter(m => !_bpUsedIds.has(m.moveId))
-      bp.moves = [..._bpValidMoves, ..._bpFresh].slice(0, 4)
-      bp.nickname = p.nickname
-      return bp
-    }).filter(Boolean) as typeof player[]
+    const battleParty = buildBattleParty(currentProfile.party)
+    if (!battleParty) return
+    const { player, bench: fullParty, partyIndexMap } = battleParty
     useProfileStore.getState().setProfile({
       ...currentProfile,
       playerX,
       playerY,
       currentRoute: currentMapIdRef.current,
     })
-    useBattleStore.getState().startWildBattle(player, opponent, fullParty)
+    useBattleStore.getState().startWildBattle(player, opponent, fullParty, partyIndexMap)
     flashAndNavigate()
   }
   startWildBattleRef.current = startWildBattle
@@ -1632,34 +1625,16 @@ export default function WorldMap() {
     const opponent = buildPartyPokemon(opponentInfo, firstEnemy.level)
     const playerInfo = pokemonMap[currentProfile.party[0].pokemonId]
     if (!playerInfo) return
-    const player = buildPartyPokemon(playerInfo, currentProfile.party[0].level)
-    player.currentHp = currentProfile.party[0].currentHp ?? player.maxHp
-    player.xp = currentProfile.party[0].xp ?? player.xp
-    const _validMoves = filterValidMoves(currentProfile.party[0].moves ?? [])
-    const _usedIds = new Set(_validMoves.map(m => m.moveId))
-    const _fresh = player.moves.filter(m => !_usedIds.has(m.moveId))
-    player.moves = [..._validMoves, ..._fresh].slice(0, 4)
-    player.nickname = currentProfile.party[0].nickname
-    const fullParty = currentProfile.party.slice(1).map(p => {
-      const info = pokemonMap[p.pokemonId]
-      if (!info) return null
-      const bp = buildPartyPokemon(info, p.level)
-      bp.currentHp = p.currentHp ?? bp.maxHp
-      bp.xp = p.xp ?? bp.xp
-      const _bpValidMoves = filterValidMoves(p.moves ?? [])
-      const _bpUsedIds = new Set(_bpValidMoves.map(m => m.moveId))
-      const _bpFresh = bp.moves.filter(m => !_bpUsedIds.has(m.moveId))
-      bp.moves = [..._bpValidMoves, ..._bpFresh].slice(0, 4)
-      bp.nickname = p.nickname
-      return bp
-    }).filter(Boolean) as typeof player[]
+    const battleParty = buildBattleParty(currentProfile.party)
+    if (!battleParty) return
+    const { player, bench: fullParty, partyIndexMap } = battleParty
     useProfileStore.getState().setProfile({
       ...currentProfile,
       playerX: pxRef.current,
       playerY: pyRef.current,
       currentRoute: currentMapIdRef.current,
     })
-    useBattleStore.getState().startTrainerBattle(player, opponent, trainer.name, fullParty)
+    useBattleStore.getState().startTrainerBattle(player, opponent, trainer.name, fullParty, partyIndexMap)
     flashAndNavigate(0)
   }
   startTrainerBattleRef.current = startTrainerBattle
@@ -1667,14 +1642,22 @@ export default function WorldMap() {
   async function healParty() {
     const freshProfile = useProfileStore.getState().profile
     if (!freshProfile?.id || !freshProfile.party?.length) return
-    const healedParty = freshProfile.party.map(p => ({ ...p, currentHp: p.maxHp }))
-    try {
-      await updateProfile(freshProfile.id, { party: healedParty })
-      useProfileStore.getState().setProfile({ ...freshProfile, party: healedParty })
-      setDialogue("Nurse Joy: Your Pokémon have been healed! ♥")
-    } catch {
-      setDialogue('Healing failed — please try again.')
-    }
+    const healedParty = freshProfile.party.map(p => {
+      const info = pokemonMap[p.pokemonId]
+      const built = info ? buildPartyPokemon(info, p.level) : null
+      const maxHp = built?.maxHp ?? p.maxHp
+      return {
+        ...p,
+        currentHp: maxHp,
+        maxHp,
+        status: null,
+        sleepTurns: 0,
+        moves: p.moves.map(m => ({ ...m, pp: m.maxPp })),
+      }
+    })
+    useProfileStore.getState().setProfile({ ...freshProfile, party: healedParty })
+    setDialogue("Nurse Joy: Your Pokémon have been healed! ♥")
+    updateProfile(freshProfile.id, { party: healedParty }).catch(() => {})
   }
 
   async function handleBuy(itemId: string) {

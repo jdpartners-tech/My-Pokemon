@@ -442,9 +442,30 @@ export default function Battle() {
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
   const { updateProfile } = useFirestoreProfile()
+
+  function handleEscape() {
+    const { playerPokemon, party: battleBench, partyIndexMap } = useBattleStore.getState()
+    const profileNow = useProfileStore.getState().profile ?? profile
+    if (profileNow?.id && playerPokemon) {
+      const origParty = profileNow.party ?? []
+      const updatedParty = origParty.map(p => ({ ...p }))
+      const activeIdx = partyIndexMap[0] ?? 0
+      if (updatedParty[activeIdx]) {
+        updatedParty[activeIdx] = { ...updatedParty[activeIdx], currentHp: playerPokemon.currentHp }
+      }
+      battleBench.forEach((benchMon, i) => {
+        const profIdx = partyIndexMap[i + 1]
+        if (profIdx !== undefined && updatedParty[profIdx]) {
+          updatedParty[profIdx] = { ...updatedParty[profIdx], currentHp: benchMon.currentHp }
+        }
+      })
+      useProfileStore.getState().setProfile({ ...profileNow, party: updatedParty })
+      updateProfile(profileNow.id, { party: updatedParty }).catch(e => console.error('escape save failed:', e))
+    }
+    navigate('/map')
+  }
   const [bagOpen, setBagOpen] = useState(false)
   const [, setFlashOn] = useState(false)
-  const [hoveredMove, setHoveredMove] = useState(0)
   const [safeAreaTop, setSafeAreaTop] = useState(0)
   const [safeAreaBottom, setSafeAreaBottom] = useState(0)
   useEffect(() => {
@@ -653,8 +674,6 @@ export default function Battle() {
   if (!playerPokemon || !opponentPokemon) return null
 
   const latestLog = log[log.length - 1] ?? ''
-  const hoverMv = playerPokemon.moves[hoveredMove]
-  const hoverMd = hoverMv ? moveDataMap[hoverMv.moveId] : null
 
   const expPct = (() => {
     const fl = expForLevel(playerPokemon.level)
@@ -756,6 +775,17 @@ export default function Battle() {
   const BATTLE_TOTAL_H = SKY_H + 280  // sky + bottom panel estimate
   const scale = Math.min(window.innerWidth / W, availH / BATTLE_TOTAL_H, 1.8)
   const scaledH = Math.round(availH / scale)
+  // Move cell height: bottom panel minus sky, dialog+margins, move-area margins, and 3px border
+  const numMoveRows = (playerPokemon?.moves?.length ?? 4) <= 2 ? 1 : 2
+  const moveCellH = Math.max(40, Math.floor((scaledH - SKY_H - DLG_H - 18) / numMoveRows))
+  // Auto-size name font so the longest move name fits in ~84px cell (monospace 0.62 ratio)
+  const longestMoveName = Math.max(...(playerPokemon?.moves?.map(mv => {
+    const md = moveDataMap[mv.moveId]
+    return (md?.name ?? mv.moveId).length
+  }) ?? [4]))
+  const nameFontSz = Math.min(14, Math.max(9, Math.floor(84 / longestMoveName / 0.62)))
+  const typeFontSz = 11
+  const dmgFontSz  = 14
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', paddingTop: safeAreaTop, paddingBottom: safeAreaBottom }}>
@@ -996,150 +1026,133 @@ export default function Battle() {
         {phase === 'player_turn' && (
           <div style={{ display: 'flex', gap: 4, margin: '4px 4px 4px', flex: 1 }}>
 
-            {/* Move grid — 1-4 slots, always 2 columns; only renders slots that exist */}
-            <div style={{
-              width: MOVE_W, flexShrink: 0,
-              position: 'relative',
-              border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
-              background: MENU_BG, overflow: 'hidden',
-              display: 'grid',
-              gridTemplateColumns: playerPokemon.moves.length === 1 ? '1fr' : '1fr 1fr',
-              gridTemplateRows: playerPokemon.moves.length <= 2 ? '1fr' : '1fr 1fr',
-            }}>
-              {/* Vertical divider — only when 2+ columns */}
-              {playerPokemon.moves.length > 1 && (
-                <div style={{
-                  position: 'absolute', left: '50%', top: 4, bottom: 4,
-                  width: 1, background: '#c8c0a8', pointerEvents: 'none',
-                }} />
-              )}
-              {/* Horizontal divider — only when 2 rows */}
-              {playerPokemon.moves.length > 2 && (
-                <div style={{
-                  position: 'absolute', left: 4, right: 4, top: '50%',
-                  height: 1, background: '#c8c0a8', pointerEvents: 'none',
-                }} />
-              )}
-
-              {playerPokemon.moves.map((mv, i) => {
+            {/* Move panel — explicit pixel heights so centering always works */}
+            {(() => {
+              const mvs = playerPokemon.moves
+              const mkBtn = (mv: typeof mvs[0], i: number) => {
                 const md = moveDataMap[mv.moveId] ?? null
-                const isHov = i === hoveredMove
+                let dmgText = '—', dmgColor = '#888'
+                if (md && (md.power ?? 0) > 0) {
+                  const atkData = pokemonDataMap[playerPokemon.pokemonId]
+                  const defData = pokemonDataMap[opponentPokemon.pokemonId]
+                  if (atkData && defData) {
+                    const atkStat = calculateStat(atkData.baseStats.atk, playerPokemon.level)
+                    const defStat = calculateStat(defData.baseStats.def, opponentPokemon.level)
+                    const eff = getTypeEffectiveness(md.type as any, defData.types as any)
+                    if (eff === 0) {
+                      dmgText = '✕'; dmgColor = '#aaa'
+                    } else {
+                      const base = Math.floor((Math.floor((2 * playerPokemon.level) / 5 + 2) * md.power * atkStat) / defStat / 50) + 2
+                      const dmg = Math.max(1, Math.floor(base * eff * 0.925))
+                      dmgText = `~${dmg}${eff >= 2 ? '★' : eff < 1 ? '▼' : ''}`
+                      dmgColor = eff >= 2 ? '#e03020' : eff < 1 ? '#6888c8' : '#484838'
+                    }
+                  }
+                }
                 return (
-                  <button
-                    key={i}
-                    onMouseEnter={() => setHoveredMove(i)}
-                    onFocus={() => setHoveredMove(i)}
-                    onClick={() => selectMove(i)}
-                    style={{
-                      background: isHov ? '#fff8d8' : 'transparent',
-                      border: 'none',
-                      outline: isHov ? `1px solid #e8a018` : 'none',
-                      padding: '6px 8px',
-                      textAlign: 'left', cursor: 'pointer',
-                      fontFamily: MONO, zIndex: 1,
-                    }}
-                  >
-                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#181808' }}>
-                      {isHov ? '▶ ' : ''}{md?.name.toUpperCase() ?? mv.moveId.toUpperCase()}
+                  <button key={i} onClick={() => selectMove(i)} style={{
+                    flex: 1, height: moveCellH, minWidth: 0,
+                    background: 'transparent', border: 'none', outline: 'none',
+                    padding: '6px 8px', textAlign: 'left', cursor: 'pointer', fontFamily: MONO,
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                  }}>
+                    <div style={{ fontSize: nameFontSz, fontWeight: 'bold', color: '#181808', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                      {md?.name.toUpperCase() ?? mv.moveId.toUpperCase()}
                     </div>
-                    <div style={{ fontSize: 11, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#999', marginTop: 2 }}>
+                    <div style={{ fontSize: typeFontSz, color: md ? (TYPE_COLOR[md.type] ?? '#999') : '#999', marginTop: 2 }}>
                       {md?.type.toUpperCase() ?? ''}
+                    </div>
+                    <div style={{ fontSize: dmgFontSz, marginTop: 2 }}>
+                      <span style={{ color: dmgColor, fontWeight: 'bold' }}>{dmgText}</span>
                     </div>
                   </button>
                 )
-              })}
-            </div>
+              }
+              const row = (a: number, b?: number) => (
+                <div style={{ display: 'flex', height: moveCellH }}>
+                  {mkBtn(mvs[a], a)}
+                  {b !== undefined && mvs[b] && <>
+                    <div style={{ width: 1, background: '#c8c0a8' }} />
+                    {mkBtn(mvs[b], b)}
+                  </>}
+                </div>
+              )
+              return (
+                <div style={{
+                  width: MOVE_W, flexShrink: 0,
+                  border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
+                  background: MENU_BG, overflow: 'hidden',
+                  display: 'flex', flexDirection: 'column',
+                }}>
+                  {row(0, mvs.length > 1 ? 1 : undefined)}
+                  {mvs.length > 2 && <>
+                    <div style={{ height: 1, background: '#c8c0a8' }} />
+                    {row(2, mvs.length > 3 ? 3 : undefined)}
+                  </>}
+                </div>
+              )
+            })()}
 
-            {/* Move info panel: DMG / PP / TYPE */}
+            {/* Action buttons panel */}
             <div style={{
               flex: 1, border: `1.5px solid ${MENU_BD}`, borderRadius: 3,
-              background: MENU_BG, padding: '6px 8px',
-              display: 'flex', flexDirection: 'column', gap: 1,
+              background: MENU_BG, padding: '4px 6px',
+              display: 'flex', flexDirection: 'column', gap: 4,
             }}>
-              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>DMG</div>
-              {(() => {
-                if (!hoverMd || hoverMd.power === 0) return (
-                  <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>—</div>
-                )
-                const atkData = pokemonDataMap[playerPokemon.pokemonId]
-                const defData = pokemonDataMap[opponentPokemon.pokemonId]
-                if (!atkData || !defData) return (
-                  <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>—</div>
-                )
-                const atkStat = calculateStat(atkData.baseStats.atk, playerPokemon.level)
-                const defStat = calculateStat(defData.baseStats.def, opponentPokemon.level)
-                const eff = getTypeEffectiveness(hoverMd.type as any, defData.types as any)
-                if (eff === 0) return (
-                  <div style={{ fontSize: 10, color: '#888', marginBottom: 3 }}>✕ No effect</div>
-                )
-                // Fixed 92.5% factor (midpoint of 85-100% range) for stable display
-                const base = Math.floor((Math.floor((2 * playerPokemon.level) / 5 + 2) * hoverMd.power * atkStat) / defStat / 50) + 2
-                const dmg = Math.max(1, Math.floor(base * eff * 0.925))
-                const color = eff >= 2 ? '#e03020' : eff < 1 ? '#6888c8' : '#181808'
-                return (
-                  <div style={{ fontSize: 13, fontWeight: 'bold', color, marginBottom: 3 }}>
-                    -{dmg}{eff >= 2 ? ' ★' : ''}
-                  </div>
-                )
-              })()}
-              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>PP</div>
-              <div style={{ fontSize: 13, color: '#181808', marginBottom: 3 }}>
-                {hoverMv ? `${hoverMv.pp}/${hoverMv.maxPp}` : '—'}
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 'bold', color: '#484838' }}>TYPE/</div>
-              {hoverMd ? (
-                <div style={{
-                  background: TYPE_COLOR[hoverMd.type] ?? '#999',
-                  borderRadius: 3, padding: '2px 0',
-                  textAlign: 'center', fontSize: 11, fontWeight: 'bold', color: '#f8f8f8',
-                }}>
-                  {hoverMd.type.toUpperCase()}
-                </div>
-              ) : (
-                <div style={{ fontSize: 11, color: '#999' }}>—</div>
-              )}
-              <div style={{ flex: 1 }} />
-              {/* BAG */}
-              <button
-                onClick={() => setBagOpen(true)}
-                style={{
-                  background: '#e0d8c8', border: `1px solid ${MENU_BD}`,
-                  borderRadius: 3, padding: '6px 0',
-                  fontSize: 12, fontWeight: 'bold', color: '#181808',
-                  cursor: 'pointer', fontFamily: MONO,
-                }}
-              >
-                BAG
-              </button>
-              {/* BALL — only in wild battles */}
-              {isWildBattle && (() => {
+              {/* POKEBALL — wild battles only */}
+              {isWildBattle ? (() => {
                 const ballCount = (profile?.bag ?? []).find(b => b.itemId === 'pokeball')?.qty ?? 0
                 return (
                   <button
                     onClick={() => ballCount > 0 && useBattleStore.getState().throwPokeball()}
                     disabled={ballCount === 0}
                     style={{
-                      background: ballCount > 0 ? '#e82020' : '#666',
+                      flex: 1, background: ballCount > 0 ? '#e82020' : '#888',
                       border: `1px solid ${MENU_BD}`,
                       borderRadius: 3, padding: '6px 0',
-                      fontSize: 12, fontWeight: 'bold', color: '#f8f8f8',
+                      fontSize: 14, fontWeight: 'bold', color: '#f8f8f8',
                       cursor: ballCount > 0 ? 'pointer' : 'default',
-                      fontFamily: MONO, marginTop: 2,
-                      opacity: ballCount > 0 ? 1 : 0.5,
+                      fontFamily: MONO, opacity: ballCount > 0 ? 1 : 0.5,
                     }}
                   >
                     BALL ×{ballCount}
                   </button>
                 )
-              })()}
-              {/* ESCAPE — available in all battles */}
+              })() : <div style={{ flex: 1 }} />}
+              {/* BAG */}
               <button
-                onClick={() => navigate('/map')}
+                onClick={() => setBagOpen(true)}
                 style={{
-                  background: '#48a048', border: `1px solid ${MENU_BD}`,
+                  flex: 1, background: '#e0d8c8', border: `1px solid ${MENU_BD}`,
                   borderRadius: 3, padding: '6px 0',
-                  fontSize: 12, fontWeight: 'bold', color: '#f8f8f8',
-                  cursor: 'pointer', fontFamily: MONO, marginTop: 2,
+                  fontSize: 14, fontWeight: 'bold', color: '#181808',
+                  cursor: 'pointer', fontFamily: MONO,
+                }}
+              >
+                BAG
+              </button>
+              {/* SWITCH — only when bench has a healthy pokemon */}
+              {party.some(p => p.currentHp > 0) ? (
+                <button
+                  onClick={() => useBattleStore.getState().setPhase('voluntary_switch')}
+                  style={{
+                    flex: 1, background: '#4080c8', border: `1px solid ${MENU_BD}`,
+                    borderRadius: 3, padding: '6px 0',
+                    fontSize: 14, fontWeight: 'bold', color: '#f8f8f8',
+                    cursor: 'pointer', fontFamily: MONO,
+                  }}
+                >
+                  SWITCH
+                </button>
+              ) : <div style={{ flex: 1 }} />}
+              {/* ESCAPE */}
+              <button
+                onClick={handleEscape}
+                style={{
+                  flex: 1, background: '#48a048', border: `1px solid ${MENU_BD}`,
+                  borderRadius: 3, padding: '6px 0',
+                  fontSize: 14, fontWeight: 'bold', color: '#f8f8f8',
+                  cursor: 'pointer', fontFamily: MONO,
                 }}
               >
                 ESCAPE
@@ -1226,12 +1239,27 @@ export default function Battle() {
           </div>
         )}
 
-        {/* ── SWITCH POKEMON ── */}
-        {phase === 'switch_pokemon' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px', flex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 'bold', color: '#484838', fontFamily: MONO, padding: '2px 4px' }}>
-              Choose a Pokémon:
+        {/* ── SWITCH POKEMON (forced on faint) ── */}
+        {(phase === 'switch_pokemon' || phase === 'voluntary_switch') && (
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '4px', flex: 1, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4, flexShrink: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 'bold', color: '#484838', fontFamily: MONO, padding: '2px 4px', flex: 1 }}>
+                {phase === 'voluntary_switch' ? 'Switch to:' : 'Choose a Pokémon:'}
+              </div>
+              {phase === 'voluntary_switch' && (
+                <button
+                  onClick={() => useBattleStore.getState().setPhase('player_turn')}
+                  style={{
+                    background: '#c0b898', border: `1px solid ${MENU_BD}`, borderRadius: 3,
+                    padding: '2px 8px', fontSize: 10, fontWeight: 'bold',
+                    color: '#181808', cursor: 'pointer', fontFamily: MONO,
+                  }}
+                >
+                  ← BACK
+                </button>
+              )}
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {party.map((p, i) => {
               const pName = (p.nickname || pokemonDataMap[p.pokemonId]?.name || `#${p.pokemonId}`).toUpperCase()
               const fainted = p.currentHp <= 0
@@ -1251,7 +1279,7 @@ export default function Battle() {
                   <img
                     src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.pokemonId}.png`}
                     alt=""
-                    style={{ width: 32, height: 32, imageRendering: 'pixelated' }}
+                    style={{ width: 28, height: 28, imageRendering: 'pixelated' }}
                   />
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div style={{ fontSize: 10, fontWeight: 'bold', color: '#181808' }}>{pName}</div>
@@ -1261,6 +1289,7 @@ export default function Battle() {
                 </button>
               )
             })}
+            </div>
           </div>
         )}
 
