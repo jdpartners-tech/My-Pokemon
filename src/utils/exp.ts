@@ -6,7 +6,7 @@ const moveDataMap = Object.fromEntries(
 ) as Record<string, MoveData>
 
 export function expForLevel(level: number): number {
-  return Math.pow(level, 3)
+  return level * level * 5
 }
 
 export function getLevel(xp: number): number {
@@ -16,7 +16,7 @@ export function getLevel(xp: number): number {
 }
 
 export function expGained(opponentLevel: number): number {
-  return Math.floor((opponentLevel * 3) + 10)
+  return Math.floor((opponentLevel * 5) + 20)
 }
 
 export function calculateMaxHp(baseHp: number, level: number): number {
