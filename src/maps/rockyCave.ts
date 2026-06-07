@@ -51,6 +51,8 @@ export const rockyCave: MapData = {
     { pokemonId: 139, minLevel: 20, maxLevel: 25, rate: 1  },  // Omastar ⭐
     { pokemonId: 141, minLevel: 20, maxLevel: 25, rate: 1  },  // Kabutops ⭐
     { pokemonId: 137, minLevel: 18, maxLevel: 22, rate: 1  },  // Porygon ⭐
+    { pokemonId: 246, minLevel: 15, maxLevel: 20, rate: 2  },  // Larvitar ⭐
+    { pokemonId: 197, minLevel: 18, maxLevel: 24, rate: 2  },  // Umbreon ⭐
     { pokemonId: 142, minLevel: 22, maxLevel: 28, rate: 1  },  // Aerodactyl ⭐
   ],
   waterPokemon: [],

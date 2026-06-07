@@ -37,6 +37,9 @@ export const volcanoTrail: MapData = {
     { pokemonId: 136, minLevel: 30, maxLevel: 36, rate: 5  },  // Flareon ⭐
     { pokemonId: 4,   minLevel: 25, maxLevel: 30, rate: 4  },  // Charmander ⭐
     { pokemonId: 150, minLevel: 50, maxLevel: 55, rate: 3  },  // Mewtwo ⭐
+    { pokemonId: 155, minLevel: 25, maxLevel: 30, rate: 8  },  // Cyndaquil ⭐
+    { pokemonId: 240, minLevel: 24, maxLevel: 29, rate: 10 },  // Magby
+    { pokemonId: 248, minLevel: 50, maxLevel: 55, rate: 2  },  // Tyranitar ⭐
     { pokemonId: 146, minLevel: 50, maxLevel: 55, rate: 2  },  // Moltres ⭐
   ],
   waterPokemon: [],

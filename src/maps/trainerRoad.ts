@@ -48,6 +48,7 @@ export const trainerRoad: MapData = {
     { pokemonId: 68,  minLevel: 22, maxLevel: 28, rate: 1  },  // Machamp ⭐
     { pokemonId: 65,  minLevel: 22, maxLevel: 28, rate: 1  },  // Alakazam ⭐
     { pokemonId: 135, minLevel: 20, maxLevel: 25, rate: 1  },  // Jolteon ⭐
+    { pokemonId: 209, minLevel: 16, maxLevel: 21, rate: 6  },  // Snubbull
     { pokemonId: 145, minLevel: 45, maxLevel: 50, rate: 1  },  // Zapdos ⭐
   ],
   waterPokemon: [],

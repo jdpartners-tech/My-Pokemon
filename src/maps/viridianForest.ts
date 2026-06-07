@@ -45,6 +45,8 @@ export const viridianForest: MapData = {
     { pokemonId: 47,  minLevel: 9,  maxLevel: 13, rate: 2  },  // Parasect
     { pokemonId: 2,   minLevel: 10, maxLevel: 14, rate: 2  },  // Ivysaur
     { pokemonId: 26,  minLevel: 10, maxLevel: 14, rate: 1  },  // Raichu ⭐
+    { pokemonId: 167, minLevel: 4,  maxLevel: 8,  rate: 10 },  // Spinarak
+    { pokemonId: 214, minLevel: 10, maxLevel: 15, rate: 2  },  // Heracross ⭐
     { pokemonId: 3,   minLevel: 15, maxLevel: 18, rate: 1  },  // Venusaur ⭐
   ],
   trainers: [],

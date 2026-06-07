@@ -44,6 +44,9 @@ export const mistyLake: MapData = {
     { pokemonId: 131, minLevel: 15, maxLevel: 20, rate: 3  },  // Lapras ⭐
     { pokemonId: 62,  minLevel: 20, maxLevel: 25, rate: 2  },  // Poliwrath
     { pokemonId: 149, minLevel: 22, maxLevel: 28, rate: 2  },  // Dragonite ⭐
+    { pokemonId: 183, minLevel: 8,  maxLevel: 12, rate: 8  },  // Marill ⭐
+    { pokemonId: 194, minLevel: 8,  maxLevel: 13, rate: 6  },  // Wooper
+    { pokemonId: 158, minLevel: 8,  maxLevel: 13, rate: 5  },  // Totodile ⭐
     { pokemonId: 144, minLevel: 45, maxLevel: 50, rate: 1  },  // Articuno ⭐
   ],
   waterPokemon: [

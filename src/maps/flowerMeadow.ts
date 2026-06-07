@@ -51,6 +51,9 @@ export const flowerMeadow: MapData = {
     { pokemonId: 36,  minLevel: 12, maxLevel: 16, rate: 1  },  // Clefable
     { pokemonId: 31,  minLevel: 14, maxLevel: 18, rate: 1  },  // Nidoqueen ⭐
     { pokemonId: 34,  minLevel: 14, maxLevel: 18, rate: 1  },  // Nidoking ⭐
+    { pokemonId: 187, minLevel: 5,  maxLevel: 10, rate: 8  },  // Hoppip
+    { pokemonId: 152, minLevel: 5,  maxLevel: 10, rate: 5  },  // Chikorita ⭐
+    { pokemonId: 196, minLevel: 12, maxLevel: 16, rate: 2  },  // Espeon ⭐
     { pokemonId: 151, minLevel: 30, maxLevel: 35, rate: 1  },  // Mew ⭐
   ],
   trainers: [],
