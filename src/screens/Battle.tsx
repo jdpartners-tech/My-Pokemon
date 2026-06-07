@@ -437,7 +437,7 @@ export default function Battle() {
     opponentAttacking, playerFlash, playerShakeX,
     isWildBattle, ballAnimPhase, ballCaught, party, answerResult,
     trainerSpriteCol, trainerSpriteRow,
-    damagePopup, battleBanner, trainerName,
+    damagePopup, battleBanner, trainerName, pendingEvolution,
   } = useBattleStore()
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
   const profile = useProfileStore(s => s.profile)
@@ -520,7 +520,7 @@ export default function Battle() {
   useEffect(() => { if (phase === 'idle') navigate('/map') }, [phase, navigate])
 
   // Evolution animation state: 'silhouette' → 'flash' → 'reveal' → done
-  const [evoStage, setEvoStage] = useState<'none' | 'silhouette' | 'flash' | 'reveal'>('none')
+  const [evoStage, setEvoStage] = useState<'none' | 'silhouette' | 'flash' | 'reveal' | 'done'>('none')
   useEffect(() => {
     if (phase !== 'evolving') { setEvoStage('none'); setFlashOn(false); return }
     const timers: ReturnType<typeof setTimeout>[] = []
@@ -530,10 +530,24 @@ export default function Battle() {
     timers.push(setTimeout(() => { setFlashOn(true); setEvoStage('flash') }, 1600))
     // Stage 3: flash off, reveal new evolved sprite with glow (1900ms)
     timers.push(setTimeout(() => { setFlashOn(false); setEvoStage('reveal') }, 1900))
-    // Stage 4: glow fades out (2800ms)
-    timers.push(setTimeout(() => setEvoStage('none'), 2800))
+    // Stage 4: glow fades out, ready for tap-to-continue (2800ms)
+    timers.push(setTimeout(() => setEvoStage('done'), 2800))
     return () => timers.forEach(clearTimeout)
   }, [phase])
+
+  // Enter key handler for evolution overlay (desktop)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (phase === 'evolving' && evoStage === 'done') {
+        if (e.key === 'Enter') {
+          useBattleStore.getState().acknowledgeEvolution()
+          return
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [phase, evoStage])
 
   // Hit effect animation
   useEffect(() => {
@@ -1440,6 +1454,44 @@ export default function Battle() {
         background: 'white',
         animation: 'evoFlash 0.35s ease-out forwards',
       }} />
+    )}
+
+    {/* ── Evolution full-screen overlay ── */}
+    {phase === 'evolving' && pendingEvolution && (
+      <div
+        onClick={evoStage === 'done' ? () => useBattleStore.getState().acknowledgeEvolution() : undefined}
+        onTouchEnd={evoStage === 'done' ? (e) => { e.preventDefault(); useBattleStore.getState().acknowledgeEvolution() } : undefined}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 55,
+          background: '#000',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: evoStage === 'done' ? 'pointer' : 'default',
+        }}
+      >
+        <div style={{ color: '#fff', fontSize: 20, fontFamily: 'Georgia, serif', marginBottom: 28, textAlign: 'center', padding: '0 24px' }}>
+          {evoStage === 'done'
+            ? `✨ ${pokemonDataMap[pendingEvolution.fromId]?.name ?? 'Pokemon'} evolved into ${pokemonDataMap[pendingEvolution.toId]?.name ?? 'a new form'}!`
+            : `What? ${pokemonDataMap[pendingEvolution.fromId]?.name ?? 'Pokemon'} is evolving!`}
+        </div>
+        <img
+          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoStage === 'reveal' || evoStage === 'done' ? pendingEvolution.toId : pendingEvolution.fromId}.png`}
+          style={{
+            width: 128, height: 128, imageRendering: 'pixelated' as const,
+            filter: evoStage === 'silhouette' || evoStage === 'flash'
+              ? 'brightness(100) saturate(0)'
+              : evoStage === 'reveal'
+              ? 'brightness(2) saturate(0.3)'
+              : 'none',
+            transition: evoStage === 'silhouette' ? 'filter 0.4s ease-in' : 'filter 0.5s ease-out',
+          }}
+          alt=""
+        />
+        {evoStage === 'done' && (
+          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, marginTop: 28, fontFamily: 'monospace' }}>
+            Tap to continue
+          </div>
+        )}
+      </div>
     )}
     </div>
   )
