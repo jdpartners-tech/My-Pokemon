@@ -445,11 +445,13 @@ export function useBattleEngine() {
         pokeInfo.evolvesTo != null
       ) {
         const evolvedData = pokemonMap[pokeInfo.evolvesTo]
+        store.setPendingEvolution({ fromId: playerPokemon.pokemonId, toId: pokeInfo.evolvesTo })
         store.setPhase('evolving')
-        await delay(2400)
+        await new Promise<void>(resolve => store.setResolveEvolution(resolve))
         store.evolvePlayer(pokeInfo.evolvesTo, evolvedData?.name ?? getName(playerPokemon))
         store.addLog(`${getName(playerPokemon)} evolved into ${evolvedData?.name ?? 'a new form'}!`)
-        await delay(600)
+        store.setPendingEvolution(null)
+        await delay(400)
       }
     }
 
