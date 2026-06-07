@@ -108,7 +108,7 @@ interface BattleState {
   pendingEvolution: { fromId: number; toId: number } | null
   resolveEvolution: (() => void) | null
   setPendingEvolution: (e: { fromId: number; toId: number } | null) => void
-  setResolveEvolution: (fn: (() => void) | null) => void
+  setResolveEvolution: (fn: () => void) => void
   acknowledgeEvolution: () => void
 
   // Stub actions — wired in Task 13 (useBattleEngine)
