@@ -105,6 +105,12 @@ interface BattleState {
   battleBanner: string | null
   setBattleBanner: (s: string | null) => void
 
+  pendingEvolution: { fromId: number; toId: number } | null
+  resolveEvolution: (() => void) | null
+  setPendingEvolution: (e: { fromId: number; toId: number } | null) => void
+  setResolveEvolution: (fn: (() => void) | null) => void
+  acknowledgeEvolution: () => void
+
   // Stub actions — wired in Task 13 (useBattleEngine)
   selectMove: (index: number) => void
   handleAnswer: (correct: boolean, chosenAnswer?: string) => void
@@ -143,6 +149,8 @@ const initialState = {
   hitEffect: null,
   projectileAnim: null,
   battleBanner: null,
+  pendingEvolution: null,
+  resolveEvolution: null,
 }
 
 export const useBattleStore = create<BattleState>((set) => ({
@@ -318,6 +326,13 @@ export const useBattleStore = create<BattleState>((set) => ({
   clearProjectileAnim: () => set({ projectileAnim: null }),
 
   setBattleBanner: (s) => set({ battleBanner: s }),
+
+  setPendingEvolution: (e) => set({ pendingEvolution: e }),
+  setResolveEvolution: (fn) => set({ resolveEvolution: fn }),
+  acknowledgeEvolution: () => set(state => {
+    state.resolveEvolution?.()
+    return { resolveEvolution: null }
+  }),
 
   setAnswerResult: (r) => set({ answerResult: r }),
   setResolveWrongAnswer: (fn) => set({ resolveWrongAnswer: fn }),
