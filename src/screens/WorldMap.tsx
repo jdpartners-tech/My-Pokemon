@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../store/profileStore'
 import { useBattleStore } from '../store/battleStore'
 import { useFirestoreProfile } from '../hooks/useFirestoreProfile'
+import { useQuestions } from '../hooks/useQuestions'
 import { getMap, MAPS } from '../maps/index'
 import { MapData, TileType, TrainerNpc } from '../maps/types'
 import { buildPartyPokemon, filterValidMoves } from '../utils/exp'
@@ -342,6 +343,7 @@ export default function WorldMap() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
   const { updateProfile } = useFirestoreProfile()
+  const { prefetchQuestionsForProfile } = useQuestions()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [currentMapId, setCurrentMapId] = useState(() => profile?.currentRoute ?? 'pallet')
   const [px, setPx] = useState(() => profile?.playerX ?? 7)
@@ -381,6 +383,12 @@ export default function WorldMap() {
   const [hiddenNpcs, setHiddenNpcs] = useState<Record<string, number>>({})
   const hiddenNpcsRef = useRef<Record<string, number>>({})
   useEffect(() => { hiddenNpcsRef.current = hiddenNpcs }, [hiddenNpcs])
+
+  // Warm question cache in background so battle starts instantly with no loading delay
+  useEffect(() => {
+    if (profile) prefetchQuestionsForProfile(profile)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id])
 
   // Canvas size — use window dimensions directly (reliable on iOS Safari)
   const mainAreaRef = useRef<HTMLDivElement>(null)

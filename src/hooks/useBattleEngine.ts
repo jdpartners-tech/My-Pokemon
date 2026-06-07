@@ -1,4 +1,3 @@
-import React from 'react'
 import { useBattleStore } from '../store/battleStore'
 import { useProfileStore } from '../store/profileStore'
 import { useQuestions } from './useQuestions'
@@ -37,20 +36,9 @@ export function useBattleEngine() {
   const { getQuestionsForProfile } = useQuestions()
   const { updateProfile } = useFirestoreProfile()
 
-  // Cache questions for the current battle so we don't hit Firestore on every move
-  const questionCacheRef = React.useRef<Question[] | null>(null)
-  const cacheProfileIdRef = React.useRef<string | null>(null)
-
   async function getQuestions(): Promise<Question[]> {
-    const profileId = profile?.id ?? null
-    if (questionCacheRef.current && cacheProfileIdRef.current === profileId) {
-      return questionCacheRef.current
-    }
     if (!profile) return []
-    const qs = await getQuestionsForProfile(profile)
-    questionCacheRef.current = qs
-    cacheProfileIdRef.current = profileId
-    return qs
+    return getQuestionsForProfile(profile)
   }
 
   async function selectMove(index: number) {
