@@ -102,6 +102,8 @@ export function useBattleEngine() {
   }
 
   async function handleAnswer(correct: boolean, chosenAnswer?: string) {
+    // Guard: prevent double-tap race on mobile (only run while in question phase)
+    if (useBattleStore.getState().phase !== 'question') return
     const state = useBattleStore.getState()
     const { playerPokemon, opponentPokemon, selectedMoveIndex, question } = state
     if (!playerPokemon || !opponentPokemon || selectedMoveIndex === null) return
@@ -109,6 +111,8 @@ export function useBattleEngine() {
     const correctAnswer = question?.answer ?? ''
     store.clearQuestion()
     store.setPhase('animating')
+
+    try {
 
     const move = playerPokemon.moves[selectedMoveIndex]
     if (!move) {
@@ -291,12 +295,17 @@ export function useBattleEngine() {
       await delay(300)
       await opponentTurn()
     }
+    } catch (e) {
+      console.error('[Battle] handleAnswer error:', e)
+      store.setPhase('player_turn')
+    }
   }
 
   async function opponentTurn() {
     let { playerPokemon, opponentPokemon } = useBattleStore.getState()
     if (!playerPokemon || !opponentPokemon) return
     store.setPhase('opponent_turn')
+    try {
     await delay(800)
 
     // Opponent status checks
@@ -412,6 +421,10 @@ export function useBattleEngine() {
     }
 
     store.setPhase('player_turn')
+    } catch (e) {
+      console.error('[Battle] opponentTurn error:', e)
+      store.setPhase('player_turn')
+    }
   }
 
   async function handleWin() {

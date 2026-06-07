@@ -13,13 +13,9 @@ export function useQuestions() {
 
   async function getQuestionsForProfile(profile: Profile): Promise<Question[]> {
     const subjects: SubjectType[] = ['english', 'maths', 'chinese']
-    const allQuestions: Question[] = []
-    for (const subject of subjects) {
-      if (profile.subjects[subject]?.enabled) {
-        const questions = await getQuestionsForSubject(subject)
-        allQuestions.push(...questions)
-      }
-    }
+    const enabled = subjects.filter(s => profile.subjects[s]?.enabled)
+    const results = await Promise.all(enabled.map(s => getQuestionsForSubject(s)))
+    const allQuestions: Question[] = results.flat()
     return filterQuestionsForProfile(allQuestions, profile)
   }
 

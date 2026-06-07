@@ -1872,10 +1872,8 @@ export default function WorldMap() {
                       .map(b => b.itemId === pendingWorldItem.itemId ? { ...b, qty: b.qty - 1 } : b)
                       .filter(b => b.qty > 0)
                     setPendingWorldItem(null)
-                    try {
-                      await updateProfile(profile.id, { party: newParty, bag: newBag })
-                      useProfileStore.getState().setProfile({ ...profile, party: newParty, bag: newBag })
-                    } catch { /* silent */ }
+                    useProfileStore.getState().setProfile({ ...profile, party: newParty, bag: newBag })
+                    updateProfile(profile.id, { party: newParty, bag: newBag }).catch(() => {})
                   }}
                   className="flex items-center gap-3 bg-[#1a1a2e] disabled:opacity-40 rounded-xl px-3 py-2 text-left transition-all hover:bg-[#16213e]"
                 >
