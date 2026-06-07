@@ -330,6 +330,7 @@ export const useBattleStore = create<BattleState>((set) => ({
   setPendingEvolution: (e) => set({ pendingEvolution: e }),
   setResolveEvolution: (fn) => set({ resolveEvolution: fn }),
   acknowledgeEvolution: () => set(state => {
+    if (state.phase !== 'evolving') return {}
     state.resolveEvolution?.()
     return { resolveEvolution: null }
   }),

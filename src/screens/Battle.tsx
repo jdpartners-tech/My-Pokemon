@@ -1448,7 +1448,7 @@ export default function Battle() {
     )}
 
     {/* ── Evolution flash burst ── */}
-    {evoStage === 'flash' && (
+    {phase === 'evolving' && evoStage === 'flash' && (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
         background: 'white',
