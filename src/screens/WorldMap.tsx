@@ -380,6 +380,7 @@ export default function WorldMap() {
     minLevel?: number;
     maxLevel?: number;
     canSwim?: boolean;
+    waterOnly?: boolean;
   }
   const [wanderingNpcs, setWanderingNpcs] = useState<WanderingState[]>([])
   const wanderingNpcsRef = useRef<WanderingState[]>([])
@@ -506,7 +507,7 @@ export default function WorldMap() {
           homeX: def.homeX, homeY: def.homeY, wanderRadius: def.wanderRadius,
           isTrainer: def.isTrainer, party: def.party,
           pokemonId: def.pokemonId, minLevel: def.minLevel, maxLevel: def.maxLevel,
-          canSwim: def.canSwim,
+          canSwim: def.canSwim, waterOnly: def.waterOnly,
         }
         setWanderingNpcs(cur => {
           if (cur.some(w => w.id === id)) return cur
@@ -615,6 +616,7 @@ export default function WorldMap() {
                 if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) continue
                 const tile = map.tiles[ny]?.[nx]
                 if (!tile || BLOCKED_TILES.has(tile) || (tile === 'water' && !w.canSwim)) continue
+                if (w.waterOnly && tile !== 'water') continue
                 // no wander-radius check during flee — NPC can run anywhere on the map
                 if (nx === playerX && ny === playerY) continue
                 if (arr.some(o => o.id !== w.id && o.x === nx && o.y === ny)) continue
@@ -639,6 +641,7 @@ export default function WorldMap() {
           if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) return { ...w, moving: false }
           const tile = map.tiles[ny]?.[nx]
           if (!tile || BLOCKED_TILES.has(tile) || (tile === 'water' && !w.canSwim)) return { ...w, moving: false }
+          if (w.waterOnly && tile !== 'water') return { ...w, moving: false }
           if (Math.abs(nx - w.homeX) > w.wanderRadius || Math.abs(ny - w.homeY) > w.wanderRadius) return { ...w, moving: false }
           if (map.exits.some(e => e.x === nx && e.y === ny)) return { ...w, moving: false }
           if (nx === playerX && ny === playerY) return { ...w, moving: false }
@@ -701,7 +704,7 @@ export default function WorldMap() {
           homeX: w.homeX, homeY: w.homeY, wanderRadius: w.wanderRadius,
           isTrainer: w.isTrainer, party: w.party,
           pokemonId: w.pokemonId, minLevel: w.minLevel, maxLevel: w.maxLevel,
-          canSwim: w.canSwim,
+          canSwim: w.canSwim, waterOnly: w.waterOnly,
         }
       })
     wanderingNpcsRef.current = initial

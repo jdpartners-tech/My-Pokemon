@@ -53,6 +53,7 @@ export interface WanderingNpc {
   minLevel?: number
   maxLevel?: number
   canSwim?: boolean     // if true, NPC can move on water tiles
+  waterOnly?: boolean   // if true, NPC can only move on water tiles (stays in pond)
 }
 
 export interface MapData {
