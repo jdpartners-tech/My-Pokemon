@@ -11,6 +11,8 @@ import { MoveData, PokemonData } from '../types/game'
 import { expForLevel, calculateStat } from '../utils/exp'
 import { getTypeEffectiveness } from '../utils/damage'
 import { TRAINER_BATTLE_PICS } from '../data/trainerPics'
+import { useGameAudio } from '../hooks/useGameAudio'
+import { useBgm } from '../hooks/useBgm'
 
 const moveDataMap = Object.fromEntries(
   (movesJson as MoveData[]).map(m => [m.id, m])
@@ -440,6 +442,8 @@ export default function Battle() {
     damagePopup, battleBanner, trainerName, pendingEvolution,
   } = useBattleStore()
   const { selectMove, handleAnswer, useItemInBattle, attemptCatch, switchToPartyMember } = useBattleEngine()
+  const { playSound } = useGameAudio()
+  const { playBgm, stopBgm } = useBgm()
   const profile = useProfileStore(s => s.profile)
   const { updateProfile } = useFirestoreProfile()
 
@@ -518,6 +522,49 @@ export default function Battle() {
   }, [opponentPokemon?.currentHp, handleOpponentHpShake])
 
   useEffect(() => { if (phase === 'idle') navigate('/map') }, [phase, navigate])
+
+  // BGM: battle track on mount, stop on unmount
+  useEffect(() => {
+    playBgm('battle')
+    return () => stopBgm()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // BGM: victory jingle when battle is won
+  useEffect(() => {
+    if (phase === 'win') playBgm('victory')
+  }, [phase])
+
+  // SFX: opponent takes a hit
+  useEffect(() => {
+    if (opponentFlash) playSound('hit')
+  }, [opponentFlash])
+
+  // SFX: player takes a hit
+  useEffect(() => {
+    if (playerFlash) playSound('playerHit')
+  }, [playerFlash])
+
+  // SFX: answer result
+  useEffect(() => {
+    if (!answerResult) return
+    playSound(answerResult.wasCorrect ? 'correct' : 'wrong')
+  }, [answerResult])
+
+  // SFX: level up
+  useEffect(() => {
+    if (leveledUp) playSound('levelUp')
+  }, [leveledUp])
+
+  // SFX: Pokéball catch sequence
+  useEffect(() => {
+    if (ballAnimPhase === 1) playSound('catch')
+  }, [ballAnimPhase])
+
+  // SFX: evolution begins
+  useEffect(() => {
+    if (phase === 'evolving') playSound('evolve')
+  }, [phase])
 
   // Evolution animation state: 'silhouette' → 'flash' → 'reveal' → done
   const [evoStage, setEvoStage] = useState<'none' | 'silhouette' | 'flash' | 'reveal' | 'done'>('none')
