@@ -409,13 +409,6 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
-  // BGM: overworld music
-  useEffect(() => {
-    playBgm('overworld')
-    return () => stopBgm()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // Canvas size — use window dimensions directly (reliable on iOS Safari)
   const mainAreaRef = useRef<HTMLDivElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
@@ -471,6 +464,14 @@ export default function WorldMap() {
     useAchievements(profile, profileId, rewardReady, updateProfile, setProfile)
   const { playSound } = useGameAudio()
   const { playBgm, stopBgm } = useBgm()
+
+  // BGM: overworld music
+  useEffect(() => {
+    playBgm('overworld')
+    return () => stopBgm()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const mapRef = useRef<MapData>(getMap('pallet'))
   const prevMapIdRef = useRef<string>('pallet')
   const pxRef = useRef(profile?.playerX ?? 7)
