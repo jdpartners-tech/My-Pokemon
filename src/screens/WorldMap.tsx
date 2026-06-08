@@ -19,6 +19,8 @@ import { PokemonData, ItemData } from '../types/game'
 import { TRAINER_BATTLE_PICS } from '../data/trainerPics'
 import { useLoginReward, RARE_ENCOUNTER_POOL } from '../hooks/useLoginReward'
 import { useAchievements } from '../hooks/useAchievements'
+import { useGameAudio } from '../hooks/useGameAudio'
+import { useBgm } from '../hooks/useBgm'
 
 const ITEMS = itemsJson as ItemData[]
 
@@ -407,6 +409,13 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
+  // BGM: overworld music
+  useEffect(() => {
+    playBgm('overworld')
+    return () => stopBgm()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Canvas size — use window dimensions directly (reliable on iOS Safari)
   const mainAreaRef = useRef<HTMLDivElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
@@ -460,6 +469,8 @@ export default function WorldMap() {
 
   const { toastQueue, dismissToast } =
     useAchievements(profile, profileId, rewardReady, updateProfile, setProfile)
+  const { playSound } = useGameAudio()
+  const { playBgm, stopBgm } = useBgm()
   const mapRef = useRef<MapData>(getMap('pallet'))
   const prevMapIdRef = useRef<string>('pallet')
   const pxRef = useRef(profile?.playerX ?? 7)
@@ -1564,6 +1575,7 @@ export default function WorldMap() {
   }, [dialogue, move, shopOpen])
 
   function flashAndNavigate(delayMs = 0) {
+    playSound('encounter')
     setTimeout(() => {
       let count = 0
       const tick = () => {
@@ -1705,6 +1717,7 @@ export default function WorldMap() {
     })
     useProfileStore.getState().setProfile({ ...freshProfile, party: healedParty })
     setDialogue("Nurse Joy: Your Pokémon have been healed! ♥")
+    playSound('heal')
     updateProfile(freshProfile.id, { party: healedParty }).catch(() => {})
   }
 
