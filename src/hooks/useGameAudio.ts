@@ -58,6 +58,7 @@ const SOUNDS: Record<SoundName, (ctx: AudioContext) => void> = {
   encounter: (ctx) => tone(ctx, 'sawtooth', 330, 440, 0.22, 0.4),
 
   evolve: (ctx) => {
+    const t0 = ctx.currentTime
     const freqs = [261, 329, 392]
     freqs.forEach(f => {
       const osc = ctx.createOscillator()
@@ -66,12 +67,11 @@ const SOUNDS: Record<SoundName, (ctx: AudioContext) => void> = {
       g.connect(ctx.destination)
       osc.type = 'sine'
       osc.frequency.value = f
-      const t = ctx.currentTime
-      g.gain.setValueAtTime(0.001, t)
-      g.gain.linearRampToValueAtTime(0.15, t + 1.5)
-      g.gain.exponentialRampToValueAtTime(0.001, t + 2.5)
-      osc.start(t)
-      osc.stop(t + 2.6)
+      g.gain.setValueAtTime(0.001, t0)
+      g.gain.linearRampToValueAtTime(0.15, t0 + 1.5)
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 2.5)
+      osc.start(t0)
+      osc.stop(t0 + 2.6)
     })
   },
 
