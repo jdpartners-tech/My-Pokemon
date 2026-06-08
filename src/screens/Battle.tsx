@@ -751,14 +751,22 @@ export default function Battle() {
   function HpBar({ current, max }: { current: number; max: number }) {
     const pct = Math.max(0, Math.min(1, current / max))
     const color = hpBarColor(current, max)
+    const danger = pct < 0.25 && pct > 0
     return (
       <div style={{ flex: 1, position: 'relative' }}>
+        <style>{`
+          @keyframes hpPulse {
+            0%   { opacity: 1; }
+            50%  { opacity: 0.45; }
+            100% { opacity: 1; }
+          }
+        `}</style>
         <div style={{ background: '#404030', height: 7, width: '100%' }}>
           <div style={{
             width: `${pct * 100}%`, height: '100%', background: color,
             transition: 'width 0.3s',
+            animation: danger ? 'hpPulse 0.8s ease-in-out infinite' : 'none',
           }} />
-          {/* White gloss highlight — top 3px of filled bar */}
           <div style={{
             position: 'absolute', top: 0, left: 0,
             width: `${pct * 100}%`, height: 3,
