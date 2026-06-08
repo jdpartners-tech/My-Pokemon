@@ -67,6 +67,7 @@ function scheduleNotes(
 // Module-level singleton state
 let masterGain: GainNode | null = null
 let loopTimer: ReturnType<typeof setTimeout> | null = null
+let crossfadeTimer: ReturnType<typeof setTimeout> | null = null
 let activeTrack: BgmTrack | null = null
 
 function stopLoop() {
@@ -91,7 +92,7 @@ function startTrack(track: BgmTrack) {
     const endAt = scheduleNotes(ctx, masterGain!, def.notes, def.bpm, startAt)
     if (def.loop && activeTrack === track) {
       // Re-schedule ~100ms before end so there is no gap
-      const msUntilReschedule = Math.max(0, (endAt - ctx.currentTime - 0.1) * 1000)
+      const msUntilReschedule = Math.max(0, (endAt - ctx.currentTime - 0.2) * 1000)
       loopTimer = setTimeout(() => {
         if (activeTrack === track) scheduleLoop(endAt)
       }, msUntilReschedule)
@@ -110,8 +111,9 @@ function crossfadeTo(track: BgmTrack | null) {
     masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5)
   }
   stopLoop()
+  if (crossfadeTimer) { clearTimeout(crossfadeTimer); crossfadeTimer = null }
   if (track) {
-    setTimeout(() => startTrack(track), 500)
+    crossfadeTimer = setTimeout(() => { crossfadeTimer = null; startTrack(track) }, 500)
   }
 }
 
