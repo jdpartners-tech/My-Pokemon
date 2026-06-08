@@ -13,8 +13,12 @@ import DPad from '../components/DPad'
 import ShopModal from '../components/ShopModal'
 import MiniMap from '../components/MiniMap'
 import BagMenu from '../components/BagMenu'
+import DailyRewardModal from '../components/DailyRewardModal'
+import AchievementToast from '../components/AchievementToast'
 import { PokemonData, ItemData } from '../types/game'
 import { TRAINER_BATTLE_PICS } from '../data/trainerPics'
+import { useLoginReward, RARE_ENCOUNTER_POOL } from '../hooks/useLoginReward'
+import { useAchievements } from '../hooks/useAchievements'
 
 const ITEMS = itemsJson as ItemData[]
 
@@ -342,6 +346,8 @@ function drawPokeCenter(ctx: CanvasRenderingContext2D, cW: number, cH: number, i
 export default function WorldMap() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
+  const setProfile = useProfileStore(s => s.setProfile)
+  const profileId = profile?.id
   const { updateProfile } = useFirestoreProfile()
   const { prefetchQuestionsForProfile } = useQuestions()
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -388,7 +394,15 @@ export default function WorldMap() {
 
   // Warm question cache in background so battle starts instantly with no loading delay
   useEffect(() => {
-    if (profile) prefetchQuestionsForProfile(profile)
+    if (!profile) return
+    prefetchQuestionsForProfile(profile)
+    // Track the starting map in visitedRoutes
+    const startMap = profile.currentRoute ?? 'pallet'
+    if (!(profile.visitedRoutes ?? []).includes(startMap)) {
+      const newVisited = [...(profile.visitedRoutes ?? []), startMap]
+      useProfileStore.getState().setProfile({ ...profile, visitedRoutes: newVisited })
+      updateProfileRef.current(profile.id, { visitedRoutes: newVisited }).catch(() => {})
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
@@ -439,6 +453,12 @@ export default function WorldMap() {
   }, [])
   const updateProfileRef = useRef(updateProfile)
   useEffect(() => { updateProfileRef.current = updateProfile }, [updateProfile])
+
+  const { rewardReady, todayReward, newStreak, dismissReward, pendingRareEncounterRef } =
+    useLoginReward(profile, profileId, updateProfile, setProfile)
+
+  const { toastQueue, dismissToast } =
+    useAchievements(profile, profileId, rewardReady, updateProfile, setProfile)
   const mapRef = useRef<MapData>(getMap('pallet'))
   const prevMapIdRef = useRef<string>('pallet')
   const pxRef = useRef(profile?.playerX ?? 7)
@@ -1406,8 +1426,10 @@ export default function WorldMap() {
         const cp = useProfileStore.getState().profile
         if (cp?.id) {
           const posUpdate = { currentRoute: exit.targetMap, playerX: exit.targetX, playerY: exit.targetY }
-          useProfileStore.getState().setProfile({ ...cp, ...posUpdate })
-          updateProfileRef.current(cp.id, posUpdate).catch(() => {})
+          const visited = cp.visitedRoutes ?? []
+          const newVisited = visited.includes(exit.targetMap) ? visited : [...visited, exit.targetMap]
+          useProfileStore.getState().setProfile({ ...cp, ...posUpdate, visitedRoutes: newVisited })
+          updateProfileRef.current(cp.id, { ...posUpdate, visitedRoutes: newVisited }).catch(() => {})
         }
       }
 
@@ -1582,6 +1604,29 @@ export default function WorldMap() {
     }).filter(Boolean) as ReturnType<typeof buildPartyPokemon>[]
     return { player, bench, partyIndexMap: [activeIdx, ...benchIndices] }
   }
+
+  function startRareEncounter() {
+    const currentProfile = useProfileStore.getState().profile
+    if (!currentProfile?.party?.length) return
+    const rarePokemonId = RARE_ENCOUNTER_POOL[Math.floor(Math.random() * RARE_ENCOUNTER_POOL.length)]
+    const level = 15 + Math.floor(Math.random() * 11)
+    const pokemonData = pokemonMap[rarePokemonId]
+    if (!pokemonData) return
+    const battleParty = buildBattleParty(currentProfile.party)
+    if (!battleParty) return
+    const { player, bench: fullParty, partyIndexMap } = battleParty
+    const opponent = buildPartyPokemon(pokemonData, level)
+    useBattleStore.getState().startWildBattle(player, opponent, fullParty, partyIndexMap)
+    flashAndNavigate()
+  }
+
+  useEffect(() => {
+    if (!rewardReady && pendingRareEncounterRef.current) {
+      pendingRareEncounterRef.current = false
+      setTimeout(() => startRareEncounter(), 400)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rewardReady])
 
   function startWildBattle(playerX: number, playerY: number) {
     const map = mapRef.current
@@ -1895,6 +1940,15 @@ export default function WorldMap() {
           background: 'white', opacity: 0.85,
         }} />
       )}
+
+      {rewardReady && (
+        <DailyRewardModal
+          streak={newStreak}
+          todayReward={todayReward}
+          onCollect={dismissReward}
+        />
+      )}
+      <AchievementToast toastQueue={toastQueue} onDismiss={dismissToast} />
     </div>
   )
 }
