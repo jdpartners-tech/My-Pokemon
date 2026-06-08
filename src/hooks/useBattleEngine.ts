@@ -452,6 +452,12 @@ export function useBattleEngine() {
         store.addLog(`${getName(playerPokemon)} evolved into ${evolvedData?.name ?? 'a new form'}!`)
         store.setPendingEvolution(null)
         await delay(400)
+        const evolvedProfile = useProfileStore.getState().profile
+        if (evolvedProfile?.id && !(evolvedProfile.achievements ?? []).includes('evolved')) {
+          const updatedAch = [...(evolvedProfile.achievements ?? []), 'evolved']
+          useProfileStore.getState().setProfile({ ...evolvedProfile, achievements: updatedAch })
+          updateProfile(evolvedProfile.id, { achievements: updatedAch }).catch(() => {})
+        }
       }
     }
 
