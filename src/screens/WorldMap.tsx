@@ -395,7 +395,7 @@ export default function WorldMap() {
 
   // Warm question cache in background so battle starts instantly with no loading delay
   useEffect(() => {
-    if (!profile) return
+    if (!profile?.id) return
     prefetchQuestionsForProfile(profile)
     // Track the starting map in visitedRoutes
     const startMap = profile.currentRoute ?? 'pallet'

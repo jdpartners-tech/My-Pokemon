@@ -46,7 +46,6 @@ export default function Progress() {
                 borderBottom: activeTab === tab ? '2px solid #c8a820' : '2px solid transparent',
                 background: 'none',
                 border: 'none',
-                borderBottom: activeTab === tab ? '2px solid #c8a820' : '2px solid transparent',
                 cursor: 'pointer',
               }}
             >
