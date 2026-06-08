@@ -135,6 +135,10 @@ export interface Profile {
   bag: BagItem[]
   pokedex: Record<string, 'caught' | 'seen' | 'unseen'>
   badges: string[]
+  achievements: string[]
+  lastLoginDate: string
+  loginStreak: number
+  visitedRoutes: string[]
   money: number
   currentRoute: string
   playerX: number
