@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ACHIEVEMENTS, AchievementDef } from '../data/achievements'
 import type { Profile } from '../types/game'
 
@@ -30,9 +30,9 @@ export function useAchievements(
     setToastQueue(newlyUnlocked)
   }, [profile, profileId, rewardReady])
 
-  function dismissToast(id: string) {
+  const dismissToast = useCallback((id: string) => {
     setToastQueue(q => q.filter(a => a.id !== id))
-  }
+  }, [])
 
   return { toastQueue, dismissToast }
 }
