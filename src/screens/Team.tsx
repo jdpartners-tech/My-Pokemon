@@ -20,6 +20,11 @@ type Mode =
   | { type: 'box-detail'; idx: number }
   | { type: 'swap-pick'; boxIdx: number }   // pick which party slot to replace
 
+function friendshipHearts(friendship: number): string {
+  const hearts = Math.floor((friendship ?? 70) / 51)
+  return '❤️'.repeat(hearts) + '🤍'.repeat(5 - hearts)
+}
+
 export default function Team() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
@@ -124,6 +129,14 @@ export default function Team() {
           <p className="text-yellow-400 font-bold mb-2 text-sm">HP</p>
           <HpBar current={mon.currentHp ?? built.maxHp} max={built.maxHp} />
           <p className="text-white text-sm mt-1">{mon.currentHp ?? '?'} / {built.maxHp}</p>
+        </div>
+
+        <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
+          <p className="text-yellow-400 font-bold mb-2 text-sm">Friendship</p>
+          <p className="text-2xl">{friendshipHearts(mon.friendship ?? 70)}</p>
+          {(mon.friendship ?? 70) >= 250 && (
+            <p className="text-pink-400 text-sm mt-1 font-semibold">Best Friends! 💕</p>
+          )}
         </div>
 
         <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
