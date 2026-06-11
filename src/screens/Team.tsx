@@ -27,108 +27,130 @@ function friendshipHearts(friendship: number): string {
   return '❤️'.repeat(hearts) + '🤍'.repeat(5 - hearts)
 }
 
+// ── TradeSection ─────────────────────────────────────────────────────────────
+
+interface TradeSectionProps {
+  partyIdx: number
+  pokemon: PartyPokemon
+  profileId: string
+  profileName: string
+  outgoingOffer: TradeOffer | null
+  createOffer: (offer: Omit<TradeOffer, 'id'>) => Promise<string>
+  cancelOffer: (tradeId: string) => Promise<void>
+  getAllProfiles: () => Promise<Array<{ id?: string; name: string }>>
+}
+
+function TradeSection({
+  partyIdx,
+  pokemon,
+  profileId,
+  profileName,
+  outgoingOffer,
+  createOffer,
+  cancelOffer,
+  getAllProfiles,
+}: TradeSectionProps) {
+  const [showPicker, setShowPicker] = useState(false)
+  const [profiles, setProfiles] = useState<Array<{ id: string; name: string }>>([])
+  const [tradeBusy, setTradeBusy] = useState(false)
+
+  async function openPicker() {
+    const all = await getAllProfiles()
+    setProfiles(all.filter(p => p.id !== profileId).map(p => ({ id: p.id!, name: p.name })))
+    setShowPicker(true)
+  }
+
+  async function sendOffer(targetId: string) {
+    if (!profileId || tradeBusy) return
+    setTradeBusy(true)
+    try {
+      await createOffer({
+        offererProfileId: profileId,
+        offererProfileName: profileName,
+        targetProfileId: targetId,
+        offeredPokemon: pokemon,
+        offeredPartyIdx: partyIdx,
+        status: 'pending',
+        createdAt: Date.now(),
+      })
+      setShowPicker(false)
+    } catch { /* silent */ }
+    finally {
+      setTradeBusy(false)
+    }
+  }
+
+  async function doCancel() {
+    if (!outgoingOffer) return
+    await cancelOffer(outgoingOffer.id).catch(() => {})
+  }
+
+  if (outgoingOffer) {
+    const isThisSlot = outgoingOffer.offeredPartyIdx === partyIdx
+    if (!isThisSlot) return null
+    return (
+      <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
+        <p className="text-yellow-400 font-bold mb-2 text-sm">Trade</p>
+        <p className="text-gray-400 text-sm mb-3">⏳ Waiting for response…</p>
+        <button
+          onClick={doCancel}
+          className="border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm font-bold"
+        >
+          Cancel Trade
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
+      <p className="text-yellow-400 font-bold mb-2 text-sm">Trade</p>
+      {showPicker ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-gray-400 text-sm mb-1">Send to:</p>
+          {profiles.map(p => (
+            <button
+              key={p.id}
+              onClick={() => sendOffer(p.id)}
+              disabled={tradeBusy}
+              className="bg-[#0f3460] text-white py-2 px-4 rounded-lg font-bold text-sm disabled:opacity-50"
+            >
+              {p.name}
+            </button>
+          ))}
+          <button onClick={() => setShowPicker(false)} className="text-gray-500 text-sm mt-1">Cancel</button>
+        </div>
+      ) : (
+        <button
+          onClick={openPicker}
+          disabled={!!outgoingOffer}
+          className="bg-[#0f3460] border border-yellow-400/30 text-yellow-400 px-6 py-2 rounded-lg font-bold text-sm disabled:opacity-40"
+        >
+          🔄 Trade this Pokémon
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function Team() {
   const navigate = useNavigate()
   const profile = useProfileStore(s => s.profile)
-  const { updateProfile } = useFirestoreProfile()
+  const { updateProfile, getAllProfiles } = useFirestoreProfile()
   const [mode, setMode] = useState<Mode>({ type: 'list' })
   const [busy, setBusy] = useState(false)
 
   const { subscribeToOutgoingOffer, createOffer, cancelOffer } = useTrades()
-  const { getAllProfiles } = useFirestoreProfile()
   const [outgoingOffer, setOutgoingOffer] = useState<TradeOffer | null>(null)
 
   useEffect(() => {
     if (!profile?.id) return
     const unsub = subscribeToOutgoingOffer(profile.id, setOutgoingOffer)
     return unsub
-  }, [profile?.id])
+  }, [profile?.id, subscribeToOutgoingOffer])
 
   const party = profile?.party ?? [] as PartyPokemon[]
   const box   = (profile?.box ?? []) as BoxPokemon[]
-
-  // ── TradeSection ─────────────────────────────────────────────────────────
-  function TradeSection({ partyIdx, pokemon }: { partyIdx: number; pokemon: PartyPokemon }) {
-    const [showPicker, setShowPicker] = useState(false)
-    const [profiles, setProfiles] = useState<Array<{ id: string; name: string }>>([])
-    const [tradeBusy, setTradeBusy] = useState(false)
-
-    async function openPicker() {
-      const all = await getAllProfiles()
-      setProfiles(all.filter(p => p.id !== profile?.id).map(p => ({ id: p.id!, name: p.name })))
-      setShowPicker(true)
-    }
-
-    async function sendOffer(targetId: string, targetName: string) {
-      if (!profile?.id || tradeBusy) return
-      setTradeBusy(true)
-      try {
-        await createOffer({
-          offererProfileId: profile.id,
-          offererProfileName: profile.name,
-          targetProfileId: targetId,
-          offeredPokemon: pokemon,
-          offeredPartyIdx: partyIdx,
-          status: 'pending',
-          createdAt: Date.now(),
-        })
-        setShowPicker(false)
-      } catch { /* silent */ }
-      setTradeBusy(false)
-    }
-
-    async function doCancel() {
-      if (!outgoingOffer) return
-      await cancelOffer(outgoingOffer.id).catch(() => {})
-    }
-
-    if (outgoingOffer) {
-      const isThisSlot = outgoingOffer.offeredPartyIdx === partyIdx
-      if (!isThisSlot) return null
-      return (
-        <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
-          <p className="text-yellow-400 font-bold mb-2 text-sm">Trade</p>
-          <p className="text-gray-400 text-sm mb-3">⏳ Waiting for response…</p>
-          <button
-            onClick={doCancel}
-            className="border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm font-bold"
-          >
-            Cancel Trade
-          </button>
-        </div>
-      )
-    }
-
-    return (
-      <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
-        <p className="text-yellow-400 font-bold mb-2 text-sm">Trade</p>
-        {showPicker ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-gray-400 text-sm mb-1">Send to:</p>
-            {profiles.map(p => (
-              <button
-                key={p.id}
-                onClick={() => sendOffer(p.id, p.name)}
-                disabled={tradeBusy}
-                className="bg-[#0f3460] text-white py-2 px-4 rounded-lg font-bold text-sm disabled:opacity-50"
-              >
-                {p.name}
-              </button>
-            ))}
-            <button onClick={() => setShowPicker(false)} className="text-gray-500 text-sm mt-1">Cancel</button>
-          </div>
-        ) : (
-          <button
-            onClick={openPicker}
-            disabled={!!outgoingOffer}
-            className="bg-[#0f3460] border border-yellow-400/30 text-yellow-400 px-6 py-2 rounded-lg font-bold text-sm disabled:opacity-40"
-          >
-            🔄 Trade this Pokémon
-          </button>
-        )}
-      </div>
-    )
-  }
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -235,7 +257,16 @@ export default function Team() {
         </div>
 
         {isParty && partyIdx !== undefined && party.length > 1 && (
-          <TradeSection partyIdx={partyIdx} pokemon={mon} />
+          <TradeSection
+            partyIdx={partyIdx}
+            pokemon={mon}
+            profileId={profile?.id ?? ''}
+            profileName={profile?.name ?? ''}
+            outgoingOffer={outgoingOffer}
+            createOffer={createOffer}
+            cancelOffer={cancelOffer}
+            getAllProfiles={getAllProfiles}
+          />
         )}
 
         <div className="bg-[#16213e] rounded-xl p-4 w-full max-w-2xl">
