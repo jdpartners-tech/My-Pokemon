@@ -37,7 +37,7 @@ export default function Trade() {
         return
       }
       setOffer({ id: snap.id, ...snap.data() } as TradeOffer)
-    })
+    }).catch(() => navigate('/map'))
   }, [params, navigate])
 
   if (!profile || !offer) {
@@ -69,7 +69,8 @@ export default function Trade() {
         useProfileStore.getState().setProfile({ id: snap.id, ...snap.data() } as typeof profile)
       }
       setPhase('success')
-    } catch {
+    } catch (err) {
+      console.error('Trade failed:', err)
       setPhase('error')
     }
     setBusy(false)
