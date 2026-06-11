@@ -389,6 +389,17 @@ export function useBattleEngine() {
 
     if (useBattleStore.getState().playerPokemon!.currentHp <= 0) {
       store.addLog(`${getName(playerPokemon)} fainted!`)
+      if (profile?.id) {
+        const freshProfile = useProfileStore.getState().profile ?? profile
+        const faintedIdx = useBattleStore.getState().partyIndexMap[0] ?? 0
+        const updatedParty = (freshProfile.party ?? []).map((p, i) =>
+          i === faintedIdx
+            ? { ...p, friendship: Math.max(0, (p.friendship ?? 70) - 10) }
+            : p
+        )
+        useProfileStore.getState().setProfile({ ...freshProfile, party: updatedParty })
+        updateProfile(profile.id, { party: updatedParty }).catch(() => {})
+      }
       const hasHealthy = useBattleStore.getState().party.some(p => p.currentHp > 0)
       store.setPhase(hasHealthy ? 'switch_pokemon' : 'lose')
       return
@@ -562,6 +573,20 @@ export function useBattleEngine() {
         }
       })
 
+      // Friendship: +5 for active winner, +1 for each bench member
+      updatedParty[activeProfileIdx] = {
+        ...updatedParty[activeProfileIdx],
+        friendship: Math.min(255, (updatedParty[activeProfileIdx].friendship ?? 70) + 5),
+      }
+      benchParty.forEach((_, i) => {
+        const profIdx = partyIndexMap[i + 1]
+        if (profIdx === undefined || !updatedParty[profIdx]) return
+        updatedParty[profIdx] = {
+          ...updatedParty[profIdx],
+          friendship: Math.min(255, (updatedParty[profIdx].friendship ?? 70) + 1),
+        }
+      })
+
       // Trainer battles reward 2 Pokéballs
       const { isWildBattle, trainerName } = useBattleStore.getState()
       let updatedBag = profile.bag ?? []
@@ -717,7 +742,7 @@ export function useBattleEngine() {
       const currentBox = freshProfile.box ?? []
       // Party not full → add to party; otherwise send to box (lighter BoxPokemon format)
       const partyWithCaught = currentParty.length < 6
-        ? [...currentParty, { ...opponentPokemon, nickname: null }]
+        ? [...currentParty, { ...opponentPokemon, nickname: null, friendship: 70 }]
         : currentParty
       const newBox = currentParty.length >= 6
         ? [...currentBox, { pokemonId: opponentPokemon.pokemonId, nickname: null, level: opponentPokemon.level, xp: opponentPokemon.xp }]
