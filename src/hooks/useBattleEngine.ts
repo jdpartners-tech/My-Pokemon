@@ -192,7 +192,8 @@ export function useBattleEngine() {
         const isCrit = Math.random() < (1 / 16)
         if (isCrit) didCrit = true
         const baseDmg = calculateDamage(playerPokemon.level, moveInfo?.power ?? 0, atkStat, defStat, eff)
-        const singleDmg = isCrit ? Math.floor(baseDmg * 1.5) : baseDmg
+        const friendshipMult = (playerPokemon.friendship ?? 70) >= 200 ? 1.05 : 1.0
+        const singleDmg = Math.floor((isCrit ? Math.floor(baseDmg * 1.5) : baseDmg) * friendshipMult)
         if (h === 0) {
           store.setProjectileAnim(moveInfo?.type ?? 'normal', true)
           await delay(360)
