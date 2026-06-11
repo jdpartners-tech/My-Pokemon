@@ -413,6 +413,17 @@ export function useBattleEngine() {
       store.addLog(`${getName(plrAfter)} is hurt by ${plrAfter.status}! (${dotDmg})`)
       if (useBattleStore.getState().playerPokemon!.currentHp <= 0) {
         store.addLog(`${getName(plrAfter)} fainted!`)
+        if (profile?.id) {
+          const freshProfile = useProfileStore.getState().profile ?? profile
+          const faintedIdx = useBattleStore.getState().partyIndexMap[0] ?? 0
+          const updatedParty = (freshProfile.party ?? []).map((p, i) =>
+            i === faintedIdx
+              ? { ...p, friendship: Math.max(0, (p.friendship ?? 70) - 10) }
+              : p
+          )
+          useProfileStore.getState().setProfile({ ...freshProfile, party: updatedParty })
+          updateProfile(profile.id, { party: updatedParty }).catch(() => {})
+        }
         const hasHealthy = useBattleStore.getState().party.some(p => p.currentHp > 0)
         store.setPhase(hasHealthy ? 'switch_pokemon' : 'lose')
         return
