@@ -65,6 +65,7 @@ export interface PartyPokemon {
   heldItem: string | null
   status: StatusCondition
   sleepTurns: number
+  friendship: number
 }
 
 export interface BoxPokemon {
@@ -77,6 +78,17 @@ export interface BoxPokemon {
 export interface BagItem {
   itemId: string
   qty: number
+}
+
+export interface TradeOffer {
+  id: string
+  offererProfileId: string
+  offererProfileName: string
+  targetProfileId: string
+  offeredPokemon: PartyPokemon
+  offeredPartyIdx: number
+  status: 'pending' | 'completed' | 'cancelled'
+  createdAt: number
 }
 
 export interface ItemData {
