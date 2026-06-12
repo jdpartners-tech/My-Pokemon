@@ -7,6 +7,7 @@ import Team from './screens/Team'
 import Admin from './screens/Admin'
 import AddProfile from './screens/AddProfile'
 import Progress from './screens/Progress'
+import Trade from './screens/Trade'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/team" element={<Team />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/progress" element={<Progress />} />
+        <Route path="/trade" element={<Trade />} />
       </Routes>
     </div>
   )

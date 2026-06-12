@@ -21,6 +21,9 @@ import { useLoginReward, RARE_ENCOUNTER_POOL } from '../hooks/useLoginReward'
 import { useAchievements } from '../hooks/useAchievements'
 import { useGameAudio } from '../hooks/useGameAudio'
 import { useBgm } from '../hooks/useBgm'
+import { useTrades } from '../hooks/useTrades'
+import TradeOfferToast from '../components/TradeOfferToast'
+import type { TradeOffer } from '../types/game'
 
 const ITEMS = itemsJson as ItemData[]
 
@@ -464,6 +467,8 @@ export default function WorldMap() {
     useAchievements(profile, profileId, rewardReady, updateProfile, setProfile)
   const { playSound } = useGameAudio()
   const { playBgm, stopBgm } = useBgm()
+  const { subscribeToIncomingOffers, cleanupStaleOffers } = useTrades()
+  const [incomingTrade, setIncomingTrade] = useState<TradeOffer | null>(null)
 
   // BGM: overworld music
   useEffect(() => {
@@ -471,6 +476,16 @@ export default function WorldMap() {
     return () => stopBgm()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!profile?.id) return
+    cleanupStaleOffers(profile.id).catch(() => {})
+    const unsub = subscribeToIncomingOffers(profile.id, offers => {
+      setIncomingTrade(offers[0] ?? null)
+    })
+    return unsub
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id])
 
   const mapRef = useRef<MapData>(getMap('pallet'))
   const prevMapIdRef = useRef<string>('pallet')
@@ -1966,6 +1981,13 @@ export default function WorldMap() {
         />
       )}
       <AchievementToast toastQueue={toastQueue} onDismiss={dismissToast} />
+      {incomingTrade && (
+        <TradeOfferToast
+          offer={incomingTrade}
+          onTap={() => navigate(`/trade?offerId=${incomingTrade.id}`)}
+          onDismiss={() => setIncomingTrade(null)}
+        />
+      )}
     </div>
   )
 }
