@@ -163,7 +163,7 @@ export default function Team() {
     return {
       pokemonId: b.pokemonId, nickname: b.nickname, level: b.level, xp: b.xp,
       currentHp: built?.maxHp ?? 50, maxHp: built?.maxHp ?? 50,
-      moves: built?.moves ?? [], heldItem: null, status: null, sleepTurns: 0,
+      moves: built?.moves ?? [], heldItem: null, status: null, sleepTurns: 0, friendship: 70,
     }
   }
 

@@ -69,5 +69,6 @@ export function buildPartyPokemon(
     heldItem: null,
     status: null,
     sleepTurns: 0,
+    friendship: 70,
   }
 }

@@ -63,7 +63,7 @@ export default function Pokedex() {
       pokemonId: incoming.pokemonId, nickname: incoming.nickname,
       level: incoming.level, xp: incoming.xp,
       currentHp: built?.maxHp ?? 50, maxHp: built?.maxHp ?? 50,
-      moves: built?.moves ?? [], heldItem: null, status: null, sleepTurns: 0,
+      moves: built?.moves ?? [], heldItem: null, status: null, sleepTurns: 0, friendship: 70,
     }
     const outgoingBox: BoxPokemon = {
       pokemonId: replacing.pokemonId, nickname: replacing.nickname,
